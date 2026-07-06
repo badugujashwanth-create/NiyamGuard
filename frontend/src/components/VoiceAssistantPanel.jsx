@@ -1,8 +1,34 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis";
 import AssistantTranscript from "./AssistantTranscript";
+
+const LANGUAGE_CODES = {
+  english: "en-IN",
+  telugu: "te-IN",
+  hindi: "hi-IN",
+  mixed: "en-IN",
+};
+
+const SAMPLE_QUESTIONS = [
+  {
+    language: "Telugu",
+    text: "purpose lo scholarship ani rayacha",
+  },
+  {
+    language: "Telugu",
+    text: "monthly income పదిహేను వేలు అయితే annual income ఎంత",
+  },
+  {
+    language: "Hindi",
+    text: "purpose mein scholarship likhna hai kya",
+  },
+  {
+    language: "English",
+    text: "monthly income fifteen thousand what should I enter",
+  },
+];
 
 export default function VoiceAssistantPanel({
   fields,
@@ -20,10 +46,12 @@ export default function VoiceAssistantPanel({
 }) {
   const [textMessage, setTextMessage] = useState("");
   const lastSpeechCommandRef = useRef(null);
+  const resumeAfterSpeechRef = useRef(false);
   const {
     supported: synthesisSupported,
     isSpeaking,
     error: synthesisError,
+    voiceWarning,
     speak,
     cancel,
   } = useSpeechSynthesis();
@@ -51,14 +79,22 @@ export default function VoiceAssistantPanel({
     onFinalTranscript: sendMessage,
   });
 
-  function speakWithoutMicrophoneFeedback(text) {
-    const shouldResumeListening = isActive;
-    if (shouldResumeListening) pause();
-    const started = speak(text, language, () => {
-      if (shouldResumeListening) resume();
-    });
-    if (!started && shouldResumeListening) resume();
-  }
+  const speakWithoutMicrophoneFeedback = useCallback(
+    (text, languageCode = LANGUAGE_CODES[language] || "en-IN") => {
+      const shouldResumeListening = isActive;
+      resumeAfterSpeechRef.current = shouldResumeListening;
+      if (shouldResumeListening) pause();
+      const started = speak(text, languageCode, () => {
+        if (resumeAfterSpeechRef.current) resume();
+        resumeAfterSpeechRef.current = false;
+      });
+      if (!started && shouldResumeListening) {
+        resume();
+        resumeAfterSpeechRef.current = false;
+      }
+    },
+    [isActive, language, pause, resume, speak],
+  );
 
   useEffect(() => {
     if (
@@ -68,11 +104,19 @@ export default function VoiceAssistantPanel({
       return;
     }
     lastSpeechCommandRef.current = speechCommand.id;
-    speakWithoutMicrophoneFeedback(speechCommand.text);
-  }, [speechCommand]);
+    speakWithoutMicrophoneFeedback(
+      speechCommand.text,
+      speechCommand.languageCode,
+    );
+  }, [speechCommand, speakWithoutMicrophoneFeedback]);
+
+  function stopVoiceHelp() {
+    resumeAfterSpeechRef.current = false;
+    stop();
+  }
 
   async function clearConversation() {
-    stop();
+    stopVoiceHelp();
     cancel();
     clearTranscript();
     setTextMessage("");
@@ -120,7 +164,7 @@ export default function VoiceAssistantPanel({
           <select
             value={language}
             onChange={(event) => {
-              stop();
+              stopVoiceHelp();
               cancel();
               onLanguageChange(event.target.value);
             }}
@@ -150,7 +194,7 @@ export default function VoiceAssistantPanel({
         <button
           className="button button-stop"
           disabled={!isActive}
-          onClick={stop}
+          onClick={stopVoiceHelp}
           type="button"
         >
           Stop Voice Help
@@ -161,6 +205,11 @@ export default function VoiceAssistantPanel({
         <p className="support-message">
           Voice recognition is not available in this browser. Use the text box
           below. Chrome or Edge generally provides browser speech recognition.
+        </p>
+      ) : null}
+      {!synthesisSupported ? (
+        <p className="support-message support-error" role="alert">
+          Voice output is not supported in this browser. Please use Chrome or Edge.
         </p>
       ) : null}
       {speechError ? (
@@ -177,6 +226,11 @@ export default function VoiceAssistantPanel({
       {synthesisError ? (
         <p className="support-message support-error" role="alert">
           {synthesisError}
+        </p>
+      ) : null}
+      {voiceWarning ? (
+        <p className="support-message" role="status">
+          {voiceWarning}
         </p>
       ) : null}
 
@@ -205,26 +259,43 @@ export default function VoiceAssistantPanel({
         </div>
       </form>
 
+      <div className="sample-questions">
+        <p>Try a sample question</p>
+        <div>
+          {SAMPLE_QUESTIONS.map((sample) => (
+            <button
+              disabled={asking || sessionStatus !== "ready"}
+              key={sample.text}
+              onClick={() => setTextMessage(sample.text)}
+              type="button"
+            >
+              <span>{sample.language}</span>
+              {sample.text}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {assistantReply ? (
         <section className="latest-reply" aria-live="polite">
           <div className="section-heading">
             <h3>Assistant reply</h3>
-            {synthesisSupported ? (
-              <button
-                className="text-button"
-                onClick={() => {
-                  if (isSpeaking) {
-                    cancel();
-                    if (isActive) resume();
-                  } else {
-                    speakWithoutMicrophoneFeedback(assistantReply.reply);
-                  }
-                }}
-                type="button"
-              >
-                {isSpeaking ? "Stop speaking" : "Speak again"}
-              </button>
-            ) : null}
+            <button
+              aria-busy={isSpeaking}
+              className="text-button"
+              disabled={!synthesisSupported}
+              onClick={() =>
+                speakWithoutMicrophoneFeedback(
+                  assistantReply.reply,
+                  assistantReply.language_code ||
+                    LANGUAGE_CODES[language] ||
+                    "en-IN",
+                )
+              }
+              type="button"
+            >
+              Speak again
+            </button>
           </div>
           <p>{assistantReply.reply}</p>
           {assistantReply.suggested_value ? (

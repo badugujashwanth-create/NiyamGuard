@@ -120,6 +120,70 @@ def test_every_ask_response_has_safety_flags(client: TestClient, session_id: str
         assert body["should_submit"] is False
 
 
+def test_telugu_roman_input_returns_telugu_guidance(
+    client: TestClient, session_id: str
+) -> None:
+    body = ask(client, session_id, "purpose lo scholarship ani rayacha")
+    assert body["detected_language"] == "telugu"
+    assert body["language_code"] == "te-IN"
+    assert "అవును" in body["reply"]
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
+def test_telugu_unicode_input_returns_telugu_guidance(
+    client: TestClient, session_id: str
+) -> None:
+    body = ask(
+        client,
+        session_id,
+        "monthly income పదిహేను వేలు అయితే annual income ఎంత",
+    )
+    assert body["detected_language"] == "telugu"
+    assert body["language_code"] == "te-IN"
+    assert body["suggested_value"] == "180000"
+    assert "అవుతుంది" in body["reply"]
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
+def test_hindi_roman_input_returns_hindi_guidance(
+    client: TestClient, session_id: str
+) -> None:
+    body = ask(client, session_id, "purpose mein scholarship likhna hai kya")
+    assert body["detected_language"] == "hindi"
+    assert body["language_code"] == "hi-IN"
+    assert "हाँ" in body["reply"]
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
+def test_hindi_unicode_input_returns_hindi_guidance(
+    client: TestClient, session_id: str
+) -> None:
+    body = ask(client, session_id, "मेरा monthly income 15000 है")
+    assert body["detected_language"] == "hindi"
+    assert body["language_code"] == "hi-IN"
+    assert "आप" in body["reply"]
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
+def test_english_input_returns_english_guidance(
+    client: TestClient, session_id: str
+) -> None:
+    body = ask(
+        client,
+        session_id,
+        "monthly income fifteen thousand what should I enter",
+    )
+    assert body["detected_language"] == "english"
+    assert body["language_code"] == "en-IN"
+    assert body["reply"].startswith("You can enter 15000")
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
 def test_complete_summary(
     client: TestClient, session_id: str, complete_form_values: dict[str, str]
 ) -> None:
@@ -152,5 +216,25 @@ def test_summary_with_missing_values(
     assert body["missing_fields"] == ["aadhaar_number", "address"]
     assert "Aadhaar Number is required." in body["warnings"]
     assert "Address is required." in body["warnings"]
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
+def test_summary_uses_requested_language(
+    client: TestClient, session_id: str, complete_form_values: dict[str, str]
+) -> None:
+    response = client.post(
+        "/api/assistant/summary",
+        json={
+            "session_id": session_id,
+            "form_values": complete_form_values,
+            "language": "telugu",
+        },
+    )
+    body = response.json()
+    assert response.status_code == 200
+    assert body["detected_language"] == "telugu"
+    assert body["language_code"] == "te-IN"
+    assert "దయచేసి" in body["summary"]
     assert body["auto_fill"] is False
     assert body["should_submit"] is False

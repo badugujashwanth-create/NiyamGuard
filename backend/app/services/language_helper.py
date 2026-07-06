@@ -1,4 +1,52 @@
 import re
+from typing import Literal
+
+LanguageName = Literal["telugu", "hindi", "english", "mixed"]
+
+LANGUAGE_CODES: dict[LanguageName, str] = {
+    "telugu": "te-IN",
+    "hindi": "hi-IN",
+    "english": "en-IN",
+    "mixed": "en-IN",
+}
+
+TELUGU_ROMAN_MARKERS = {
+    "lo",
+    "emi",
+    "rayali",
+    "rayacha",
+    "enduku",
+    "kavali",
+    "entha",
+    "peru",
+    "ooru",
+    "mandal",
+    "tappu",
+    "kosam",
+    "ani",
+}
+TELUGU_ROMAN_PHRASES = {
+    "aadhaar number tappu",
+    "scholarship kosam",
+}
+HINDI_ROMAN_MARKERS = {
+    "kya",
+    "likhna",
+    "hai",
+    "mein",
+    "kitna",
+    "naam",
+    "pata",
+    "galat",
+}
+HINDI_ROMAN_PHRASES = {"kis liye"}
+
+INDIC_NUMBER_PHRASES = {
+    "పదిహేను వేలు": 15_000,
+    "పదిహేను వేల": 15_000,
+    "పదిహేను వెయ్యి": 15_000,
+    "पंद्रह हजार": 15_000,
+}
 
 ONES = {
     "zero": 0,
@@ -34,6 +82,60 @@ TENS = {
 }
 SCALES = {"hundred": 100, "thousand": 1_000, "lakh": 100_000, "lakhs": 100_000}
 NUMBER_WORDS = set(ONES) | set(TENS) | set(SCALES) | {"and"}
+
+
+def _contains_script(text: str, start: int, end: int) -> bool:
+    return any(start <= ord(character) <= end for character in text)
+
+
+def _has_phrase(text: str, phrase: str) -> bool:
+    return re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", text) is not None
+
+
+def detect_language(
+    message: str, selected_language: str | None = None
+) -> dict[str, str]:
+    """Detect the citizen's language, using the selector as a fallback preference."""
+    normalized = " ".join(message.casefold().split())
+    selected: LanguageName | None = (
+        selected_language
+        if selected_language in LANGUAGE_CODES
+        else None
+    )
+
+    if _contains_script(normalized, 0x0C00, 0x0C7F):
+        return {"language": "telugu", "language_code": "te-IN"}
+    if _contains_script(normalized, 0x0900, 0x097F):
+        return {"language": "hindi", "language_code": "hi-IN"}
+
+    tokens = set(re.findall(r"[a-z]+", normalized))
+    telugu_markers = tokens & TELUGU_ROMAN_MARKERS
+    hindi_markers = tokens & HINDI_ROMAN_MARKERS
+    telugu_score = len(telugu_markers) + sum(
+        2 for phrase in TELUGU_ROMAN_PHRASES if _has_phrase(normalized, phrase)
+    )
+    hindi_score = len(hindi_markers) + sum(
+        2 for phrase in HINDI_ROMAN_PHRASES if _has_phrase(normalized, phrase)
+    )
+
+    if telugu_score and hindi_score:
+        if selected in {"telugu", "hindi"}:
+            language = selected
+            return {
+                "language": language,
+                "language_code": LANGUAGE_CODES[language],
+            }
+        return {"language": "mixed", "language_code": "en-IN"}
+    if telugu_score:
+        return {"language": "telugu", "language_code": "te-IN"}
+    if hindi_score:
+        return {"language": "hindi", "language_code": "hi-IN"}
+
+    language = selected or "english"
+    return {
+        "language": language,
+        "language_code": LANGUAGE_CODES[language],
+    }
 
 
 def _parse_words(words: list[str]) -> int | None:
@@ -81,6 +183,10 @@ def parse_spoken_number(text: str) -> int | None:
     if digit_match:
         digits = re.sub(r"\D", "", digit_match.group(1))
         return int(digits) if digits else None
+
+    for phrase, value in INDIC_NUMBER_PHRASES.items():
+        if phrase in normalized:
+            return value
 
     tokens = re.findall(r"[a-z]+", normalized)
     best: list[str] = []

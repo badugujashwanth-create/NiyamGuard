@@ -73,12 +73,13 @@ export function validateInput(field, value) {
   });
 }
 
-export function generateSummary(sessionId, formValues) {
+export function generateSummary(sessionId, formValues, language = "english") {
   return request("/api/assistant/summary", {
     method: "POST",
     body: JSON.stringify({
       session_id: sessionId,
       form_values: formValues,
+      language,
     }),
   });
 }

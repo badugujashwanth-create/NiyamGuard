@@ -18,7 +18,12 @@ router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 @router.post("/ask", response_model=AskResponse)
 def ask_assistant(request: AskRequest) -> AskResponse:
     try:
-        return assistant_service.ask(request.session_id, request.message, request.current_field)
+        return assistant_service.ask(
+            request.session_id,
+            request.message,
+            request.current_field,
+            request.language,
+        )
     except SessionNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Session not found.") from exc
 
@@ -38,6 +43,10 @@ def validate_input(request: ValidateRequest) -> ValidateResponse:
 @router.post("/summary", response_model=SummaryResponse)
 def generate_summary(request: SummaryRequest) -> SummaryResponse:
     try:
-        return assistant_service.summary(request.session_id, request.form_values)
+        return assistant_service.summary(
+            request.session_id,
+            request.form_values,
+            request.language,
+        )
     except SessionNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Session not found.") from exc

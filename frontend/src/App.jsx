@@ -9,6 +9,13 @@ import {
   getIncomeCertificateForm,
 } from "./services/api";
 
+const LANGUAGE_CODES = {
+  english: "en-IN",
+  telugu: "te-IN",
+  hindi: "hi-IN",
+  mixed: "en-IN",
+};
+
 const FALLBACK_FIELDS = [
   ["applicant_name", "Applicant Full Name", "text"],
   ["father_name", "Father Name", "text"],
@@ -129,12 +136,21 @@ export default function App() {
         ...current,
         message("assistant", safeResponse.reply),
       ]);
-      setSpeechCommand({ id: Date.now(), text: safeResponse.reply });
+      setSpeechCommand({
+        id: Date.now(),
+        text: safeResponse.reply,
+        languageCode:
+          safeResponse.language_code || LANGUAGE_CODES[language] || "en-IN",
+      });
       return safeResponse;
     } catch (error) {
       setGlobalError(error.message);
       const errorReply = "I could not contact the guidance service. Please try again.";
-      setAssistantReply({ reply: errorReply, warning: error.message });
+      setAssistantReply({
+        reply: errorReply,
+        warning: error.message,
+        language_code: LANGUAGE_CODES[language] || "en-IN",
+      });
       setMessages((current) => [...current, message("assistant", errorReply)]);
       return null;
     } finally {
@@ -147,7 +163,7 @@ export default function App() {
     setLoadingSummary(true);
     setGlobalError("");
     try {
-      const response = await generateSummary(sessionId, formValues);
+      const response = await generateSummary(sessionId, formValues, language);
       const warningText = response.warnings.length
         ? ` ${response.warnings.join(" ")}`
         : "";
@@ -155,10 +171,17 @@ export default function App() {
       const summaryReply = {
         reply,
         warning: response.warnings.length ? response.warnings.join(" ") : null,
+        detected_language: response.detected_language,
+        language_code:
+          response.language_code || LANGUAGE_CODES[language] || "en-IN",
       };
       setAssistantReply(summaryReply);
       setMessages((current) => [...current, message("assistant", reply)]);
-      setSpeechCommand({ id: Date.now(), text: reply });
+      setSpeechCommand({
+        id: Date.now(),
+        text: reply,
+        languageCode: summaryReply.language_code,
+      });
     } catch (error) {
       setGlobalError(error.message);
     } finally {

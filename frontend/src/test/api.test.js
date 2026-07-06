@@ -43,7 +43,7 @@ describe("API client", () => {
 
   it("sends validation and summary values without mutating them", async () => {
     await validateInput("mobile_number", "9876543210");
-    await generateSummary("abc", { purpose: "Scholarship" });
+    await generateSummary("abc", { purpose: "Scholarship" }, "hindi");
 
     expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
       field: "mobile_number",
@@ -52,6 +52,7 @@ describe("API client", () => {
     expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({
       session_id: "abc",
       form_values: { purpose: "Scholarship" },
+      language: "hindi",
     });
   });
 });
