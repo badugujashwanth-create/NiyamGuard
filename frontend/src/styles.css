@@ -502,6 +502,83 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.location-help {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  background: #f8f5e9;
+  border: 1px solid #e3d8b6;
+  border-radius: 0.55rem;
+}
+
+.location-help h3 {
+  margin: 0 0 0.65rem;
+  color: #4f4934;
+  font-size: 0.88rem;
+}
+
+.location-help > .button {
+  width: 100%;
+}
+
+.pincode-help {
+  display: grid;
+  grid-template-columns: auto minmax(7rem, 1fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+  margin: 0.6rem 0;
+}
+
+.pincode-help label {
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.pincode-help input {
+  min-width: 0;
+}
+
+.privacy-note {
+  margin: 0.55rem 0 0;
+  color: #726c57;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.developer-diagnostics {
+  margin-top: 1rem;
+  padding: 0.7rem;
+  color: #526059;
+  background: #f5f7f5;
+  border: 1px solid #dce2de;
+  border-radius: 0.5rem;
+  font-size: 0.72rem;
+}
+
+.developer-diagnostics summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.developer-diagnostics ul {
+  max-height: 8rem;
+  padding-left: 1.2rem;
+  overflow-y: auto;
+}
+
+.diagnostic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.diagnostic-actions button {
+  padding: 0.38rem 0.5rem;
+  background: white;
+  border: 1px solid #cfd9d3;
+  border-radius: 0.35rem;
+  font-size: 0.7rem;
+}
+
 .latest-reply,
 .transcript {
   margin-top: 1rem;
@@ -644,7 +721,8 @@ footer {
 
   .form-grid,
   .assistant-selectors,
-  .voice-controls {
+  .voice-controls,
+  .pincode-help {
     grid-template-columns: 1fr;
   }
 

@@ -6,7 +6,12 @@ from pathlib import Path
 from uuid import uuid4
 
 from app.config import SESSION_STORAGE_PATH
-from app.models.session_models import ConversationEntry, Language, Session
+from app.models.session_models import (
+    ConversationEntry,
+    Language,
+    LanguagePreference,
+    Session,
+)
 
 
 class SessionNotFoundError(KeyError):
@@ -43,7 +48,7 @@ class SessionService:
         )
         os.replace(temporary_path, self.storage_path)
 
-    def create(self, form_id: str, language: Language) -> Session:
+    def create(self, form_id: str, language: LanguagePreference) -> Session:
         session = Session(
             session_id=uuid4().hex,
             form_id=form_id,
@@ -63,7 +68,15 @@ class SessionService:
             raise SessionNotFoundError(session_id)
         return Session.model_validate(raw_session)
 
-    def add_conversation_pair(self, session_id: str, user_message: str, reply: str) -> Session:
+    def add_conversation_pair(
+        self,
+        session_id: str,
+        user_message: str,
+        reply: str,
+        *,
+        detected_language: Language | None = None,
+        field: str | None = None,
+    ) -> Session:
         now = datetime.now(timezone.utc)
         with self._lock:
             sessions = self._read()
@@ -77,6 +90,10 @@ class SessionService:
                     ConversationEntry(role="assistant", message=reply, timestamp=now),
                 ]
             )
+            if detected_language is not None:
+                session.last_detected_language = detected_language
+            if field is not None:
+                session.last_field = field
             sessions[session_id] = session.model_dump(mode="json")
             self._write(sessions)
         return session

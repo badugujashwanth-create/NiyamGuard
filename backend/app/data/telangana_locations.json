@@ -1,0 +1,30 @@
+[
+  {
+    "state": "Telangana",
+    "district": "Hyderabad",
+    "mandal": "Ameerpet",
+    "village_or_locality": "Ameerpet",
+    "pincode": "500016"
+  },
+  {
+    "state": "Telangana",
+    "district": "Hyderabad",
+    "mandal": "Shaikpet",
+    "village_or_locality": "Shaikpet",
+    "pincode": "500008"
+  },
+  {
+    "state": "Telangana",
+    "district": "Rangareddy",
+    "mandal": "Serilingampally",
+    "village_or_locality": "Gachibowli",
+    "pincode": "500032"
+  },
+  {
+    "state": "Telangana",
+    "district": "Medchal-Malkajgiri",
+    "mandal": "Kukatpally",
+    "village_or_locality": "Kukatpally",
+    "pincode": "500072"
+  }
+]

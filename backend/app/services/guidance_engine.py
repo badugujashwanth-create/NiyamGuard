@@ -42,34 +42,59 @@ def _unknown_guidance(language: str) -> Guidance:
 
 
 def _missing_income_guidance(field_name: str, language: str) -> Guidance:
-    replies = {
-        "english": (
-            "Please repeat the income amount clearly, for example fifteen thousand or 15000."
-        ),
-        "telugu": (
-            "ఆదాయ మొత్తాన్ని స్పష్టంగా మళ్లీ చెప్పండి. ఉదాహరణకు పదిహేను వేలు లేదా 15000."
-        ),
-        "hindi": (
-            "कृपया आय की राशि साफ़-साफ़ दोबारा बताइए, जैसे पंद्रह हजार या 15000।"
-        ),
-    }
-    warnings = {
-        "english": "Income must be a number greater than 0.",
-        "telugu": "ఆదాయం 0 కంటే ఎక్కువ సంఖ్యగా ఉండాలి.",
-        "hindi": "आय 0 से बड़ी संख्या होनी चाहिए।",
-    }
     reply_language = _reply_language(language)
-    return Guidance(
-        field=field_name,
-        reply=replies[reply_language],
-        warning=warnings[reply_language],
-    )
+    if field_name == "annual_income":
+        replies = {
+            "english": (
+                "Annual income means the total money your family gets in one year. "
+                "It is usually monthly income multiplied by 12. For example, "
+                "15000 per month becomes 180000 per year."
+            ),
+            "telugu": (
+                "సంవత్సర ఆదాయం అంటే మీ కుటుంబానికి ఏడాదిలో వచ్చే మొత్తం డబ్బు. "
+                "నెలవారీ ఆదాయాన్ని 12తో గుణించాలి. ఉదాహరణకు నెలకు 15000 అయితే, "
+                "సంవత్సర ఆదాయం 180000 అవుతుంది."
+            ),
+            "hindi": (
+                "साल की आमदनी का मतलब आपके परिवार को एक साल में मिलने वाला कुल पैसा। "
+                "महीने की आमदनी को 12 से गुणा करें। जैसे महीने में 15000 हो तो "
+                "साल की आमदनी 180000 होगी।"
+            ),
+        }
+    else:
+        replies = {
+            "english": (
+                "Monthly income means how much money your family gets in one month. "
+                "If your family gets fifteen thousand per month, type 15000."
+            ),
+            "telugu": (
+                "నెలవారీ ఆదాయం అంటే మీ కుటుంబానికి ఒక నెలలో వచ్చే మొత్తం డబ్బు. "
+                "ఉదాహరణకు నెలకు పదిహేను వేలు వస్తే, ఈ బాక్స్‌లో 15000 అని టైప్ చేయండి."
+            ),
+            "hindi": (
+                "महीने की आमदनी का मतलब आपके परिवार को एक महीने में मिलने वाला कुल पैसा। "
+                "अगर महीने में पंद्रह हजार रुपये आते हैं, तो इस box में 15000 लिखें।"
+            ),
+        }
+    return Guidance(field=field_name, reply=replies[reply_language])
 
 
 def _income_guidance(message: str, detected_field: str, language: str) -> Guidance:
     amount = parse_spoken_number(message)
-    if amount is None or amount <= 0:
+    if amount is None:
         return _missing_income_guidance(detected_field, language)
+    if amount <= 0:
+        reply_language = _reply_language(language)
+        replies = {
+            "english": "Income must be a number greater than 0.",
+            "telugu": "ఆదాయం 0 కంటే ఎక్కువ సంఖ్యగా ఉండాలి. దయచేసి సరైన మొత్తాన్ని చెప్పండి.",
+            "hindi": "आमदनी 0 से बड़ी संख्या होनी चाहिए। कृपया सही रकम बताइए।",
+        }
+        return Guidance(
+            field=detected_field,
+            reply=replies[reply_language],
+            warning=replies[reply_language],
+        )
 
     reply_language = _reply_language(language)
     normalized = message.casefold()
@@ -82,12 +107,12 @@ def _income_guidance(message: str, detected_field: str, language: str) -> Guidan
                     f"You can enter {annual} in the Annual Income field."
                 ),
                 "telugu": (
-                    f"మీ monthly income {amount} అయితే, annual income {annual} అవుతుంది. "
-                    f"Annual Income ఫీల్డ్‌లో {annual} అని టైప్ చేయండి."
+                    f"మీ నెలవారీ ఆదాయం {amount} అయితే, సంవత్సర ఆదాయం {annual} అవుతుంది. "
+                    f"Annual Income బాక్స్‌లో {annual} అని మీరే టైప్ చేయండి."
                 ),
                 "hindi": (
-                    f"अगर आपकी monthly income {amount} है, तो annual income {annual} होगी। "
-                    f"Annual Income field में {annual} लिखें।"
+                    f"अगर आपकी महीने की आमदनी {amount} है, तो साल की आमदनी {annual} होगी। "
+                    f"Annual Income box में {annual} स्वयं लिखें।"
                 ),
             }
             return Guidance(
@@ -100,8 +125,14 @@ def _income_guidance(message: str, detected_field: str, language: str) -> Guidan
         monthly = calculate_monthly_income(amount)
         replies = {
             "english": f"You can enter {amount} in the Annual Income field.",
-            "telugu": f"Annual Income ఫీల్డ్‌లో {amount} అని టైప్ చేయవచ్చు.",
-            "hindi": f"आप Annual Income field में {amount} लिख सकते हैं।",
+            "telugu": (
+                f"ఇది మీ సంవత్సర ఆదాయం. Annual Income బాక్స్‌లో {amount} అని "
+                "సరిచూసుకుని మీరే టైప్ చేయండి."
+            ),
+            "hindi": (
+                f"यह आपकी साल की आमदनी है। Annual Income box में {amount} जाँचकर "
+                "स्वयं लिखें।"
+            ),
         }
         return Guidance(
             field="annual_income",
@@ -117,13 +148,15 @@ def _income_guidance(message: str, detected_field: str, language: str) -> Guidan
             f"Annual Income, you can enter {annual} because {amount} multiplied by 12 is {annual}."
         ),
         "telugu": (
-            f"మీరు Monthly Income ఫీల్డ్‌లో {amount} అని టైప్ చేయవచ్చు. "
-            f"Annual Income కూడా అడిగితే, {annual} అని టైప్ చేయండి. "
+            f"ఇది మీ నెలవారీ ఆదాయం, అంటే కుటుంబానికి ఒక నెలలో వచ్చే మొత్తం డబ్బు. "
+            f"Monthly Income బాక్స్‌లో {amount} అని మీరే టైప్ చేయండి. "
+            f"సంవత్సర ఆదాయం కూడా అడిగితే, {annual} అని టైప్ చేయండి. "
             f"ఎందుకంటే {amount} × 12 = {annual}."
         ),
         "hindi": (
-            f"आप Monthly Income field में {amount} लिख सकते हैं। अगर Annual Income भी "
-            f"पूछी गई है, तो {annual} लिखें, क्योंकि {amount} × 12 = {annual}।"
+            f"यह आपकी महीने की आमदनी है, यानी परिवार को एक महीने में मिलने वाला कुल पैसा। "
+            f"Monthly Income box में {amount} स्वयं लिखें। अगर साल की आमदनी भी पूछी गई "
+            f"है, तो {annual} लिखें, क्योंकि {amount} × 12 = {annual}।"
         ),
     }
     return Guidance(
@@ -150,8 +183,14 @@ def _identity_number_guidance(
     if not digits:
         replies = {
             "english": f"Please say or type the {expected}-digit {label.lower()} clearly.",
-            "telugu": f"దయచేసి {expected}-digit {label.lower()}ను స్పష్టంగా చెప్పండి లేదా టైప్ చేయండి.",
-            "hindi": f"कृपया {expected}-digit {label.lower()} साफ़-साफ़ बोलें या लिखें।",
+            "telugu": (
+                f"ఇక్కడ మీ {expected} అంకెల {label.lower()} టైప్ చేయాలి. "
+                f"దయచేసి numberను స్పష్టంగా చెప్పండి లేదా మీరే టైప్ చేయండి."
+            ),
+            "hindi": (
+                f"यहाँ अपना {expected} अंकों का {label.lower()} लिखना है। "
+                "कृपया number साफ़ बोलें या स्वयं लिखें।"
+            ),
         }
         return Guidance(
             field=field_name,
@@ -190,11 +229,11 @@ def _identity_number_guidance(
             "You can type it manually after checking it."
         ),
         "telugu": (
-            f"ఈ {label.lower()}లో {expected} digits ఉన్నాయి. "
-            "ఒకసారి సరిచూసుకుని మీరు దానిని మాన్యువల్‌గా టైప్ చేయండి."
+            f"ఈ {label.lower()}లో సరైన {expected} అంకెలు ఉన్నాయి. "
+            "ఒకసారి సరిచూసుకుని మీరు దానిని మీరే టైప్ చేయండి."
         ),
         "hindi": (
-            f"इस {label.lower()} में {expected} digits हैं। "
+            f"इस {label.lower()} में सही {expected} अंक हैं। "
             "जाँचने के बाद इसे स्वयं लिखें।"
         ),
     }
@@ -223,12 +262,12 @@ def _purpose_guidance(message: str, language: str) -> Guidance:
                 f"you can enter {selected} in the Purpose of Certificate field."
             ),
             "telugu": (
-                f"అవును. మీకు income certificate {selected.lower()} కోసం కావాలంటే, "
-                f"Purpose of Certificate ఫీల్డ్‌లో “{selected}” అని టైప్ చేయండి."
+                f"అవును. ఈ సర్టిఫికేట్ మీకు {selected.lower()} కోసం కావాలంటే, "
+                f"Purpose of Certificate బాక్స్‌లో “{selected}” అని మీరే టైప్ చేయండి."
             ),
             "hindi": (
-                f"हाँ। अगर आपको income certificate {selected.lower()} के लिए चाहिए, "
-                f"तो Purpose of Certificate field में “{selected}” लिख सकते हैं।"
+                f"हाँ। अगर यह certificate आपको {selected.lower()} के लिए चाहिए, "
+                f"तो Purpose of Certificate box में “{selected}” स्वयं लिखें।"
             ),
         }
         return Guidance(
@@ -243,12 +282,12 @@ def _purpose_guidance(message: str, language: str) -> Guidance:
             "Scholarship, College Admission, Job, or Pension."
         ),
         "telugu": (
-            "Purpose అంటే మీకు certificate ఎందుకు కావాలో చెప్పడం. Scholarship, "
-            "College Admission, Job లేదా Pension వంటి చిన్న కారణాన్ని టైప్ చేయండి."
+            "ఇక్కడ ఈ సర్టిఫికేట్ మీకు ఎందుకు కావాలో టైప్ చేయాలి. Scholarship కోసం "
+            "అయితే Scholarship, College admission కోసం అయితే College Admission అని టైప్ చేయండి."
         ),
         "hindi": (
-            "Purpose का अर्थ है कि आपको certificate क्यों चाहिए। Scholarship, "
-            "College Admission, Job या Pension जैसा छोटा कारण लिखें।"
+            "यहाँ लिखना है कि आपको यह certificate किस काम के लिए चाहिए। Scholarship, "
+            "College Admission, Job या Pension जैसा छोटा कारण स्वयं लिखें।"
         ),
     }
     return Guidance(field="purpose", reply=replies[reply_language])
@@ -269,29 +308,40 @@ SIMPLE_FIELD_REPLIES = {
     },
     "telugu": {
         "address": (
-            "Address ఫీల్డ్‌లో మీ house number, street, village లేదా city, mandal, "
-            "district మరియు pin code టైప్ చేయండి."
+            "ఇక్కడ మీ పూర్తి చిరునామా టైప్ చేయాలి. House number, street, గ్రామం లేదా "
+            "city, మండలం, జిల్లా మరియు pincode ఉంటే వాటిని మీరే టైప్ చేయండి."
         ),
         "applicant_name": (
-            "Aadhaar లేదా మరో అధికారిక రికార్డులో ఉన్నట్లే మీ పూర్తి పేరును టైప్ చేయండి."
+            "ఇక్కడ దరఖాస్తు చేసే వ్యక్తి పూర్తి పేరు టైప్ చేయాలి. Aadhaar లేదా "
+            "official recordలో పేరు ఎలా ఉందో అలా టైప్ చేయండి."
         ),
-        "father_name": "అధికారిక రికార్డులో ఉన్నట్లే మీ తండ్రి పూర్తి పేరును టైప్ చేయండి.",
-        "district": "మీరు నివసించే district పేరును టైప్ చేయండి.",
-        "mandal": "మీరు నివసించే mandal పేరును టైప్ చేయండి.",
-        "village": "మీ village లేదా town పేరును టైప్ చేయండి.",
+        "father_name": "ఇక్కడ మీ తండ్రి పూర్తి పేరు మీరే టైప్ చేయాలి.",
+        "district": (
+            "ఇక్కడ మీరు ఉండే జిల్లా పేరు టైప్ చేయాలి. ఉదాహరణకు Hyderabad, "
+            "Warangal లేదా Karimnagar."
+        ),
+        "mandal": (
+            "మండలం అంటే మీ ఊరు ఏ mandal పరిధిలోకి వస్తుందో అది. మీకు మండలం "
+            "తెలియకపోతే, మీ గ్రామం పేరు లేదా pincode చెప్పండి; నేను సహాయం చేస్తాను."
+        ),
+        "village": "ఇక్కడ మీ గ్రామం, ఊరు లేదా town పేరు మీరే టైప్ చేయాలి.",
     },
     "hindi": {
         "address": (
-            "Address field में house number, street, village या city, mandal, "
-            "district और pin code लिखें।"
+            "यहाँ अपना पूरा पता लिखना है। House number, street, गाँव या city, "
+            "मंडल, जिला और pincode स्वयं लिखें।"
         ),
         "applicant_name": (
-            "Aadhaar या किसी अन्य आधिकारिक रिकॉर्ड में जैसा है, वैसा अपना पूरा नाम लिखें।"
+            "यहाँ आवेदन करने वाले व्यक्ति का पूरा नाम लिखना है। Aadhaar या official "
+            "record में जैसा नाम है, वैसा ही लिखें।"
         ),
-        "father_name": "आधिकारिक रिकॉर्ड में जैसा है, वैसा अपने पिता का पूरा नाम लिखें।",
-        "district": "जिस district में आप रहते हैं उसका नाम लिखें।",
-        "mandal": "जिस mandal में आप रहते हैं उसका नाम लिखें।",
-        "village": "अपने village या town का नाम लिखें।",
+        "father_name": "यहाँ अपने पिता का पूरा नाम स्वयं लिखें।",
+        "district": "यहाँ उस जिले का नाम लिखें जहाँ आप रहते हैं।",
+        "mandal": (
+            "मंडल का मतलब आपका गाँव किस mandal या taluk में आता है। अगर मंडल नहीं "
+            "पता, तो अपना गाँव या pincode बताइए; मैं मदद करूँगा।"
+        ),
+        "village": "यहाँ अपने गाँव या town का नाम स्वयं लिखें।",
     },
 }
 

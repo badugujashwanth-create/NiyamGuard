@@ -7,14 +7,8 @@ import {
   createSession,
   generateSummary,
   getIncomeCertificateForm,
+  reverseLocation,
 } from "./services/api";
-
-const LANGUAGE_CODES = {
-  english: "en-IN",
-  telugu: "te-IN",
-  hindi: "hi-IN",
-  mixed: "en-IN",
-};
 
 const FALLBACK_FIELDS = [
   ["applicant_name", "Applicant Full Name", "text"],
@@ -48,7 +42,8 @@ export default function App() {
   const [fields, setFields] = useState([]);
   const [formValues, setFormValues] = useState({});
   const [currentField, setCurrentField] = useState("");
-  const [language, setLanguage] = useState("english");
+  const [lastDetectedLanguage, setLastDetectedLanguage] = useState("english");
+  const [lastLanguageCode, setLastLanguageCode] = useState("en-IN");
   const [sessionId, setSessionId] = useState("");
   const [sessionStatus, setSessionStatus] = useState("loading");
   const [globalError, setGlobalError] = useState("");
@@ -60,11 +55,11 @@ export default function App() {
 
   const displayedFields = fields.length ? fields : FALLBACK_FIELDS;
 
-  const initializeSession = useCallback(async (selectedLanguage = "english") => {
+  const initializeSession = useCallback(async () => {
     setSessionStatus("loading");
     setGlobalError("");
     try {
-      const session = await createSession(selectedLanguage);
+      const session = await createSession("auto");
       setSessionId(session.session_id);
       setSessionStatus("ready");
       return session.session_id;
@@ -81,7 +76,7 @@ export default function App() {
     async function initialize() {
       const [formResult] = await Promise.allSettled([
         getIncomeCertificateForm(),
-        initializeSession("english"),
+        initializeSession(),
       ]);
       if (!active) return;
       if (formResult.status === "fulfilled") {
@@ -112,6 +107,30 @@ export default function App() {
     return Math.round((completed / displayedFields.length) * 100);
   }, [displayedFields, formValues]);
 
+  function applyAssistantResponse(response) {
+    const safeResponse = {
+      ...response,
+      suggested_value:
+        response.auto_fill === false ? response.suggested_value : null,
+      detected_language: response.detected_language || "english",
+      language_code: response.language_code || "en-IN",
+    };
+    setAssistantReply(safeResponse);
+    setLastDetectedLanguage(safeResponse.detected_language);
+    setLastLanguageCode(safeResponse.language_code);
+    setMessages((current) => [
+      ...current,
+      message("assistant", safeResponse.reply),
+    ]);
+    setSpeechCommand({
+      id: `${Date.now()}-${Math.random()}`,
+      text: safeResponse.reply,
+      languageCode: safeResponse.language_code,
+      detectedLanguage: safeResponse.detected_language,
+    });
+    return safeResponse;
+  }
+
   async function handleAsk(text) {
     if (!sessionId) {
       setGlobalError("The assistant session is not ready.");
@@ -125,31 +144,17 @@ export default function App() {
         sessionId,
         message: text,
         currentField,
-        language,
+        language: "auto",
       });
-      const safeResponse = {
-        ...response,
-        suggested_value: response.auto_fill === false ? response.suggested_value : null,
-      };
-      setAssistantReply(safeResponse);
-      setMessages((current) => [
-        ...current,
-        message("assistant", safeResponse.reply),
-      ]);
-      setSpeechCommand({
-        id: Date.now(),
-        text: safeResponse.reply,
-        languageCode:
-          safeResponse.language_code || LANGUAGE_CODES[language] || "en-IN",
-      });
-      return safeResponse;
+      return applyAssistantResponse(response);
     } catch (error) {
       setGlobalError(error.message);
       const errorReply = "I could not contact the guidance service. Please try again.";
       setAssistantReply({
         reply: errorReply,
         warning: error.message,
-        language_code: LANGUAGE_CODES[language] || "en-IN",
+        detected_language: "english",
+        language_code: "en-IN",
       });
       setMessages((current) => [...current, message("assistant", errorReply)]);
       return null;
@@ -163,7 +168,7 @@ export default function App() {
     setLoadingSummary(true);
     setGlobalError("");
     try {
-      const response = await generateSummary(sessionId, formValues, language);
+      const response = await generateSummary(sessionId, formValues, "auto");
       const warningText = response.warnings.length
         ? ` ${response.warnings.join(" ")}`
         : "";
@@ -172,16 +177,11 @@ export default function App() {
         reply,
         warning: response.warnings.length ? response.warnings.join(" ") : null,
         detected_language: response.detected_language,
-        language_code:
-          response.language_code || LANGUAGE_CODES[language] || "en-IN",
+        language_code: response.language_code || "en-IN",
+        auto_fill: false,
+        should_submit: false,
       };
-      setAssistantReply(summaryReply);
-      setMessages((current) => [...current, message("assistant", reply)]);
-      setSpeechCommand({
-        id: Date.now(),
-        text: reply,
-        languageCode: summaryReply.language_code,
-      });
+      applyAssistantResponse(summaryReply);
     } catch (error) {
       setGlobalError(error.message);
     } finally {
@@ -193,15 +193,25 @@ export default function App() {
     setMessages([]);
     setAssistantReply(null);
     setSpeechCommand(null);
-    await initializeSession(language);
+    setLastDetectedLanguage("english");
+    setLastLanguageCode("en-IN");
+    await initializeSession();
   }
 
-  async function handleLanguageChange(nextLanguage) {
-    setLanguage(nextLanguage);
-    setMessages([]);
-    setAssistantReply(null);
-    setSpeechCommand(null);
-    await initializeSession(nextLanguage);
+  async function handleUseLocation({ latitude, longitude }) {
+    setGlobalError("");
+    try {
+      const response = await reverseLocation({
+        latitude,
+        longitude,
+        language: lastDetectedLanguage || "auto",
+      });
+      applyAssistantResponse(response);
+      return response;
+    } catch (error) {
+      setGlobalError(error.message);
+      return null;
+    }
   }
 
   return (
@@ -229,7 +239,7 @@ export default function App() {
         <div className="global-error" role="alert">
           <span>{globalError}</span>
           {sessionStatus === "error" ? (
-            <button onClick={() => initializeSession(language)} type="button">
+            <button onClick={() => initializeSession()} type="button">
               Retry connection
             </button>
           ) : null}
@@ -241,6 +251,7 @@ export default function App() {
           backendReady={sessionStatus === "ready"}
           fields={displayedFields}
           loadingSummary={loadingSummary}
+          language={lastDetectedLanguage}
           onFieldFocus={setCurrentField}
           onReview={handleReview}
           onValueChange={(field, value) =>
@@ -251,14 +262,12 @@ export default function App() {
         <VoiceAssistantPanel
           asking={asking}
           assistantReply={assistantReply}
-          currentField={currentField}
-          fields={displayedFields}
-          language={language}
+          lastDetectedLanguage={lastDetectedLanguage}
+          lastLanguageCode={lastLanguageCode}
           messages={messages}
           onAsk={handleAsk}
           onClear={handleClear}
-          onCurrentFieldChange={setCurrentField}
-          onLanguageChange={handleLanguageChange}
+          onUseLocation={handleUseLocation}
           sessionStatus={sessionStatus}
           speechCommand={speechCommand}
         />

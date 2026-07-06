@@ -75,7 +75,7 @@ def test_address_guidance_for_mixed_language(client: TestClient, session_id: str
     body = ask(client, session_id, "address lo emi rayali")
     assert body["field"] == "address"
     assert body["suggested_value"] is None
-    assert "house number" in body["reply"]
+    assert "house number" in body["reply"].lower()
 
 
 def test_unknown_field_guidance(client: TestClient, session_id: str) -> None:
@@ -95,6 +95,8 @@ def test_conversation_is_saved_but_suggested_values_are_not(
     ask(client, session_id, "monthly income fifteen thousand")
     session = client.get(f"/api/sessions/{session_id}").json()["session"]
     assert [entry["role"] for entry in session["conversation"]] == ["user", "assistant"]
+    assert session["last_detected_language"] == "english"
+    assert session["last_field"] == "monthly_income"
     assert "form_values" not in session
     assert "filled_fields" not in session
 
@@ -129,6 +131,15 @@ def test_telugu_roman_input_returns_telugu_guidance(
     assert "అవును" in body["reply"]
     assert body["auto_fill"] is False
     assert body["should_submit"] is False
+
+
+def test_telugu_monthly_income_explains_everyday_meaning(
+    client: TestClient, session_id: str
+) -> None:
+    body = ask(client, session_id, "monthly income ante enti")
+    assert body["detected_language"] == "telugu"
+    assert "నెలవారీ ఆదాయం" in body["reply"]
+    assert "ఒక నెలలో వచ్చే మొత్తం డబ్బు" in body["reply"]
 
 
 def test_telugu_unicode_input_returns_telugu_guidance(
@@ -196,6 +207,9 @@ def test_complete_summary(
     assert body["missing_fields"] == []
     assert body["warnings"] == []
     assert "Ravi Kumar" in body["summary"]
+    assert "123456789012" in body["summary"]
+    assert "Ameerpet" in body["summary"]
+    assert "House 1, Ameerpet, Hyderabad" in body["summary"]
     assert "submit the application yourself" in body["summary"]
     assert body["auto_fill"] is False
     assert body["should_submit"] is False
@@ -212,7 +226,7 @@ def test_summary_with_missing_values(
     )
     body = response.json()
     assert response.status_code == 200
-    assert body["summary"] == "Some required details are still missing."
+    assert body["summary"].startswith("Some required details are still missing.")
     assert body["missing_fields"] == ["aadhaar_number", "address"]
     assert "Aadhaar Number is required." in body["warnings"]
     assert "Address is required." in body["warnings"]
@@ -238,3 +252,31 @@ def test_summary_uses_requested_language(
     assert "దయచేసి" in body["summary"]
     assert body["auto_fill"] is False
     assert body["should_submit"] is False
+
+
+def test_summary_uses_session_last_detected_language(
+    client: TestClient, session_id: str, complete_form_values: dict[str, str]
+) -> None:
+    ask(client, session_id, "purpose lo scholarship ani rayacha")
+    response = client.post(
+        "/api/assistant/summary",
+        json={
+            "session_id": session_id,
+            "form_values": complete_form_values,
+            "language": "auto",
+        },
+    )
+    body = response.json()
+    assert response.status_code == 200
+    assert body["detected_language"] == "telugu"
+    assert body["language_code"] == "te-IN"
+    assert "దయచేసి" in body["summary"]
+
+
+def test_previous_discussed_field_is_reused(
+    client: TestClient, session_id: str
+) -> None:
+    ask(client, session_id, "monthly income fifteen thousand")
+    body = ask(client, session_id, "what does this mean")
+    assert body["field"] == "monthly_income"
+    assert "Monthly income means" in body["reply"]

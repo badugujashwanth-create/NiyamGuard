@@ -24,6 +24,15 @@ TELUGU_ROMAN_MARKERS = {
     "tappu",
     "kosam",
     "ani",
+    "cheppandi",
+    "ikkada",
+    "ela",
+    "petali",
+    "cheyali",
+    "teliyadu",
+    "telidu",
+    "enti",
+    "ante",
 }
 TELUGU_ROMAN_PHRASES = {
     "aadhaar number tappu",
@@ -38,8 +47,32 @@ HINDI_ROMAN_MARKERS = {
     "naam",
     "pata",
     "galat",
+    "bharna",
+    "dalna",
+    "likhu",
+    "nahi",
+    "mujhe",
 }
 HINDI_ROMAN_PHRASES = {"kis liye"}
+ENGLISH_MARKERS = {
+    "what",
+    "should",
+    "enter",
+    "where",
+    "which",
+    "how",
+    "monthly",
+    "annual",
+    "income",
+    "address",
+    "please",
+    "type",
+}
+ENGLISH_PHRASES = {
+    "i don't know my mandal",
+    "i do not know my mandal",
+    "help me find my mandal",
+}
 
 INDIC_NUMBER_PHRASES = {
     "పదిహేను వేలు": 15_000,
@@ -94,7 +127,7 @@ def _has_phrase(text: str, phrase: str) -> bool:
 
 def detect_language(
     message: str, selected_language: str | None = None
-) -> dict[str, str]:
+) -> dict[str, str | float]:
     """Detect the citizen's language, using the selector as a fallback preference."""
     normalized = " ".join(message.casefold().split())
     selected: LanguageName | None = (
@@ -104,9 +137,19 @@ def detect_language(
     )
 
     if _contains_script(normalized, 0x0C00, 0x0C7F):
-        return {"language": "telugu", "language_code": "te-IN"}
+        return {
+            "language": "telugu",
+            "detected_language": "telugu",
+            "language_code": "te-IN",
+            "confidence": 1.0,
+        }
     if _contains_script(normalized, 0x0900, 0x097F):
-        return {"language": "hindi", "language_code": "hi-IN"}
+        return {
+            "language": "hindi",
+            "detected_language": "hindi",
+            "language_code": "hi-IN",
+            "confidence": 1.0,
+        }
 
     tokens = set(re.findall(r"[a-z]+", normalized))
     telugu_markers = tokens & TELUGU_ROMAN_MARKERS
@@ -117,24 +160,56 @@ def detect_language(
     hindi_score = len(hindi_markers) + sum(
         2 for phrase in HINDI_ROMAN_PHRASES if _has_phrase(normalized, phrase)
     )
+    english_score = len(tokens & ENGLISH_MARKERS) + sum(
+        3 for phrase in ENGLISH_PHRASES if phrase in normalized
+    )
 
+    if english_score >= 3 and telugu_score <= 1 and not hindi_score:
+        return {
+            "language": "english",
+            "detected_language": "english",
+            "language_code": "en-IN",
+            "confidence": 0.9,
+        }
     if telugu_score and hindi_score:
-        if selected in {"telugu", "hindi"}:
+        if telugu_score == hindi_score and selected in {"telugu", "hindi"}:
             language = selected
-            return {
-                "language": language,
-                "language_code": LANGUAGE_CODES[language],
-            }
-        return {"language": "mixed", "language_code": "en-IN"}
+        else:
+            language = "telugu" if telugu_score >= hindi_score else "hindi"
+        return {
+            "language": language,
+            "detected_language": language,
+            "language_code": LANGUAGE_CODES[language],
+            "confidence": 0.75,
+        }
     if telugu_score:
-        return {"language": "telugu", "language_code": "te-IN"}
+        return {
+            "language": "telugu",
+            "detected_language": "telugu",
+            "language_code": "te-IN",
+            "confidence": min(0.95, 0.65 + telugu_score * 0.08),
+        }
     if hindi_score:
-        return {"language": "hindi", "language_code": "hi-IN"}
+        return {
+            "language": "hindi",
+            "detected_language": "hindi",
+            "language_code": "hi-IN",
+            "confidence": min(0.95, 0.65 + hindi_score * 0.08),
+        }
+    if english_score >= 2:
+        return {
+            "language": "english",
+            "detected_language": "english",
+            "language_code": "en-IN",
+            "confidence": min(0.95, 0.7 + english_score * 0.05),
+        }
 
     language = selected or "english"
     return {
         "language": language,
+        "detected_language": language,
         "language_code": LANGUAGE_CODES[language],
+        "confidence": 0.6 if selected else 0.8,
     }
 
 

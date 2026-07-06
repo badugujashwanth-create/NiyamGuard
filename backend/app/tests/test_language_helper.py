@@ -18,6 +18,14 @@ from app.services.language_helper import detect_language
         ),
         ("help me", "telugu", "telugu", "te-IN"),
         ("help me", "hindi", "hindi", "hi-IN"),
+        (
+            "monthly income fifteen thousand what should I enter",
+            "hindi",
+            "english",
+            "en-IN",
+        ),
+        ("I don't know my mandal", "telugu", "english", "en-IN"),
+        ("ikkada emi type cheyali", "english", "telugu", "te-IN"),
     ],
 )
 def test_detect_language(
@@ -26,7 +34,8 @@ def test_detect_language(
     expected_language: str,
     expected_code: str,
 ) -> None:
-    assert detect_language(message, selected_language) == {
-        "language": expected_language,
-        "language_code": expected_code,
-    }
+    result = detect_language(message, selected_language)
+    assert result["language"] == expected_language
+    assert result["detected_language"] == expected_language
+    assert result["language_code"] == expected_code
+    assert 0 < result["confidence"] <= 1
