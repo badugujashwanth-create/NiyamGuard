@@ -1,0 +1,97 @@
+{
+  "form_id": "income_certificate",
+  "form_name": "Income Certificate Application",
+  "description": "Simplified income certificate application form used for NiyamGuard Call Assistant MVP.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Applicant Full Name",
+      "type": "text",
+      "required": true,
+      "help": "Enter your full name as per Aadhaar or official record.",
+      "simple_question": "What is your full name?"
+    },
+    {
+      "key": "father_name",
+      "label": "Father Name",
+      "type": "text",
+      "required": true,
+      "help": "Enter your father's full name.",
+      "simple_question": "What is your father's name?"
+    },
+    {
+      "key": "mobile_number",
+      "label": "Mobile Number",
+      "type": "phone",
+      "required": true,
+      "help": "Enter your 10-digit mobile number.",
+      "validation": "10_digits",
+      "simple_question": "What is your 10-digit mobile number?"
+    },
+    {
+      "key": "aadhaar_number",
+      "label": "Aadhaar Number",
+      "type": "aadhaar",
+      "required": true,
+      "help": "Enter your 12-digit Aadhaar number.",
+      "validation": "12_digits",
+      "simple_question": "What is your 12-digit Aadhaar number?"
+    },
+    {
+      "key": "district",
+      "label": "District",
+      "type": "text",
+      "required": true,
+      "help": "Enter the district where you live.",
+      "simple_question": "Which district do you live in?"
+    },
+    {
+      "key": "mandal",
+      "label": "Mandal",
+      "type": "text",
+      "required": true,
+      "help": "Enter your mandal name.",
+      "simple_question": "What is your mandal name?"
+    },
+    {
+      "key": "village",
+      "label": "Village",
+      "type": "text",
+      "required": true,
+      "help": "Enter your village or town name.",
+      "simple_question": "What is your village or town name?"
+    },
+    {
+      "key": "monthly_income",
+      "label": "Monthly Income",
+      "type": "number",
+      "required": true,
+      "help": "Enter your family's monthly income in rupees.",
+      "simple_question": "What is your family monthly income?"
+    },
+    {
+      "key": "annual_income",
+      "label": "Annual Income",
+      "type": "number",
+      "required": true,
+      "help": "Annual income means monthly income multiplied by 12.",
+      "simple_question": "What is your family annual income?"
+    },
+    {
+      "key": "purpose",
+      "label": "Purpose of Certificate",
+      "type": "text",
+      "required": true,
+      "help": "Enter why you need the certificate, such as scholarship, college admission, job, pension, or other.",
+      "simple_question": "Why do you need this income certificate?"
+    },
+    {
+      "key": "address",
+      "label": "Address",
+      "type": "textarea",
+      "required": true,
+      "help": "Enter your full address including house number, street, village or city, mandal, district, and pin code.",
+      "simple_question": "What is your full address?"
+    }
+  ]
+}
