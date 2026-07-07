@@ -1,0 +1,225 @@
+{
+  "form_id": "income_certificate",
+  "service_name": "Income Certificate",
+  "form_name": "Income Certificate Application",
+  "department": "Revenue",
+  "category": "Certificates",
+  "description": "Citizen-friendly income certificate application form for scholarship, education, pension, and other needs.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Applicant Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your full name as per Aadhaar or official record.",
+        "telugu": "దరఖాస్తు చేసే వ్యక్తి పూర్తి పేరు Aadhaar లేదా official recordలో ఎలా ఉందో అలా టైప్ చేయండి.",
+        "hindi": "आवेदन करने वाले व्यक्ति का पूरा नाम Aadhaar या official record के अनुसार लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Father Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your father's full name as shown in official records.",
+        "telugu": "మీ తండ్రి పూర్తి పేరు official recordలో ఉన్నట్టు టైప్ చేయండి.",
+        "hindi": "अपने पिता का पूरा नाम official record के अनुसार लिखें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter a 10-digit mobile number that you can receive calls on.",
+        "telugu": "మీకు calls రావడానికి ఉపయోగించే 10 అంకెల మొబైల్ నంబర్ టైప్ చేయండి.",
+        "hindi": "ऐसा 10 अंकों का मोबाइल नंबर लिखें जिस पर आप call receive कर सकें."
+      }
+    },
+    {
+      "key": "aadhaar_number",
+      "label": "Aadhaar Number",
+      "type": "aadhaar",
+      "required": true,
+      "validation": "12_digits",
+      "help": {
+        "english": "Enter your 12-digit Aadhaar number after checking the card.",
+        "telugu": "Aadhaar card చూసి 12 అంకెల ఆధార్ నంబర్ టైప్ చేయండి.",
+        "hindi": "Aadhaar card देखकर 12 अंकों का आधार नंबर लिखें."
+      }
+    },
+    {
+      "key": "date_of_birth",
+      "label": "Date of Birth",
+      "type": "date",
+      "required": false,
+      "validation": "date",
+      "help": {
+        "english": "Select your date of birth if it is required for this service.",
+        "telugu": "ఈ serviceకు అవసరమైతే మీ పుట్టిన తేదీ ఎంచుకోండి.",
+        "hindi": "अगर इस service में जरूरी हो तो अपनी जन्म तिथि चुनें."
+      }
+    },
+    {
+      "key": "district",
+      "label": "District",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the district where you currently live.",
+        "telugu": "మీరు ఉండే జిల్లా పేరు టైప్ చేయండి.",
+        "hindi": "आप जिस जिले में रहते हैं उसका नाम लिखें."
+      }
+    },
+    {
+      "key": "mandal",
+      "label": "Mandal",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your mandal or tehsil area. If unsure, ask the assistant with village or pincode.",
+        "telugu": "మీ ఊరు ఏ మండల పరిధిలోకి వస్తుందో టైప్ చేయండి. తెలియకపోతే village లేదా pincode చెప్పి assistantని అడగండి.",
+        "hindi": "अपना मंडल या तहसील area लिखें. नहीं पता हो तो village या pincode बताकर assistant से पूछें."
+      }
+    },
+    {
+      "key": "village",
+      "label": "Village / Locality",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your village, town, or locality name.",
+        "telugu": "మీ గ్రామం, ఊరు లేదా locality పేరు టైప్ చేయండి.",
+        "hindi": "अपने गाँव, town या locality का नाम लिखें."
+      }
+    },
+    {
+      "key": "monthly_income",
+      "label": "Monthly Income",
+      "type": "number",
+      "required": true,
+      "validation": "positive_number",
+      "help": {
+        "english": "Monthly income means the total money your family receives in one month.",
+        "telugu": "నెలవారీ ఆదాయం అంటే మీ కుటుంబానికి ఒక నెలలో వచ్చే మొత్తం డబ్బు.",
+        "hindi": "महीने की आमदनी मतलब आपके परिवार को एक महीने में मिलने वाला कुल पैसा."
+      }
+    },
+    {
+      "key": "annual_income",
+      "label": "Annual Income",
+      "type": "number",
+      "required": true,
+      "validation": "positive_number",
+      "help": {
+        "english": "Annual income is usually monthly income multiplied by 12.",
+        "telugu": "సంవత్సర ఆదాయం అంటే సాధారణంగా నెలవారీ ఆదాయం × 12.",
+        "hindi": "साल की आमदनी आम तौर पर महीने की आमदनी × 12 होती है."
+      }
+    },
+    {
+      "key": "purpose",
+      "label": "Purpose of Certificate",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter why you need this certificate, for example Scholarship, College Admission, Job, or Pension.",
+        "telugu": "ఈ certificate ఎందుకు కావాలో టైప్ చేయండి. ఉదాహరణకు Scholarship, College Admission, Job, Pension.",
+        "hindi": "यह certificate किस काम के लिए चाहिए लिखें. जैसे Scholarship, College Admission, Job, Pension."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Full Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter house number, street, village or city, mandal, district, and pincode.",
+        "telugu": "House number, street, గ్రామం లేదా city, మండలం, జిల్లా, pincodeతో పూర్తి చిరునామా టైప్ చేయండి.",
+        "hindi": "House number, street, गाँव या city, मंडल, जिला और pincode के साथ पूरा पता लिखें."
+      }
+    },
+    {
+      "key": "declaration",
+      "label": "I confirm the details are true",
+      "type": "checkbox",
+      "required": true,
+      "validation": "checked",
+      "help": {
+        "english": "Tick only after you review all details yourself.",
+        "telugu": "అన్ని వివరాలు మీరు స్వయంగా చూసిన తర్వాత మాత్రమే tick చేయండి.",
+        "hindi": "सभी details खुद जाँचने के बाद ही tick करें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "aadhaar",
+      "label": "Aadhaar Card",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Aadhaar card PDF", "Aadhaar card photo"],
+      "help": {
+        "english": "Upload Aadhaar card as identity proof.",
+        "telugu": "గుర్తింపు కోసం Aadhaar card upload చేయండి.",
+        "hindi": "पहचान प्रमाण के लिए Aadhaar card upload करें."
+      }
+    },
+    {
+      "key": "income_proof",
+      "label": "Income Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Salary slip", "Income affidavit", "Pension proof", "IT return"],
+      "help": {
+        "english": "Upload salary slip, income affidavit, pension proof, or IT return if available.",
+        "telugu": "Salary slip, income affidavit, pension proof లేదా IT return ఉంటే upload చేయండి.",
+        "hindi": "Salary slip, income affidavit, pension proof या IT return हो तो upload करें."
+      }
+    },
+    {
+      "key": "address_proof",
+      "label": "Address Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Ration card", "Electricity bill", "Rental agreement"],
+      "help": {
+        "english": "Upload a document showing your current address.",
+        "telugu": "మీ ప్రస్తుత చిరునామా కనిపించే document upload చేయండి.",
+        "hindi": "अपना वर्तमान पता दिखाने वाला document upload करें."
+      }
+    },
+    {
+      "key": "photo",
+      "label": "Passport Size Photo",
+      "required": false,
+      "accepted_file_types": ["jpg", "jpeg", "png"],
+      "max_size_mb": 2,
+      "examples": ["Recent passport photo"],
+      "help": {
+        "english": "Upload a recent passport size photo if requested.",
+        "telugu": "అవసరమైతే తాజా passport size photo upload చేయండి.",
+        "hindi": "जरूरत हो तो हाल की passport size photo upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["What should I enter in monthly income?", "What should I upload for income proof?"],
+    "telugu": ["monthly income ante enti?", "purpose lo emi rayali?", "income proof ante enti?"],
+    "hindi": ["monthly income mein kya likhna hai?", "income proof upload kya karna hai?"]
+  }
+}

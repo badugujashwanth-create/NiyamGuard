@@ -1,0 +1,139 @@
+{
+  "form_id": "family_member_certificate",
+  "service_name": "Family Member Certificate",
+  "form_name": "Family Member Certificate Application",
+  "department": "Revenue",
+  "category": "Certificates",
+  "description": "Simplified form for listing family members for official use.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Applicant Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the applicant full name.",
+        "telugu": "Applicant పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "Applicant का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Family Head Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the family head name.",
+        "telugu": "కుటుంబ పెద్ద పేరు టైప్ చేయండి.",
+        "hindi": "परिवार के मुखिया का नाम लिखें."
+      }
+    },
+    {
+      "key": "relation",
+      "label": "Relation to Family Head",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your relation to the family head, such as son, daughter, wife, or husband.",
+        "telugu": "కుటుంబ పెద్దతో మీ సంబంధం son, daughter, wife లేదా husbandలా టైప్ చేయండి.",
+        "hindi": "Family head से अपना रिश्ता son, daughter, wife या husband जैसा लिखें."
+      }
+    },
+    {
+      "key": "family_members",
+      "label": "Family Member Names",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "List family member names and relation one by one.",
+        "telugu": "Family members పేర్లు మరియు relation ఒక్కొక్కటిగా టైప్ చేయండి.",
+        "hindi": "Family members के नाम और relation एक-एक करके लिखें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter applicant 10-digit mobile number.",
+        "telugu": "Applicant 10 అంకెల mobile number టైప్ చేయండి.",
+        "hindi": "Applicant का 10 अंकों का mobile number लिखें."
+      }
+    },
+    {
+      "key": "district",
+      "label": "District",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your district.",
+        "telugu": "మీ జిల్లా టైప్ చేయండి.",
+        "hindi": "अपना जिला लिखें."
+      }
+    },
+    {
+      "key": "mandal",
+      "label": "Mandal",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your mandal.",
+        "telugu": "మీ మండలం టైప్ చేయండి.",
+        "hindi": "अपना मंडल लिखें."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Family Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the family address.",
+        "telugu": "కుటుంబ చిరునామా టైప్ చేయండి.",
+        "hindi": "परिवार का पता लिखें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "aadhaar",
+      "label": "Applicant Aadhaar",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Applicant Aadhaar"],
+      "help": {
+        "english": "Upload applicant Aadhaar.",
+        "telugu": "Applicant Aadhaar upload చేయండి.",
+        "hindi": "Applicant Aadhaar upload करें."
+      }
+    },
+    {
+      "key": "ration_card",
+      "label": "Ration Card / Family Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Ration card", "Family register extract"],
+      "help": {
+        "english": "Upload ration card or another document showing family members.",
+        "telugu": "Family members కనిపించే ration card లేదా document upload చేయండి.",
+        "hindi": "Family members दिखाने वाला ration card या document upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["How should I list family members?"],
+    "telugu": ["family members ela rayali?", "relation ante enti?"],
+    "hindi": ["family members kaise likhna hai?"]
+  }
+}

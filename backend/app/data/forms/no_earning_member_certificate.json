@@ -1,0 +1,151 @@
+{
+  "form_id": "no_earning_member_certificate",
+  "service_name": "No Earning Member Certificate",
+  "form_name": "No Earning Member Certificate Application",
+  "department": "Revenue",
+  "category": "Certificates",
+  "description": "Simplified form for declaring that a family member has no income source.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Applicant Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the applicant full name.",
+        "telugu": "Applicant పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "Applicant का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "non_earning_person_name",
+      "label": "No Earning Person Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the name of the person who has no earning source.",
+        "telugu": "Income source లేని వ్యక్తి పేరు టైప్ చేయండి.",
+        "hindi": "जिस व्यक्ति की income source नहीं है उसका नाम लिखें."
+      }
+    },
+    {
+      "key": "relation",
+      "label": "Relation",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter relation to the no earning person.",
+        "telugu": "ఆ వ్యక్తితో మీ సంబంధం టైప్ చేయండి.",
+        "hindi": "उस व्यक्ति से अपना रिश्ता लिखें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter a 10-digit mobile number.",
+        "telugu": "10 అంకెల mobile number టైప్ చేయండి.",
+        "hindi": "10 अंकों का mobile number लिखें."
+      }
+    },
+    {
+      "key": "purpose",
+      "label": "Purpose",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter why this certificate is needed, for example pension, scholarship, or scheme benefit.",
+        "telugu": "ఈ certificate ఎందుకు కావాలో pension, scholarship లేదా scheme benefitలా టైప్ చేయండి.",
+        "hindi": "यह certificate क्यों चाहिए, जैसे pension, scholarship या scheme benefit लिखें."
+      }
+    },
+    {
+      "key": "district",
+      "label": "District",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter district.",
+        "telugu": "జిల్లా టైప్ చేయండి.",
+        "hindi": "जिला लिखें."
+      }
+    },
+    {
+      "key": "mandal",
+      "label": "Mandal",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter mandal.",
+        "telugu": "మండలం టైప్ చేయండి.",
+        "hindi": "मंडल लिखें."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter full address.",
+        "telugu": "పూర్తి చిరునామా టైప్ చేయండి.",
+        "hindi": "पूरा पता लिखें."
+      }
+    },
+    {
+      "key": "declaration",
+      "label": "I confirm there is no earning source",
+      "type": "checkbox",
+      "required": true,
+      "validation": "checked",
+      "help": {
+        "english": "Tick only after confirming the declaration yourself.",
+        "telugu": "Declaration మీరు confirm చేసిన తర్వాత మాత్రమే tick చేయండి.",
+        "hindi": "Declaration खुद confirm करने के बाद ही tick करें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "aadhaar",
+      "label": "Aadhaar Card",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Aadhaar card"],
+      "help": {
+        "english": "Upload Aadhaar as identity proof.",
+        "telugu": "Identity proof కోసం Aadhaar upload చేయండి.",
+        "hindi": "Identity proof के लिए Aadhaar upload करें."
+      }
+    },
+    {
+      "key": "affidavit",
+      "label": "No Earning Affidavit",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Self declaration", "Affidavit"],
+      "help": {
+        "english": "Upload self declaration or affidavit if available.",
+        "telugu": "Self declaration లేదా affidavit ఉంటే upload చేయండి.",
+        "hindi": "Self declaration या affidavit हो तो upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["What should I write in purpose?"],
+    "telugu": ["declaration ante enti?", "affidavit ledu"],
+    "hindi": ["affidavit nahi hai kya karu?"]
+  }
+}

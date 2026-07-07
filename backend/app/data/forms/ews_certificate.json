@@ -1,0 +1,232 @@
+{
+  "form_id": "ews_certificate",
+  "service_name": "EWS Certificate",
+  "form_name": "EWS Certificate Application",
+  "department": "Revenue",
+  "category": "Certificates",
+  "description": "Guided form for Economically Weaker Section certificate preparation.",
+  "common_use_cases": ["Education reservation", "Recruitment", "Scholarship", "Fee reimbursement"],
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Applicant Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your full name as per Aadhaar or official record.",
+        "telugu": "Aadhaar లేదా official recordలో ఉన్నట్టు మీ పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "Aadhaar या official record के अनुसार अपना पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Father / Guardian Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter father or guardian full name.",
+        "telugu": "తండ్రి లేదా guardian పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "पिता या guardian का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter a 10-digit mobile number.",
+        "telugu": "10 అంకెల మొబైల్ నంబర్ టైప్ చేయండి.",
+        "hindi": "10 अंकों का मोबाइल नंबर लिखें."
+      }
+    },
+    {
+      "key": "aadhaar_number",
+      "label": "Aadhaar Number",
+      "type": "aadhaar",
+      "required": true,
+      "validation": "12_digits",
+      "help": {
+        "english": "Enter your 12-digit Aadhaar number after checking the card.",
+        "telugu": "Aadhaar card చూసి 12 అంకెల ఆధార్ నంబర్ టైప్ చేయండి.",
+        "hindi": "Aadhaar card देखकर 12 अंकों का आधार नंबर लिखें."
+      }
+    },
+    {
+      "key": "community_category",
+      "label": "Community Category",
+      "type": "select",
+      "required": true,
+      "validation": "non_empty",
+      "options": ["General / OC", "Other"],
+      "help": {
+        "english": "Select the community category requested for EWS eligibility. Confirm locally if unsure.",
+        "telugu": "EWS eligibility కోసం అడిగిన community category ఎంచుకోండి. సందేహం ఉంటే local officeలో confirm చేయండి.",
+        "hindi": "EWS eligibility के लिए मांगी गई community category चुनें. संदेह हो तो local office में confirm करें."
+      }
+    },
+    {
+      "key": "monthly_income",
+      "label": "Monthly Family Income",
+      "type": "number",
+      "required": true,
+      "validation": "positive_number",
+      "help": {
+        "english": "Enter total family income received in one month.",
+        "telugu": "మీ కుటుంబానికి ఒక నెలలో వచ్చే మొత్తం ఆదాయం టైప్ చేయండి.",
+        "hindi": "परिवार को एक महीने में मिलने वाली कुल आमदनी लिखें."
+      }
+    },
+    {
+      "key": "annual_income",
+      "label": "Annual Family Income",
+      "type": "number",
+      "required": true,
+      "validation": "positive_number",
+      "help": {
+        "english": "Annual income is usually monthly income multiplied by 12.",
+        "telugu": "సంవత్సర ఆదాయం అంటే సాధారణంగా నెలవారీ ఆదాయం × 12.",
+        "hindi": "साल की आमदनी आम तौर पर महीने की आमदनी × 12 होती है."
+      }
+    },
+    {
+      "key": "district",
+      "label": "District",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your district.",
+        "telugu": "మీ జిల్లా పేరు టైప్ చేయండి.",
+        "hindi": "अपना जिला लिखें."
+      }
+    },
+    {
+      "key": "mandal",
+      "label": "Mandal",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your mandal. If unsure, ask with village or pincode.",
+        "telugu": "మీ మండలం టైప్ చేయండి. తెలియకపోతే village లేదా pincodeతో అడగండి.",
+        "hindi": "अपना मंडल लिखें. नहीं पता हो तो village या pincode से पूछें."
+      }
+    },
+    {
+      "key": "village",
+      "label": "Village / Locality",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your village, town, or locality.",
+        "telugu": "మీ గ్రామం, town లేదా locality టైప్ చేయండి.",
+        "hindi": "अपना गाँव, town या locality लिखें."
+      }
+    },
+    {
+      "key": "purpose",
+      "label": "Purpose",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter why you need EWS certificate, such as education, scholarship, or job application.",
+        "telugu": "EWS certificate ఎందుకు కావాలో education, scholarship లేదా job applicationలా టైప్ చేయండి.",
+        "hindi": "EWS certificate क्यों चाहिए, जैसे education, scholarship या job application लिखें."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Full Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter house number, street, village or city, mandal, district, and pincode.",
+        "telugu": "House number, street, గ్రామం లేదా city, మండలం, జిల్లా, pincodeతో పూర్తి చిరునామా టైప్ చేయండి.",
+        "hindi": "House number, street, गाँव या city, मंडल, जिला और pincode के साथ पूरा पता लिखें."
+      }
+    },
+    {
+      "key": "declaration",
+      "label": "I confirm the details are true",
+      "type": "checkbox",
+      "required": true,
+      "validation": "checked",
+      "help": {
+        "english": "Tick only after you review all details yourself.",
+        "telugu": "అన్ని వివరాలు మీరు స్వయంగా చూసిన తర్వాత మాత్రమే tick చేయండి.",
+        "hindi": "सभी details खुद जाँचने के बाद ही tick करें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "aadhaar",
+      "label": "Aadhaar Card",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Aadhaar card PDF", "Aadhaar card photo"],
+      "help": {
+        "english": "Upload Aadhaar card as identity proof.",
+        "telugu": "గుర్తింపు కోసం Aadhaar card upload చేయండి.",
+        "hindi": "पहचान प्रमाण के लिए Aadhaar card upload करें."
+      }
+    },
+    {
+      "key": "income_proof",
+      "label": "Income Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Salary slip", "Income affidavit", "Pension proof", "IT return"],
+      "help": {
+        "english": "Upload salary slip, income affidavit, pension proof, or IT return if available.",
+        "telugu": "Salary slip, income affidavit, pension proof లేదా IT return ఉంటే upload చేయండి.",
+        "hindi": "Salary slip, income affidavit, pension proof या IT return हो तो upload करें."
+      }
+    },
+    {
+      "key": "address_proof",
+      "label": "Address Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Ration card", "Electricity bill", "Rental agreement"],
+      "help": {
+        "english": "Upload a document showing your current address.",
+        "telugu": "మీ ప్రస్తుత చిరునామా కనిపించే document upload చేయండి.",
+        "hindi": "अपना वर्तमान पता दिखाने वाला document upload करें."
+      }
+    },
+    {
+      "key": "asset_declaration",
+      "label": "Asset / Property Declaration",
+      "required": false,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Self declaration", "Affidavit"],
+      "help": {
+        "english": "Upload asset or property declaration if requested locally.",
+        "telugu": "Local office అడిగితే asset లేదా property declaration upload చేయండి.",
+        "hindi": "Local office मांगे तो asset या property declaration upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["What should I enter for annual income?", "What should I upload for EWS?"],
+    "telugu": ["ews ki income proof enti?", "monthly income ante enti?"],
+    "hindi": ["ews ke liye income proof kya upload karna hai?"]
+  },
+  "assistant_guidance": {
+    "english": "Explain EWS fields cautiously and ask the citizen to verify eligibility rules locally.",
+    "telugu": "EWS eligibility rulesను local officeలో verify చేయమని చెప్పాలి.",
+    "hindi": "EWS eligibility rules local office में verify करने को कहें."
+  }
+}

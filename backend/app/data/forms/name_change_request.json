@@ -1,0 +1,127 @@
+{
+  "form_id": "name_change_request",
+  "service_name": "Name Change Request",
+  "form_name": "Name Change Request Application",
+  "department": "Revenue",
+  "category": "Identity Updates",
+  "description": "Simplified form for name correction or name change guidance.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Current Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your current full name as shown in present records.",
+        "telugu": "ప్రస్తుతం recordsలో ఉన్న మీ పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "Present records में जैसा नाम है वह पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "new_name",
+      "label": "New / Correct Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the new or corrected name you want to use.",
+        "telugu": "మీరు ఉపయోగించాలనుకునే కొత్త లేదా corrected పేరు టైప్ చేయండి.",
+        "hindi": "जो नया या corrected नाम रखना चाहते हैं वह लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Father / Guardian Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter father or guardian full name.",
+        "telugu": "తండ్రి లేదా guardian పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "पिता या guardian का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "date_of_birth",
+      "label": "Date of Birth",
+      "type": "date",
+      "required": true,
+      "validation": "date",
+      "help": {
+        "english": "Select your date of birth.",
+        "telugu": "మీ పుట్టిన తేదీ ఎంచుకోండి.",
+        "hindi": "अपनी जन्म तिथि चुनें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter your 10-digit mobile number.",
+        "telugu": "మీ 10 అంకెల mobile number టైప్ చేయండి.",
+        "hindi": "अपना 10 अंकों का mobile number लिखें."
+      }
+    },
+    {
+      "key": "purpose",
+      "label": "Reason for Name Change",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Write a short reason, such as spelling correction, marriage, or official record mismatch.",
+        "telugu": "Spelling correction, marriage లేదా record mismatch వంటి చిన్న reason టైప్ చేయండి.",
+        "hindi": "Spelling correction, marriage या record mismatch जैसा छोटा reason लिखें."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your full current address.",
+        "telugu": "మీ ప్రస్తుత పూర్తి చిరునామా టైప్ చేయండి.",
+        "hindi": "अपना वर्तमान पूरा पता लिखें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "aadhaar",
+      "label": "Aadhaar Card",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Aadhaar card"],
+      "help": {
+        "english": "Upload Aadhaar showing current identity.",
+        "telugu": "ప్రస్తుత identity చూపించే Aadhaar upload చేయండి.",
+        "hindi": "Current identity दिखाने वाला Aadhaar upload करें."
+      }
+    },
+    {
+      "key": "supporting_proof",
+      "label": "Supporting Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Gazette copy", "Affidavit", "Marriage certificate", "School record"],
+      "help": {
+        "english": "Upload a proof supporting the name change, such as affidavit, gazette copy, marriage certificate, or school record.",
+        "telugu": "Name changeకు supportగా affidavit, gazette copy, marriage certificate లేదా school record upload చేయండి.",
+        "hindi": "Name change support के लिए affidavit, gazette copy, marriage certificate या school record upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["What reason should I write for name change?"],
+    "telugu": ["name change reason lo emi rayali?", "affidavit upload cheyala?"],
+    "hindi": ["name change reason mein kya likhna hai?"]
+  }
+}

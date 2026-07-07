@@ -1,0 +1,186 @@
+# NiyamGuard AI Voice/Form Assistant
+
+NiyamGuard is a ready-to-demo MVP that helps citizens complete simplified
+government service forms with voice and text guidance in Telugu, Hindi, English,
+and common mixed-language phrases.
+
+The assistant guides the citizen but does not submit the application. The citizen remains in control.
+
+## Problem
+
+MeeSeva-style forms are hard for first-time users, elderly citizens, and people
+who are not comfortable with formal labels such as monthly income, purpose,
+mandal, or required documents.
+
+## Solution
+
+NiyamGuard provides a service catalog, dynamic form renderer, document checklist,
+same-language assistant replies, voice output, mandal/pincode help, validation,
+and final read-back before a manual demo submit.
+
+## Features
+
+- Service catalog with 25+ entries, search, categories, cards, and assistant suggestions.
+- Clear Ready form vs Catalog only / coming soon status on service cards.
+- Dynamic JSON form renderer for 10 high-priority MeeSeva-style forms.
+- Required document checklist and local file validation per form.
+- Backend STT endpoint for recorded audio, with browser SpeechRecognition fallback.
+- Start/Stop-only assistant UI with listening, thinking, speaking, stopped, and repeat status.
+- Automatic language detection on every message, no language dropdown.
+- Same-language Telugu/Hindi/English text replies and voice output.
+- Backend gTTS MP3 fallback when browser Telugu/Hindi voices are missing.
+- Focused-field and session-memory based guidance.
+- Mandal/district/village/pincode help from local Telangana demo data.
+- Optional location permission flow, requested only after user click.
+- Review summary with missing fields/documents and safety reminder.
+- Demo submit message only; no government API call.
+
+## Seeded Forms
+
+1. Income Certificate
+2. Residence Certificate
+3. Caste / Community Certificate
+4. Birth Certificate
+5. Death Certificate
+6. Name Change Request
+7. Family Member Certificate
+8. No Earning Member Certificate
+9. No Property Certificate
+10. EWS Certificate
+
+Each schema lives in `backend/app/data/forms/` and includes fields,
+localized help, required documents, accepted file types, max file size, and
+assistant examples.
+
+Catalog-only services include ration card, ration corrections, employment
+registration/renewal, loan eligibility card, agricultural income, small and
+marginal farmer certificate, integrated certificate, nativity, solvency,
+encumbrance, mutation, electricity new connection, birth/death corrections,
+widow pension assistance, and disability certificate assistance. These do not
+open incomplete forms.
+
+## Architecture
+
+```text
+React/Vite frontend
+  -> service catalog and dynamic form renderer
+  -> MediaRecorder audio capture while Start is active
+  -> browser SpeechRecognition fallback if backend STT is unavailable
+  -> browser speech synthesis
+  -> backend TTS fallback audio playback
+
+FastAPI backend
+  -> form catalog and service search
+  -> /api/stt/transcribe provider interface
+  -> session memory
+  -> language, field, income, document, and location guidance
+  -> validation and review summary
+  -> gTTS MP3 cache
+```
+
+## Tech Stack
+
+- Backend: Python 3.12, FastAPI, Pydantic, gTTS, pytest.
+- Frontend: React, Vite, Web Speech APIs, HTML Audio, Vitest.
+- Storage: JSON demo files for forms, locations, sessions, and TTS cache.
+
+## Setup
+
+Backend:
+
+```powershell
+cd D:\niyam\niyamguard-call-assistant\backend
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Frontend:
+
+```powershell
+cd D:\niyam\niyamguard-call-assistant\frontend
+npm install
+npm run dev
+```
+
+Open `http://127.0.0.1:5173`.
+
+## Tests
+
+```powershell
+cd D:\niyam\niyamguard-call-assistant\backend
+pytest
+
+cd D:\niyam\niyamguard-call-assistant\frontend
+npm test
+npm run build
+```
+
+## Demo Flow
+
+1. Open the app and confirm the service catalog appears.
+2. Select **Income Certificate**.
+3. Click **Start**; the assistant speaks an introduction first.
+4. Ask `purpose lo scholarship ani rayacha`.
+5. Confirm Telugu text and Telugu voice output; no field is filled.
+6. Ask `monthly income పదిహేను వేలు అయితే annual income ఎంత`.
+7. Confirm it explains monthly income and says annual income is `180000`.
+8. Focus Mandal and ask `na mandal teliyadu pincode 500032`.
+9. Confirm it suggests Rangareddy / Serilingampally and asks you to verify.
+10. Ask `income proof upload cheyali ante emi upload cheyali`.
+11. Confirm document guidance is shown and spoken.
+12. Ask Hindi and English questions; replies switch language per message.
+13. Fill fields and upload files manually.
+14. Click **Review My Details** for same-language summary.
+15. Click **Submit Manually (Demo)** and confirm no government submission occurs.
+
+## Safety Boundary
+
+The assistant never auto-fills fields, uploads files, submits applications,
+claims official submission, handles OTP/CAPTCHA/payment/login, or calls a real
+government portal. Suggested values are shown as guidance only and can be copied
+or typed by the citizen.
+
+## TTS Fallback
+
+The frontend first checks for a matching browser voice (`te-IN`, `hi-IN`,
+`en-IN`). Telugu/Hindi are not spoken through an English voice. If a matching
+voice is missing, the frontend calls `/api/tts/speak`; the backend generates or
+serves cached MP3 audio using gTTS.
+
+## STT Fallback
+
+The frontend records short audio chunks with `MediaRecorder` and sends them to
+`POST /api/stt/transcribe`. If `faster-whisper` is installed, the backend can
+use local Whisper transcription. If it is not installed or transcription is not
+clear, the app falls back to browser SpeechRecognition and keeps the typed
+fallback under **Having trouble? Type instead**.
+
+## Document Upload Guidance
+
+Every form has a document checklist with accepted file types and max file size.
+Uploads are demo/local only. The assistant explains what to upload but never
+selects or uploads files.
+
+## Mandal / Location Help
+
+The backend includes sample Telangana locations for pincode and village lookup.
+If GPS permission is used, the MVP honestly states exact GPS-to-mandal lookup is
+not available and asks for pincode or village details.
+
+## Limitations
+
+- No real government portal integration.
+- No official MeeSeva login, OTP, CAPTCHA, payment, or submission.
+- gTTS requires internet for uncached phrases.
+- Local Whisper STT is optional; browser speech fallback remains available.
+- Telangana location data is a small MVP sample.
+- Uploaded files remain browser-local demo selections.
+
+## Future Scope
+
+Add larger official location datasets, production TTS such as Bhashini,
+authenticated deployment, stronger document checks, more services, and official
+API submission only if a verified government API exists and the citizen
+explicitly controls final submission.

@@ -43,4 +43,14 @@ def complete_form_values() -> dict[str, str]:
         "annual_income": "180000",
         "purpose": "Scholarship",
         "address": "House 1, Ameerpet, Hyderabad",
+        "declaration": True,
+    }
+
+
+@pytest.fixture
+def complete_uploaded_documents() -> dict[str, dict[str, object]]:
+    return {
+        "aadhaar": {"name": "aadhaar.pdf", "uploaded": True},
+        "income_proof": {"name": "income.pdf", "uploaded": True},
+        "address_proof": {"name": "address.pdf", "uploaded": True},
     }

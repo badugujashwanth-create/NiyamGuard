@@ -16,6 +16,7 @@ export default function IncomeCertificateForm({
   onReview,
   loadingSummary,
   backendReady,
+  language = "english",
 }) {
   const [validation, setValidation] = useState({});
   const [submitNotice, setSubmitNotice] = useState("");
@@ -43,9 +44,16 @@ export default function IncomeCertificateForm({
   function handleSubmit(event) {
     event.preventDefault();
     setSubmitNotice(
-      "Demo only: no government application was submitted. On a real portal, review every value and use its submit button yourself.",
+      "Demo only. No government application was submitted. On a real portal, review every value and use its submit button yourself.",
     );
   }
+
+  const reviewLabel =
+    language === "telugu"
+      ? "వివరాలు చెక్ చేయండి"
+      : language === "hindi"
+        ? "विवरण जाँचें"
+        : "Review My Details";
 
   return (
     <section className="form-card" aria-labelledby="form-title">
@@ -127,7 +135,7 @@ export default function IncomeCertificateForm({
             onClick={onReview}
             type="button"
           >
-            {loadingSummary ? "Preparing review…" : "Review My Details"}
+            {loadingSummary ? "Preparing review…" : reviewLabel}
           </button>
           <button className="button button-primary" type="submit">
             Submit Manually (Demo)

@@ -1,0 +1,114 @@
+[
+  {
+    "state": "Telangana",
+    "district": "Hyderabad",
+    "mandal": "Ameerpet",
+    "village_or_locality": "Ameerpet",
+    "pincode": "500016",
+    "aliases": ["Begumpet side", "SR Nagar"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Hyderabad",
+    "mandal": "Shaikpet",
+    "village_or_locality": "Shaikpet",
+    "pincode": "500008",
+    "aliases": ["Tolichowki", "Film Nagar"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Rangareddy",
+    "mandal": "Serilingampally",
+    "village_or_locality": "Gachibowli",
+    "pincode": "500032",
+    "aliases": ["Gachibowli", "Financial District", "Nanakramguda"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Medchal-Malkajgiri",
+    "mandal": "Kukatpally",
+    "village_or_locality": "Kukatpally",
+    "pincode": "500072",
+    "aliases": ["KPHB", "Kukatpally Housing Board"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Hanumakonda",
+    "mandal": "Hanamkonda",
+    "village_or_locality": "Hanamkonda",
+    "pincode": "506001",
+    "aliases": ["Warangal", "Hanumakonda"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Karimnagar",
+    "mandal": "Karimnagar Urban",
+    "village_or_locality": "Karimnagar",
+    "pincode": "505001",
+    "aliases": ["Karimnagar town"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Nizamabad",
+    "mandal": "Nizamabad South",
+    "village_or_locality": "Nizamabad",
+    "pincode": "503001",
+    "aliases": ["Nizamabad town"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Khammam",
+    "mandal": "Khammam Urban",
+    "village_or_locality": "Khammam",
+    "pincode": "507001",
+    "aliases": ["Khammam town"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Nalgonda",
+    "mandal": "Nalgonda",
+    "village_or_locality": "Nalgonda",
+    "pincode": "508001",
+    "aliases": ["Nalgonda town"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Mahbubnagar",
+    "mandal": "Mahbubnagar Urban",
+    "village_or_locality": "Mahbubnagar",
+    "pincode": "509001",
+    "aliases": ["Mahabubnagar", "Palamuru"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Siddipet",
+    "mandal": "Siddipet Urban",
+    "village_or_locality": "Siddipet",
+    "pincode": "502103",
+    "aliases": ["Siddipet town", "Siddipeta"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Suryapet",
+    "mandal": "Suryapet",
+    "village_or_locality": "Suryapet",
+    "pincode": "508213",
+    "aliases": ["Suryapet town"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Adilabad",
+    "mandal": "Adilabad Urban",
+    "village_or_locality": "Adilabad",
+    "pincode": "504001",
+    "aliases": ["Adilabad town"]
+  },
+  {
+    "state": "Telangana",
+    "district": "Mancherial",
+    "mandal": "Mancherial",
+    "village_or_locality": "Mancherial",
+    "pincode": "504208",
+    "aliases": ["Mancherial town"]
+  }
+]

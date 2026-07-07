@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const LANGUAGE_CODES = {
-  english: "en-IN",
-  telugu: "te-IN",
-  hindi: "hi-IN",
-  mixed: "en-IN",
-};
-
-export function useSpeechRecognition({ language = "english", onFinalTranscript }) {
+export function useSpeechRecognition({
+  languageCode = "en-IN",
+  onFinalTranscript,
+}) {
   const recognitionRef = useRef(null);
   const finalCallbackRef = useRef(onFinalTranscript);
   const shouldListenRef = useRef(false);
@@ -32,7 +28,7 @@ export function useSpeechRecognition({ language = "english", onFinalTranscript }
     const recognition = new Recognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = LANGUAGE_CODES[language] || "en-IN";
+    recognition.lang = languageCode || "en-IN";
 
     const beginRecognition = () => {
       if (
@@ -111,7 +107,7 @@ export function useSpeechRecognition({ language = "english", onFinalTranscript }
       recognition.abort();
       recognitionRef.current = null;
     };
-  }, [Recognition, language, supported]);
+  }, [Recognition, languageCode, supported]);
 
   const start = useCallback(() => {
     if (!recognitionRef.current || shouldListenRef.current) return;
