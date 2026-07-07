@@ -27,7 +27,7 @@ class Session(BaseModel):
 
 
 class CreateSessionRequest(BaseModel):
-    form_id: Literal["income_certificate"] = "income_certificate"
+    form_id: str = "income_certificate"
     language: LanguagePreference = "auto"
 
 

@@ -33,10 +33,21 @@ TELUGU_ROMAN_MARKERS = {
     "telidu",
     "enti",
     "ante",
+    "nenu",
+    "na",
+    "veyyi",
+    "velu",
+    "padiheenu",
+    "padihenu",
+    "motham",
 }
 TELUGU_ROMAN_PHRASES = {
     "aadhaar number tappu",
     "scholarship kosam",
+    "type cheyali",
+    "na mandal",
+    "padiheenu velu",
+    "padihenu velu",
 }
 HINDI_ROMAN_MARKERS = {
     "kya",
@@ -52,8 +63,13 @@ HINDI_ROMAN_MARKERS = {
     "likhu",
     "nahi",
     "mujhe",
+    "kis",
+    "liye",
+    "hazar",
+    "lakh",
+    "pandrah",
 }
-HINDI_ROMAN_PHRASES = {"kis liye"}
+HINDI_ROMAN_PHRASES = {"kis liye", "pandrah hazar"}
 ENGLISH_MARKERS = {
     "what",
     "should",
@@ -79,6 +95,12 @@ INDIC_NUMBER_PHRASES = {
     "పదిహేను వేల": 15_000,
     "పదిహేను వెయ్యి": 15_000,
     "पंद्रह हजार": 15_000,
+    "padiheenu velu": 15_000,
+    "padihenu velu": 15_000,
+    "padiheenu veyyi": 15_000,
+    "pandrah hazar": 15_000,
+    "ek lakh": 100_000,
+    "do lakh": 200_000,
 }
 
 ONES = {
@@ -254,6 +276,18 @@ def _parse_words(words: list[str]) -> int | None:
 def parse_spoken_number(text: str) -> int | None:
     """Extract one useful non-negative integer from digits or simple English words."""
     normalized = text.lower().replace("-", " ")
+    digit_with_scale = re.search(
+        r"(?<!\w)(\d[\d,\s]*\d|\d)\s*(thousand|lakh|lakhs|hazar|हजार|लाख|वेలు|వేలు|వెయ్యి)(?!\w)",
+        normalized,
+    )
+    if digit_with_scale:
+        digits = re.sub(r"\D", "", digit_with_scale.group(1))
+        scale_word = digit_with_scale.group(2)
+        if digits:
+            if scale_word in {"lakh", "lakhs", "लाख"}:
+                return int(digits) * 100_000
+            return int(digits) * 1_000
+
     digit_match = re.search(r"(?<!\w)(\d[\d,\s]*\d|\d)(?!\w)", normalized)
     if digit_match:
         digits = re.sub(r"\D", "", digit_match.group(1))

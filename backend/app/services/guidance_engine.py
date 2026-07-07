@@ -305,6 +305,12 @@ SIMPLE_FIELD_REPLIES = {
         "district": "Enter the name of the district where you live.",
         "mandal": "Enter the name of the mandal where you live.",
         "village": "Enter your village or town name.",
+        "date_of_birth": "Date of birth means your birth date. Select it from your official record.",
+        "gender": "Choose the gender shown in your official or hospital record.",
+        "document_upload": "Upload the document requested in this section. Choose the file yourself; the assistant will not upload anything.",
+        "declaration": "Read the declaration carefully and tick it only if you personally confirm it is true.",
+        "relation": "Relation means how you are connected to the person, for example son, daughter, wife, husband, father, or mother.",
+        "certificate_type": "Choose the certificate type requested by your school, college, office, or scheme.",
     },
     "telugu": {
         "address": (
@@ -325,6 +331,12 @@ SIMPLE_FIELD_REPLIES = {
             "తెలియకపోతే, మీ గ్రామం పేరు లేదా pincode చెప్పండి; నేను సహాయం చేస్తాను."
         ),
         "village": "ఇక్కడ మీ గ్రామం, ఊరు లేదా town పేరు మీరే టైప్ చేయాలి.",
+        "date_of_birth": "పుట్టిన తేదీ అంటే మీ జన్మ తేదీ. Official recordలో ఉన్న dateని ఎంచుకోండి.",
+        "gender": "Official లేదా hospital recordలో ఉన్న genderని ఎంచుకోండి.",
+        "document_upload": "ఇక్కడ అడిగిన documentను మీరు స్వయంగా upload చేయాలి. AI file upload చేయదు.",
+        "declaration": "Declarationని జాగ్రత్తగా చదివి, నిజమని మీరు confirm చేసినప్పుడు మాత్రమే tick చేయండి.",
+        "relation": "Relation అంటే ఆ వ్యక్తితో మీ సంబంధం. ఉదాహరణకు son, daughter, wife, husband, father లేదా mother.",
+        "certificate_type": "School, college, office లేదా scheme అడిగిన certificate type ఎంచుకోండి.",
     },
     "hindi": {
         "address": (
@@ -342,13 +354,22 @@ SIMPLE_FIELD_REPLIES = {
             "पता, तो अपना गाँव या pincode बताइए; मैं मदद करूँगा।"
         ),
         "village": "यहाँ अपने गाँव या town का नाम स्वयं लिखें।",
+        "date_of_birth": "Date of birth मतलब आपकी जन्म तिथि. Official record में जो date है वही चुनें.",
+        "gender": "Official या hospital record में जो gender है उसे चुनें.",
+        "document_upload": "यहाँ माँगा गया document आपको खुद upload करना है. AI file upload नहीं करता.",
+        "declaration": "Declaration ध्यान से पढ़ें और सही होने पर ही tick करें.",
+        "relation": "Relation मतलब उस व्यक्ति से आपका रिश्ता, जैसे son, daughter, wife, husband, father या mother.",
+        "certificate_type": "School, college, office या scheme ने जो certificate type माँगा है उसे चुनें.",
     },
 }
 
 
 def _simple_field_guidance(field_name: str, language: str) -> Guidance:
     reply_language = _reply_language(language)
-    return Guidance(field=field_name, reply=SIMPLE_FIELD_REPLIES[reply_language][field_name])
+    reply = SIMPLE_FIELD_REPLIES[reply_language].get(field_name)
+    if reply is None:
+        return _unknown_guidance(language)
+    return Guidance(field=field_name, reply=reply)
 
 
 def generate_guidance(

@@ -1,84 +1,78 @@
 # NiyamGuard Frontend
 
-React/Vite citizen interface for an Income Certificate form and same-language
-voice guidance.
+React/Vite frontend for the NiyamGuard AI Voice/Form Assistant. The first screen
+is a service catalog; selected services render dynamically from backend JSON
+schemas.
 
-The assistant does not fill or submit the form. It only guides the citizen. The citizen remains in control.
+The assistant guides the citizen but does not submit the application. The citizen remains in control.
 
-## Setup
+## Run
 
-Start the FastAPI backend first, then:
+Start FastAPI first, then:
 
 ```powershell
 cd D:\niyam\niyamguard-call-assistant\frontend
-Copy-Item .env.example .env
 npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173` in current Chrome or Edge.
+Open `http://127.0.0.1:5173`.
 
-## Configuration
+Optional `.env`:
 
 ```dotenv
 VITE_API_BASE_URL=http://127.0.0.1:8000
 VITE_FORCE_BACKEND_TTS=false
 ```
 
-Set `VITE_FORCE_BACKEND_TTS=true` to route all voice output through backend MP3
-TTS for testing.
+## UI Flow
 
-## User experience
+1. Service catalog appears with search, category filter, service cards, and Ask
+   Assistant.
+2. Citizen starts a service.
+3. Dynamic form fields and document upload guidance render from backend schema.
+4. Citizen clicks **Start**; assistant speaks an introduction first.
+5. User can ask by voice or text in Telugu, Hindi, English, or mixed phrasing.
+6. Assistant replies in the detected language and speaks in that language.
+7. Citizen manually fills fields and selects files.
+8. **Review My Details** reads back values and missing documents.
+9. **Submit Manually (Demo)** shows demo-only notice.
 
-- No language or technical current-field selector is required.
-- The focused form field is sent internally as context.
-- Language is detected by the backend from Telugu, Hindi, English, or mixed text.
-- The answer is displayed and spoken in the detected language.
-- Voice recognition pauses during playback and resumes only while Voice Help is
-  still active.
-- Suggested values are never written into the form.
-- Review uses only values the citizen manually entered.
-- Demo submit makes no government submission API call.
+## Voice Behavior
 
-## Voice output architecture
+- Only Start and Stop are visible as the main voice controls.
+- No language dropdown.
+- No visible current-field selector.
+- Focused field is sent internally as context.
+- MediaRecorder sends short audio chunks to backend STT first.
+- Browser SpeechRecognition is used as fallback if backend STT is unavailable.
+- Listening pauses while assistant audio plays and resumes only while Start is active.
+- Telugu/Hindi are never silently spoken through an English browser voice.
+- If a matching browser voice is missing, the frontend calls backend
+  `/api/tts/speak` and plays MP3 audio.
+- If backend TTS fails, text guidance stays visible with a warning.
 
-```text
-Backend reply + language_code
-  → load browser voices
-  → exact/prefix language voice found: use SpeechSynthesis
-  → matching voice missing: POST /api/tts/speak
-  → play returned MP3 with HTML Audio
-```
+## Dynamic Forms and Documents
 
-Telugu and Hindi are never silently spoken through an English browser voice.
-If backend TTS fails, the localized text remains visible and a clear warning is
-shown. gTTS requires internet for uncached phrases.
+`DynamicFormPage`, `DynamicFieldRenderer`, and `DocumentUploadSection` render
+fields and upload guidance from schema. File validation is local/demo-only:
+accepted extension, max size, and required document status. The assistant never
+uploads files.
 
-**Speak again** reuses the latest reply and latest backend language code.
-Developer Diagnostics is collapsed by default and contains voice counts,
-backend health, forced backend playback, and language test controls.
+## Safety
 
-## Location help and privacy
+Suggested values are shown with a copy action only. They are not written into
+fields automatically. Demo submit does not call a government endpoint.
 
-The assistant includes:
-
-- **I don't know my mandal** quick help
-- a manual pincode helper
-- optional **Use My Location to Help Find Mandal**
-
-Location access is never requested on page load. It is requested only after the
-citizen clicks the button. Because the MVP has no precise GPS reverse-geocoding
-dataset, GPS guidance honestly asks for pincode or village details. District and
-mandal suggestions are never auto-filled.
-
-## Tests and build
+## Tests and Build
 
 ```powershell
 npm test
 npm run build
 ```
 
-Coverage includes auto-language payloads, focused-field context, browser voice
-selection, backend audio fallback, forced backend playback, recognition
-pause/resume, optional geolocation, location suggestions, manually controlled
-form state, summary payloads, and absence of submission requests.
+Tests cover catalog rendering, dynamic form rendering, hidden technical
+selectors, Start/Stop assistant controls, voice intro, listening status changes,
+auto-language payloads, focused field/document context, Telugu and Hindi backend
+TTS fallback, document upload validation, no auto-fill, review payloads,
+demo-only submit, and optional location permission behavior.

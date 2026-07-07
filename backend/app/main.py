@@ -6,14 +6,15 @@ from app.routes.assistant_routes import router as assistant_router
 from app.routes.form_routes import router as form_router
 from app.routes.location_routes import router as location_router
 from app.routes.session_routes import router as session_router
+from app.routes.stt_routes import router as stt_router
 from app.routes.tts_routes import router as tts_router
 
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
     description=(
-        "Text-first guidance API for the Income Certificate form. "
-        "It never fills or submits an application."
+        "Voice and form guidance API for simplified government service forms. "
+        "It guides citizens but never fills, uploads, or submits an application."
     ),
 )
 
@@ -34,6 +35,7 @@ app.include_router(form_router)
 app.include_router(session_router)
 app.include_router(assistant_router)
 app.include_router(tts_router)
+app.include_router(stt_router)
 app.include_router(location_router)
 
 

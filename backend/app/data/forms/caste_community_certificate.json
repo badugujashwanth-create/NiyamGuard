@@ -1,0 +1,153 @@
+{
+  "form_id": "caste_community_certificate",
+  "service_name": "Caste / Community Certificate",
+  "form_name": "Caste / Community Certificate Application",
+  "department": "Revenue",
+  "category": "Certificates",
+  "description": "Simplified form for caste or community certificate guidance.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Applicant Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the applicant's full name as per official record.",
+        "telugu": "దరఖాస్తుదారుడి పూర్తి పేరు official record ప్రకారం టైప్ చేయండి.",
+        "hindi": "आवेदक का पूरा नाम official record के अनुसार लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Father / Mother Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter parent full name as per records.",
+        "telugu": "Recordలో ఉన్నట్టు parent పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "Record के अनुसार parent का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "certificate_type",
+      "label": "Certificate Type",
+      "type": "select",
+      "required": true,
+      "validation": "non_empty",
+      "options": ["Caste Certificate", "Community Certificate", "OBC Certificate", "SC Certificate", "ST Certificate"],
+      "help": {
+        "english": "Choose the certificate type requested by your school, college, office, or scheme.",
+        "telugu": "School, college, office లేదా scheme అడిగిన certificate type ఎంచుకోండి.",
+        "hindi": "School, college, office या scheme ने जो certificate type माँगा है उसे चुनें."
+      }
+    },
+    {
+      "key": "relation",
+      "label": "Relation to Family Head",
+      "type": "text",
+      "required": false,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter relation such as son, daughter, wife, or husband if asked.",
+        "telugu": "అడిగితే son, daughter, wife, husband వంటి సంబంధం టైప్ చేయండి.",
+        "hindi": "पूछा जाए तो son, daughter, wife, husband जैसा रिश्ता लिखें."
+      }
+    },
+    {
+      "key": "district",
+      "label": "District",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your district.",
+        "telugu": "మీ జిల్లా పేరు టైప్ చేయండి.",
+        "hindi": "अपना जिला लिखें."
+      }
+    },
+    {
+      "key": "mandal",
+      "label": "Mandal",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your mandal. Ask with village or pincode if unsure.",
+        "telugu": "మీ మండలం టైప్ చేయండి. తెలియకపోతే village లేదా pincode చెప్పి అడగండి.",
+        "hindi": "अपना मंडल लिखें. नहीं पता हो तो village या pincode बताकर पूछें."
+      }
+    },
+    {
+      "key": "purpose",
+      "label": "Purpose",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter why you need the certificate, such as scholarship or admission.",
+        "telugu": "Certificate ఎందుకు కావాలో టైప్ చేయండి. ఉదాహరణకు scholarship లేదా admission.",
+        "hindi": "Certificate किस काम के लिए चाहिए लिखें, जैसे scholarship या admission."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your complete address.",
+        "telugu": "మీ పూర్తి చిరునామా టైప్ చేయండి.",
+        "hindi": "अपना पूरा पता लिखें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "aadhaar",
+      "label": "Aadhaar Card",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Aadhaar card"],
+      "help": {
+        "english": "Upload Aadhaar as identity proof.",
+        "telugu": "గుర్తింపు కోసం Aadhaar upload చేయండి.",
+        "hindi": "पहचान के लिए Aadhaar upload करें."
+      }
+    },
+    {
+      "key": "community_proof",
+      "label": "Community / Caste Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Parent caste certificate", "School record", "Community certificate"],
+      "help": {
+        "english": "Upload any available caste or community proof such as parent certificate or school record.",
+        "telugu": "Parent caste certificate లేదా school record వంటి caste/community proof ఉంటే upload చేయండి.",
+        "hindi": "Parent caste certificate या school record जैसा caste/community proof हो तो upload करें."
+      }
+    },
+    {
+      "key": "address_proof",
+      "label": "Address Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Ration card", "Electricity bill"],
+      "help": {
+        "english": "Upload current address proof.",
+        "telugu": "ప్రస్తుత చిరునామా proof upload చేయండి.",
+        "hindi": "वर्तमान पते का proof upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["Which caste proof should I upload?"],
+    "telugu": ["caste proof ante enti?", "certificate type emi petali?"],
+    "hindi": ["caste proof kya upload karna hai?"]
+  }
+}

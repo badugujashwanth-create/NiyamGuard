@@ -19,6 +19,19 @@ REQUIRED_TEXT_FIELDS = {
     "village": "Village",
     "purpose": "Purpose",
     "address": "Address",
+    "mother_name": "Mother name",
+    "birth_place": "Birth place",
+    "death_place": "Death place",
+    "date_of_birth": "Date of birth",
+    "date_of_death": "Date of death",
+    "relation": "Relation",
+    "certificate_type": "Certificate type",
+    "new_name": "New name",
+    "family_members": "Family members",
+    "non_earning_person_name": "No earning person name",
+    "land_details": "Land details",
+    "residing_since": "Residing since",
+    "declaration": "Declaration",
 }
 
 
@@ -60,7 +73,13 @@ def validate_field(field: str, value: Any) -> ValidationResult:
         return _income_validation("Annual income", value)
     if field in REQUIRED_TEXT_FIELDS:
         label = REQUIRED_TEXT_FIELDS[field]
+        if field == "declaration":
+            if value is True or str(value).strip().lower() in {"true", "yes", "1", "on"}:
+                return ValidationResult(True, "Declaration is confirmed.")
+            return ValidationResult(False, "Declaration must be confirmed by the citizen.")
         if value is None or not str(value).strip():
             return ValidationResult(False, f"{label} is required.")
         return ValidationResult(True, f"{label} is valid.")
-    return ValidationResult(False, f"Unknown field: {field}.")
+    if value is None or not str(value).strip():
+        return ValidationResult(False, f"{field.replace('_', ' ').title()} is required.")
+    return ValidationResult(True, f"{field.replace('_', ' ').title()} is valid.")

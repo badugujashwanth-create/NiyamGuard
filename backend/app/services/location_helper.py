@@ -38,6 +38,7 @@ def load_locations(
             "mandal": str(item.get("mandal", "")),
             "village_or_locality": str(item.get("village_or_locality", "")),
             "pincode": str(item.get("pincode", "")),
+            "aliases": " ".join(str(alias) for alias in item.get("aliases", [])),
         }
         for item in data
         if isinstance(item, dict)
@@ -79,20 +80,31 @@ def search_location(
     normalized_query = " ".join((query or "").casefold().split())
 
     if normalized_pincode:
-        return [
+        matches = [
             location
             for location in locations
             if location["pincode"] == normalized_pincode
         ]
-    if not normalized_query:
+    elif not normalized_query:
         return []
+    else:
+        matches = [
+            location
+            for location in locations
+            if any(
+                normalized_query in location[key].casefold()
+                for key in ("district", "mandal", "village_or_locality", "pincode", "aliases")
+            )
+        ]
     return [
-        location
-        for location in locations
-        if any(
-            normalized_query in location[key].casefold()
-            for key in ("district", "mandal", "village_or_locality", "pincode")
-        )
+        {
+            "state": location["state"],
+            "district": location["district"],
+            "mandal": location["mandal"],
+            "village_or_locality": location["village_or_locality"],
+            "pincode": location["pincode"],
+        }
+        for location in matches
     ]
 
 

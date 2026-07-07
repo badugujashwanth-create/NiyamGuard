@@ -24,7 +24,8 @@ def test_get_income_certificate_form(client: TestClient) -> None:
     assert response.status_code == 200
     assert body["success"] is True
     assert body["form"]["form_id"] == "income_certificate"
-    assert len(body["form"]["fields"]) == 11
+    assert len(body["form"]["fields"]) == 13
+    assert len(body["form"]["required_documents"]) >= 3
 
 
 def test_create_and_get_session(client: TestClient) -> None:
@@ -82,6 +83,54 @@ def test_unknown_field_guidance(client: TestClient, session_id: str) -> None:
     body = ask(client, session_id, "I need help")
     assert body["field"] is None
     assert "which field" in body["reply"]
+
+
+def test_document_upload_guidance(client: TestClient, session_id: str) -> None:
+    body = ask(client, session_id, "income proof upload cheyali ante emi upload cheyali")
+    assert body["field"] == "document_upload"
+    assert body["detected_language"] == "telugu"
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+    assert "Income Proof" in body["reply"]
+    assert "AI file upload" in body["reply"]
+
+
+def test_catalog_session_suggests_income_certificate(client: TestClient) -> None:
+    create_response = client.post(
+        "/api/sessions",
+        json={"form_id": "catalog", "language": "auto"},
+    )
+    session_id = create_response.json()["session_id"]
+    body = ask(
+        client,
+        session_id,
+        "Scholarship kosam income certificate kavali",
+        form_id="catalog",
+    )
+    assert body["suggested_form_id"] == "income_certificate"
+    assert body["suggested_form_name"] == "Income Certificate"
+    assert body["detected_language"] == "telugu"
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
+def test_catalog_only_suggestion_says_coming_soon(client: TestClient) -> None:
+    create_response = client.post(
+        "/api/sessions",
+        json={"form_id": "catalog", "language": "auto"},
+    )
+    session_id = create_response.json()["session_id"]
+    body = ask(
+        client,
+        session_id,
+        "I need a loan eligibility card",
+        form_id="catalog",
+    )
+    assert body["suggested_form_id"] == "loan_eligibility_card"
+    assert body["suggested_form_name"] == "Loan Eligibility Card"
+    assert "detailed guided form is coming soon" in body["reply"]
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
 
 
 def test_current_field_is_used_as_fallback(client: TestClient, session_id: str) -> None:
@@ -190,58 +239,77 @@ def test_english_input_returns_english_guidance(
     )
     assert body["detected_language"] == "english"
     assert body["language_code"] == "en-IN"
-    assert body["reply"].startswith("You can enter 15000")
+    assert "You can enter 15000" in body["reply"]
     assert body["auto_fill"] is False
     assert body["should_submit"] is False
 
 
 def test_complete_summary(
-    client: TestClient, session_id: str, complete_form_values: dict[str, str]
-) -> None:
-    response = client.post(
-        "/api/assistant/summary",
-        json={"session_id": session_id, "form_values": complete_form_values},
-    )
-    body = response.json()
-    assert response.status_code == 200
-    assert body["missing_fields"] == []
-    assert body["warnings"] == []
-    assert "Ravi Kumar" in body["summary"]
-    assert "123456789012" in body["summary"]
-    assert "Ameerpet" in body["summary"]
-    assert "House 1, Ameerpet, Hyderabad" in body["summary"]
-    assert "submit the application yourself" in body["summary"]
-    assert body["auto_fill"] is False
-    assert body["should_submit"] is False
-
-
-def test_summary_with_missing_values(
-    client: TestClient, session_id: str, complete_form_values: dict[str, str]
-) -> None:
-    complete_form_values.pop("aadhaar_number")
-    complete_form_values["address"] = ""
-    response = client.post(
-        "/api/assistant/summary",
-        json={"session_id": session_id, "form_values": complete_form_values},
-    )
-    body = response.json()
-    assert response.status_code == 200
-    assert body["summary"].startswith("Some required details are still missing.")
-    assert body["missing_fields"] == ["aadhaar_number", "address"]
-    assert "Aadhaar Number is required." in body["warnings"]
-    assert "Address is required." in body["warnings"]
-    assert body["auto_fill"] is False
-    assert body["should_submit"] is False
-
-
-def test_summary_uses_requested_language(
-    client: TestClient, session_id: str, complete_form_values: dict[str, str]
+    client: TestClient,
+    session_id: str,
+    complete_form_values: dict[str, str],
+    complete_uploaded_documents: dict[str, dict[str, object]],
 ) -> None:
     response = client.post(
         "/api/assistant/summary",
         json={
             "session_id": session_id,
             "form_values": complete_form_values,
+            "uploaded_documents": complete_uploaded_documents,
+        },
+    )
+    body = response.json()
+    assert response.status_code == 200
+    assert body["missing_fields"] == []
+    assert body["missing_documents"] == []
+    assert body["warnings"] == []
+    assert "Ravi Kumar" in body["summary"]
+    assert "123456789012" in body["summary"]
+    assert "Scholarship" in body["summary"]
+    assert "AI does not submit" in body["summary"]
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
+def test_summary_with_missing_values(
+    client: TestClient,
+    session_id: str,
+    complete_form_values: dict[str, str],
+    complete_uploaded_documents: dict[str, dict[str, object]],
+) -> None:
+    complete_form_values.pop("aadhaar_number")
+    complete_form_values["address"] = ""
+    response = client.post(
+        "/api/assistant/summary",
+        json={
+            "session_id": session_id,
+            "form_values": complete_form_values,
+            "uploaded_documents": complete_uploaded_documents,
+        },
+    )
+    body = response.json()
+    assert response.status_code == 200
+    assert body["summary"].startswith("Some required details or documents are still missing.")
+    assert body["missing_fields"] == ["aadhaar_number", "address"]
+    assert body["missing_documents"] == []
+    assert "Aadhaar Number is required." in body["warnings"]
+    assert "Full Address is required." in body["warnings"]
+    assert body["auto_fill"] is False
+    assert body["should_submit"] is False
+
+
+def test_summary_uses_requested_language(
+    client: TestClient,
+    session_id: str,
+    complete_form_values: dict[str, str],
+    complete_uploaded_documents: dict[str, dict[str, object]],
+) -> None:
+    response = client.post(
+        "/api/assistant/summary",
+        json={
+            "session_id": session_id,
+            "form_values": complete_form_values,
+            "uploaded_documents": complete_uploaded_documents,
             "language": "telugu",
         },
     )
@@ -255,7 +323,10 @@ def test_summary_uses_requested_language(
 
 
 def test_summary_uses_session_last_detected_language(
-    client: TestClient, session_id: str, complete_form_values: dict[str, str]
+    client: TestClient,
+    session_id: str,
+    complete_form_values: dict[str, str],
+    complete_uploaded_documents: dict[str, dict[str, object]],
 ) -> None:
     ask(client, session_id, "purpose lo scholarship ani rayacha")
     response = client.post(
@@ -263,6 +334,7 @@ def test_summary_uses_session_last_detected_language(
         json={
             "session_id": session_id,
             "form_values": complete_form_values,
+            "uploaded_documents": complete_uploaded_documents,
             "language": "auto",
         },
     )

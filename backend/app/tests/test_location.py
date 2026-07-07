@@ -46,6 +46,21 @@ def test_location_search_by_name(client: TestClient) -> None:
     assert response.json()["matches"][0]["mandal"] == "Serilingampally"
 
 
+def test_location_dataset_includes_requested_demo_districts(client: TestClient) -> None:
+    for query, expected_district in [
+        ("siddipet", "Siddipet"),
+        ("suryapet", "Suryapet"),
+        ("adilabad", "Adilabad"),
+        ("mancherial", "Mancherial"),
+    ]:
+        response = client.get(f"/api/location/search?query={query}")
+        assert response.status_code == 200
+        assert any(
+            match["district"] == expected_district
+            for match in response.json()["matches"]
+        )
+
+
 def test_telugu_mandal_unknown_asks_for_details(client: TestClient) -> None:
     body = ask(client, create_session(client), "na mandal teliyadu")
     assert body["detected_language"] == "telugu"

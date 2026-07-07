@@ -1,0 +1,140 @@
+{
+  "form_id": "birth_certificate",
+  "service_name": "Birth Certificate",
+  "form_name": "Birth Certificate Application",
+  "department": "Municipal / Panchayat",
+  "category": "Certificates",
+  "description": "Simplified form for requesting a birth certificate copy or registration support.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Child Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the child's full name as it should appear on the certificate.",
+        "telugu": "Certificateలో ఉండాల్సిన child పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "Certificate में जैसा नाम चाहिए, बच्चे का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Father Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter father's full name.",
+        "telugu": "తండ్రి పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "पिता का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "mother_name",
+      "label": "Mother Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter mother's full name.",
+        "telugu": "తల్లి పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "माता का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "date_of_birth",
+      "label": "Date of Birth",
+      "type": "date",
+      "required": true,
+      "validation": "date",
+      "help": {
+        "english": "Select the child's date of birth.",
+        "telugu": "పిల్లవాడి పుట్టిన తేదీ ఎంచుకోండి.",
+        "hindi": "बच्चे की जन्म तिथि चुनें."
+      }
+    },
+    {
+      "key": "gender",
+      "label": "Gender",
+      "type": "select",
+      "required": true,
+      "validation": "non_empty",
+      "options": ["Male", "Female", "Other"],
+      "help": {
+        "english": "Choose the gender as per hospital or official record.",
+        "telugu": "Hospital లేదా official record ప్రకారం gender ఎంచుకోండి.",
+        "hindi": "Hospital या official record के अनुसार gender चुनें."
+      }
+    },
+    {
+      "key": "birth_place",
+      "label": "Place of Birth",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter hospital name, home, village, town, or city where the birth happened.",
+        "telugu": "Birth జరిగిన hospital, home, village, town లేదా city పేరు టైప్ చేయండి.",
+        "hindi": "Birth जहाँ हुआ, वह hospital, home, village, town या city लिखें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Parent Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter a 10-digit parent mobile number.",
+        "telugu": "Parent 10 అంకెల mobile number టైప్ చేయండి.",
+        "hindi": "Parent का 10 अंकों का mobile number लिखें."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Family Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the family address.",
+        "telugu": "కుటుంబ చిరునామా టైప్ చేయండి.",
+        "hindi": "परिवार का पता लिखें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "hospital_record",
+      "label": "Hospital Birth Record",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Hospital birth slip", "Discharge summary"],
+      "help": {
+        "english": "Upload hospital birth slip or discharge summary if available.",
+        "telugu": "Hospital birth slip లేదా discharge summary ఉంటే upload చేయండి.",
+        "hindi": "Hospital birth slip या discharge summary हो तो upload करें."
+      }
+    },
+    {
+      "key": "parent_id",
+      "label": "Parent ID Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Aadhaar of father or mother"],
+      "help": {
+        "english": "Upload parent Aadhaar or other ID proof.",
+        "telugu": "Parent Aadhaar లేదా ID proof upload చేయండి.",
+        "hindi": "Parent Aadhaar या ID proof upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["What should I enter for place of birth?"],
+    "telugu": ["birth place lo emi rayali?", "hospital record ledu"],
+    "hindi": ["birth place mein kya likhna hai?"]
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "form_id": "residence_certificate",
+  "service_name": "Residence Certificate",
+  "form_name": "Residence Certificate Application",
+  "department": "Revenue",
+  "category": "Certificates",
+  "description": "Simplified form to request proof of residence for local services.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Applicant Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your full name as per Aadhaar or official record.",
+        "telugu": "Aadhaar లేదా official recordలో ఉన్నట్టు మీ పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "Aadhaar या official record के अनुसार अपना पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Father / Guardian Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter father, mother, or guardian full name.",
+        "telugu": "తండ్రి, తల్లి లేదా guardian పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "पिता, माता या guardian का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter your 10-digit mobile number.",
+        "telugu": "మీ 10 అంకెల మొబైల్ నంబర్ టైప్ చేయండి.",
+        "hindi": "अपना 10 अंकों का मोबाइल नंबर लिखें."
+      }
+    },
+    {
+      "key": "district",
+      "label": "District",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the district where you live.",
+        "telugu": "మీరు ఉండే జిల్లా పేరు టైప్ చేయండి.",
+        "hindi": "आप जिस जिले में रहते हैं उसका नाम लिखें."
+      }
+    },
+    {
+      "key": "mandal",
+      "label": "Mandal",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your mandal or ask the assistant using your pincode.",
+        "telugu": "మీ మండలం టైప్ చేయండి. తెలియకపోతే pincodeతో assistantని అడగండి.",
+        "hindi": "अपना मंडल लिखें. नहीं पता हो तो pincode से assistant से पूछें."
+      }
+    },
+    {
+      "key": "village",
+      "label": "Village / Locality",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your village, town, or locality.",
+        "telugu": "మీ గ్రామం, town లేదా locality టైప్ చేయండి.",
+        "hindi": "अपना गाँव, town या locality लिखें."
+      }
+    },
+    {
+      "key": "residing_since",
+      "label": "Residing Since",
+      "type": "date",
+      "required": false,
+      "validation": "date",
+      "help": {
+        "english": "Select the approximate date from when you have lived at this address.",
+        "telugu": "ఈ చిరునామాలో ఎప్పటి నుంచి ఉంటున్నారో దగ్గరగా ఉన్న తేదీ ఎంచుకోండి.",
+        "hindi": "इस पते पर कब से रह रहे हैं, उसकी लगभग तारीख चुनें."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Full Residential Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter house number, street, locality, mandal, district, and pincode.",
+        "telugu": "House number, street, locality, మండలం, జిల్లా, pincodeతో పూర్తి చిరునామా టైప్ చేయండి.",
+        "hindi": "House number, street, locality, मंडल, जिला और pincode के साथ पूरा पता लिखें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "aadhaar",
+      "label": "Aadhaar Card",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Aadhaar card PDF", "Aadhaar card photo"],
+      "help": {
+        "english": "Upload Aadhaar as identity proof.",
+        "telugu": "గుర్తింపు కోసం Aadhaar upload చేయండి.",
+        "hindi": "पहचान के लिए Aadhaar upload करें."
+      }
+    },
+    {
+      "key": "address_proof",
+      "label": "Address Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Electricity bill", "Ration card", "Rental agreement"],
+      "help": {
+        "english": "Upload a document proving your current address.",
+        "telugu": "మీ ప్రస్తుత చిరునామా నిరూపించే document upload చేయండి.",
+        "hindi": "वर्तमान पते का प्रमाण देने वाला document upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["What address proof can I upload?"],
+    "telugu": ["address proof ante enti?", "mandal teliyadu"],
+    "hindi": ["address proof kya upload karna hai?"]
+  }
+}

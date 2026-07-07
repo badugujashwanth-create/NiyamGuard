@@ -1,34 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import IncomeCertificateForm from "./components/IncomeCertificateForm";
+import DynamicFormPage from "./components/DynamicFormPage";
+import ServiceCatalog from "./components/ServiceCatalog";
 import VoiceAssistantPanel from "./components/VoiceAssistantPanel";
 import {
   askAssistant,
   createSession,
   generateSummary,
-  getIncomeCertificateForm,
+  getForm,
+  getForms,
   reverseLocation,
+  searchServices,
 } from "./services/api";
-
-const FALLBACK_FIELDS = [
-  ["applicant_name", "Applicant Full Name", "text"],
-  ["father_name", "Father Name", "text"],
-  ["mobile_number", "Mobile Number", "phone"],
-  ["aadhaar_number", "Aadhaar Number", "aadhaar"],
-  ["district", "District", "text"],
-  ["mandal", "Mandal", "text"],
-  ["village", "Village", "text"],
-  ["monthly_income", "Monthly Income", "number"],
-  ["annual_income", "Annual Income", "number"],
-  ["purpose", "Purpose of Certificate", "text"],
-  ["address", "Address", "textarea"],
-].map(([key, label, type]) => ({
-  key,
-  label,
-  type,
-  required: true,
-  help: `Enter ${label.toLowerCase()} manually.`,
-}));
 
 function message(role, text) {
   return {
@@ -38,14 +21,45 @@ function message(role, text) {
   };
 }
 
+function emptyValuesFor(form) {
+  return Object.fromEntries(
+    form.fields.map((field) => [field.key, field.type === "checkbox" ? false : ""]),
+  );
+}
+
+function publicDocumentState(uploadedDocuments) {
+  return Object.fromEntries(
+    Object.entries(uploadedDocuments).map(([key, value]) => [
+      key,
+      value
+        ? {
+            name: value.name,
+            size: value.size,
+            type: value.type,
+            uploaded: Boolean(value.uploaded && !value.error),
+          }
+        : null,
+    ]),
+  );
+}
+
 export default function App() {
-  const [fields, setFields] = useState([]);
+  const [services, setServices] = useState([]);
+  const [catalogStatus, setCatalogStatus] = useState("loading");
+  const [catalogSessionId, setCatalogSessionId] = useState("");
+  const [catalogReply, setCatalogReply] = useState(null);
+  const [catalogAsking, setCatalogAsking] = useState(false);
+
+  const [selectedForm, setSelectedForm] = useState(null);
   const [formValues, setFormValues] = useState({});
+  const [uploadedDocuments, setUploadedDocuments] = useState({});
   const [currentField, setCurrentField] = useState("");
+  const [currentDocument, setCurrentDocument] = useState("");
+  const [lastVisibleSection, setLastVisibleSection] = useState("");
   const [lastDetectedLanguage, setLastDetectedLanguage] = useState("english");
   const [lastLanguageCode, setLastLanguageCode] = useState("en-IN");
   const [sessionId, setSessionId] = useState("");
-  const [sessionStatus, setSessionStatus] = useState("loading");
+  const [sessionStatus, setSessionStatus] = useState("idle");
   const [globalError, setGlobalError] = useState("");
   const [messages, setMessages] = useState([]);
   const [assistantReply, setAssistantReply] = useState(null);
@@ -53,59 +67,41 @@ export default function App() {
   const [asking, setAsking] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
 
-  const displayedFields = fields.length ? fields : FALLBACK_FIELDS;
-
-  const initializeSession = useCallback(async () => {
-    setSessionStatus("loading");
-    setGlobalError("");
-    try {
-      const session = await createSession("auto");
-      setSessionId(session.session_id);
-      setSessionStatus("ready");
-      return session.session_id;
-    } catch (error) {
-      setSessionId("");
-      setSessionStatus("error");
-      setGlobalError(error.message);
-      return null;
-    }
-  }, []);
-
   useEffect(() => {
     let active = true;
-    async function initialize() {
-      const [formResult] = await Promise.allSettled([
-        getIncomeCertificateForm(),
-        initializeSession(),
-      ]);
-      if (!active) return;
-      if (formResult.status === "fulfilled") {
-        const loadedFields = formResult.value.form.fields;
-        setFields(loadedFields);
-        setFormValues(
-          Object.fromEntries(loadedFields.map((field) => [field.key, ""])),
-        );
-      } else {
-        setFields(FALLBACK_FIELDS);
-        setFormValues(
-          Object.fromEntries(FALLBACK_FIELDS.map((field) => [field.key, ""])),
-        );
-        setGlobalError((current) => current || formResult.reason.message);
+    async function initializeCatalog() {
+      setCatalogStatus("loading");
+      try {
+        const [formsResponse, sessionResponse] = await Promise.all([
+          getForms(),
+          createSession("auto", "catalog"),
+        ]);
+        if (!active) return;
+        setServices(formsResponse.forms || []);
+        setCatalogSessionId(sessionResponse.session_id);
+        setCatalogStatus("ready");
+      } catch (error) {
+        if (!active) return;
+        setGlobalError(error.message);
+        setCatalogStatus("error");
       }
     }
-    initialize();
+    void initializeCatalog();
     return () => {
       active = false;
     };
-  }, [initializeSession]);
+  }, []);
 
   const completion = useMemo(() => {
-    if (!displayedFields.length) return 0;
-    const completed = displayedFields.filter((field) =>
-      formValues[field.key]?.toString().trim(),
-    ).length;
-    return Math.round((completed / displayedFields.length) * 100);
-  }, [displayedFields, formValues]);
+    if (!selectedForm?.fields?.length) return 0;
+    const completed = selectedForm.fields.filter((field) => {
+      const value = formValues[field.key];
+      return typeof value === "boolean" ? value : Boolean(value?.toString().trim());
+    }).length;
+    return Math.round((completed / selectedForm.fields.length) * 100);
+  }, [formValues, selectedForm]);
+
+  const activeFormId = selectedForm?.form_id || "catalog";
 
   function applyAssistantResponse(response) {
     const safeResponse = {
@@ -131,10 +127,72 @@ export default function App() {
     return safeResponse;
   }
 
+  async function startApplication(formId) {
+    setGlobalError("");
+    const service = services.find((item) => item.form_id === formId);
+    if (service && (service.status === "catalog_only" || service.has_detailed_schema === false)) {
+      setGlobalError("Detailed guided form coming soon for this service.");
+      return;
+    }
+    setSessionStatus("loading");
+    try {
+      const [formResponse, sessionResponse] = await Promise.all([
+        getForm(formId),
+        createSession("auto", formId),
+      ]);
+      const form = formResponse.form;
+      setSelectedForm(form);
+      setFormValues(emptyValuesFor(form));
+      setUploadedDocuments({});
+      setCurrentField("");
+      setCurrentDocument("");
+      setLastVisibleSection("details");
+      setLastDetectedLanguage("english");
+      setLastLanguageCode("en-IN");
+      setMessages([]);
+      setAssistantReply(null);
+      setSpeechCommand(null);
+      setSessionId(sessionResponse.session_id);
+      setSessionStatus("ready");
+      window.scrollTo?.({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setGlobalError(error.message);
+      setSessionStatus("error");
+    }
+  }
+
+  async function handleCatalogSearch(query) {
+    try {
+      const response = await searchServices(query);
+      setServices(response.services || []);
+    } catch (error) {
+      setGlobalError(error.message);
+    }
+  }
+
+  async function handleCatalogAsk(text) {
+    if (!catalogSessionId) return;
+    setCatalogAsking(true);
+    setGlobalError("");
+    try {
+      const response = await askAssistant({
+        sessionId: catalogSessionId,
+        formId: "catalog",
+        message: text,
+        language: "auto",
+      });
+      setCatalogReply(response);
+    } catch (error) {
+      setGlobalError(error.message);
+    } finally {
+      setCatalogAsking(false);
+    }
+  }
+
   async function handleAsk(text) {
     if (!sessionId) {
       setGlobalError("The assistant session is not ready.");
-      return;
+      return null;
     }
     setAsking(true);
     setGlobalError("");
@@ -142,14 +200,18 @@ export default function App() {
     try {
       const response = await askAssistant({
         sessionId,
+        formId: activeFormId,
         message: text,
         currentField,
+        currentDocument,
+        lastVisibleSection,
         language: "auto",
       });
       return applyAssistantResponse(response);
     } catch (error) {
       setGlobalError(error.message);
-      const errorReply = "I could not contact the guidance service. Please try again.";
+      const errorReply =
+        "I could not contact the guidance service. Please try again.";
       setAssistantReply({
         reply: errorReply,
         warning: error.message,
@@ -164,24 +226,32 @@ export default function App() {
   }
 
   async function handleReview() {
-    if (!sessionId) return;
+    if (!sessionId || !selectedForm) return;
     setLoadingSummary(true);
     setGlobalError("");
     try {
-      const response = await generateSummary(sessionId, formValues, "auto");
-      const warningText = response.warnings.length
+      const response = await generateSummary({
+        sessionId,
+        formId: selectedForm.form_id,
+        formValues,
+        uploadedDocuments: publicDocumentState(uploadedDocuments),
+        language: "auto",
+      });
+      const missingDocs = response.missing_documents?.length
+        ? ` Missing documents: ${response.missing_documents.join(", ")}.`
+        : "";
+      const warningText = response.warnings?.length
         ? ` ${response.warnings.join(" ")}`
         : "";
-      const reply = `${response.summary}${warningText}`.trim();
-      const summaryReply = {
+      const reply = `${response.summary}${missingDocs}${warningText}`.trim();
+      applyAssistantResponse({
         reply,
-        warning: response.warnings.length ? response.warnings.join(" ") : null,
+        warning: response.warnings?.length ? response.warnings.join(" ") : null,
         detected_language: response.detected_language,
         language_code: response.language_code || "en-IN",
         auto_fill: false,
         should_submit: false,
-      };
-      applyAssistantResponse(summaryReply);
+      });
     } catch (error) {
       setGlobalError(error.message);
     } finally {
@@ -195,7 +265,16 @@ export default function App() {
     setSpeechCommand(null);
     setLastDetectedLanguage("english");
     setLastLanguageCode("en-IN");
-    await initializeSession();
+    if (selectedForm) {
+      try {
+        const session = await createSession("auto", selectedForm.form_id);
+        setSessionId(session.session_id);
+        setSessionStatus("ready");
+      } catch (error) {
+        setGlobalError(error.message);
+        setSessionStatus("error");
+      }
+    }
   }
 
   async function handleUseLocation({ latitude, longitude }) {
@@ -214,12 +293,23 @@ export default function App() {
     }
   }
 
+  function backToCatalog() {
+    setSelectedForm(null);
+    setSessionId("");
+    setSessionStatus("idle");
+    setMessages([]);
+    setAssistantReply(null);
+    setSpeechCommand(null);
+    setCurrentField("");
+    setCurrentDocument("");
+  }
+
   return (
     <div className="app-shell">
       <header className="site-header">
         <div className="brand">
           <span className="brand-emblem" aria-hidden="true">
-            नियम
+            NG
           </span>
           <div>
             <p>Citizen Assistance Service</p>
@@ -227,10 +317,10 @@ export default function App() {
           </div>
         </div>
         <div className="progress-summary" aria-label={`${completion}% form completed`}>
-          <span>Form progress</span>
-          <strong>{completion}%</strong>
+          <span>{selectedForm ? "Form progress" : "Catalog ready"}</span>
+          <strong>{selectedForm ? `${completion}%` : services.length}</strong>
           <div>
-            <span style={{ width: `${completion}%` }} />
+            <span style={{ width: selectedForm ? `${completion}%` : "100%" }} />
           </div>
         </div>
       </header>
@@ -238,44 +328,76 @@ export default function App() {
       {globalError ? (
         <div className="global-error" role="alert">
           <span>{globalError}</span>
-          {sessionStatus === "error" ? (
-            <button onClick={() => initializeSession()} type="button">
-              Retry connection
-            </button>
-          ) : null}
+          <button onClick={() => setGlobalError("")} type="button">
+            Dismiss
+          </button>
         </div>
       ) : null}
 
-      <main className="workspace">
-        <IncomeCertificateForm
-          backendReady={sessionStatus === "ready"}
-          fields={displayedFields}
-          loadingSummary={loadingSummary}
-          language={lastDetectedLanguage}
-          onFieldFocus={setCurrentField}
-          onReview={handleReview}
-          onValueChange={(field, value) =>
-            setFormValues((current) => ({ ...current, [field]: value }))
-          }
-          values={formValues}
+      {selectedForm ? (
+        <main className="workspace">
+          <DynamicFormPage
+            backendReady={sessionStatus === "ready"}
+            form={selectedForm}
+            language={lastDetectedLanguage}
+            loadingSummary={loadingSummary}
+            onBack={backToCatalog}
+            onDocumentChange={(key, value) =>
+              setUploadedDocuments((current) => ({
+                ...current,
+                [key]: value,
+              }))
+            }
+            onFieldFocus={(field) => {
+              if (field.startsWith("document:")) {
+                setCurrentDocument(field.split(":", 2)[1]);
+                setLastVisibleSection("documents");
+              } else {
+                setCurrentField(field);
+                setCurrentDocument("");
+                setLastVisibleSection("details");
+              }
+            }}
+            onReview={() => void handleReview()}
+            onValueChange={(field, value) =>
+              setFormValues((current) => ({ ...current, [field]: value }))
+            }
+            uploadedDocuments={uploadedDocuments}
+            values={formValues}
+          />
+          <VoiceAssistantPanel
+            asking={asking}
+            assistantReply={assistantReply}
+            lastDetectedLanguage={lastDetectedLanguage}
+            lastLanguageCode={lastLanguageCode}
+            messages={messages}
+            onAsk={handleAsk}
+            onClear={handleClear}
+            onReview={() => void handleReview()}
+            onUseLocation={handleUseLocation}
+            sessionId={sessionId}
+            formId={activeFormId}
+            activeField={currentField}
+            activeDocument={currentDocument}
+            sessionStatus={sessionStatus}
+            speechCommand={speechCommand}
+          />
+        </main>
+      ) : (
+        <ServiceCatalog
+          assistantReply={catalogReply}
+          asking={catalogAsking}
+          loading={catalogStatus === "loading"}
+          onAskCatalog={handleCatalogAsk}
+          onSearch={handleCatalogSearch}
+          onStart={(formId) => void startApplication(formId)}
+          services={services}
         />
-        <VoiceAssistantPanel
-          asking={asking}
-          assistantReply={assistantReply}
-          lastDetectedLanguage={lastDetectedLanguage}
-          lastLanguageCode={lastLanguageCode}
-          messages={messages}
-          onAsk={handleAsk}
-          onClear={handleClear}
-          onUseLocation={handleUseLocation}
-          sessionStatus={sessionStatus}
-          speechCommand={speechCommand}
-        />
-      </main>
+      )}
 
       <footer>
-        NiyamGuard provides guidance only. Always verify your details before using
-        an official government portal.
+        The assistant guides the citizen but does not submit the application.
+        The citizen remains in control.
       </footer>
     </div>
   );

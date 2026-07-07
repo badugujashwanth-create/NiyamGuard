@@ -1,0 +1,139 @@
+{
+  "form_id": "no_property_certificate",
+  "service_name": "No Property Certificate",
+  "form_name": "No Property Certificate Application",
+  "department": "Revenue",
+  "category": "Certificates",
+  "description": "Simplified form for declaring no property ownership for eligible services.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Applicant Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter applicant full name as per official records.",
+        "telugu": "Official records ప్రకారం applicant పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "Official records के अनुसार applicant का पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Father / Guardian Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter father or guardian name.",
+        "telugu": "తండ్రి లేదా guardian పేరు టైప్ చేయండి.",
+        "hindi": "पिता या guardian का नाम लिखें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter 10-digit mobile number.",
+        "telugu": "10 అంకెల mobile number టైప్ చేయండి.",
+        "hindi": "10 अंकों का mobile number लिखें."
+      }
+    },
+    {
+      "key": "purpose",
+      "label": "Purpose",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter why the no property certificate is required.",
+        "telugu": "No property certificate ఎందుకు కావాలో టైప్ చేయండి.",
+        "hindi": "No property certificate क्यों चाहिए लिखें."
+      }
+    },
+    {
+      "key": "district",
+      "label": "District",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter district.",
+        "telugu": "జిల్లా టైప్ చేయండి.",
+        "hindi": "जिला लिखें."
+      }
+    },
+    {
+      "key": "mandal",
+      "label": "Mandal",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter mandal or ask the assistant with pincode.",
+        "telugu": "మండలం టైప్ చేయండి లేదా pincodeతో assistantని అడగండి.",
+        "hindi": "मंडल लिखें या pincode से assistant से पूछें."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter complete address.",
+        "telugu": "పూర్తి చిరునామా టైప్ చేయండి.",
+        "hindi": "पूरा पता लिखें."
+      }
+    },
+    {
+      "key": "declaration",
+      "label": "I confirm I do not own property",
+      "type": "checkbox",
+      "required": true,
+      "validation": "checked",
+      "help": {
+        "english": "Tick only after confirming this statement yourself.",
+        "telugu": "ఈ statementను మీరు confirm చేసిన తర్వాత మాత్రమే tick చేయండి.",
+        "hindi": "यह statement खुद confirm करने के बाद ही tick करें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "aadhaar",
+      "label": "Aadhaar Card",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Aadhaar card"],
+      "help": {
+        "english": "Upload Aadhaar as identity proof.",
+        "telugu": "Identity proof కోసం Aadhaar upload చేయండి.",
+        "hindi": "Identity proof के लिए Aadhaar upload करें."
+      }
+    },
+    {
+      "key": "affidavit",
+      "label": "No Property Affidavit",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Self declaration", "No property affidavit"],
+      "help": {
+        "english": "Upload a self declaration or no property affidavit if available.",
+        "telugu": "Self declaration లేదా no property affidavit ఉంటే upload చేయండి.",
+        "hindi": "Self declaration या no property affidavit हो तो upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["What document proves no property?"],
+    "telugu": ["no property affidavit ante enti?", "declaration ela tick cheyali?"],
+    "hindi": ["no property affidavit kya hota hai?"]
+  }
+}

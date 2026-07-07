@@ -1,100 +1,92 @@
 # NiyamGuard Backend
 
-FastAPI backend for language-aware Income Certificate guidance, manual-value
-validation, location help, session context, summaries, and MP3 text-to-speech.
+FastAPI backend for the NiyamGuard AI Voice/Form Assistant. It serves the form
+catalog, dynamic form schemas, assistant guidance, validation, review summaries,
+location help, and backend MP3 TTS fallback.
 
-The assistant does not fill or submit the form. It only guides the citizen. The citizen remains in control.
+The assistant guides the citizen but does not submit the application. The citizen remains in control.
 
-## Setup
+## Run
 
 ```powershell
 cd D:\niyam\niyamguard-call-assistant\backend
 py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-Copy-Item .env.example .env
 uvicorn app.main:app --reload
 ```
 
-Swagger documentation is available at `http://127.0.0.1:8000/docs`.
+Swagger docs: `http://127.0.0.1:8000/docs`.
 
-## Environment
-
-```dotenv
-APP_ENV=development
-TTS_PROVIDER=auto
-ENABLE_GTTS=true
-ENABLE_BHASHINI=false
-BHASHINI_API_KEY=
-BHASHINI_USER_ID=
-```
-
-`auto` currently resolves to gTTS. gTTS requires internet for uncached text.
-Bhashini is an intentionally non-breaking placeholder for future production
-integration.
-
-## Main endpoints
+## Main APIs
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `GET` | `/` | Backend health |
-| `GET` | `/api/forms/income-certificate` | Form schema |
-| `POST` | `/api/sessions` | Create an auto-language session |
-| `POST` | `/api/assistant/ask` | Detect language/field and return guidance |
-| `POST` | `/api/assistant/summary` | Validate and summarize manual values |
+| `GET` | `/` | Health |
+| `GET` | `/api/forms` | Catalog of seeded forms |
+| `GET` | `/api/forms/income-certificate` | Backward-compatible income form |
+| `GET` | `/api/forms/{form_id}` | Dynamic form schema |
+| `GET` | `/api/services` | Service catalog |
+| `GET` | `/api/services/search?q=` | Service search |
+| `POST` | `/api/sessions` | Create session for form or catalog |
+| `GET` | `/api/sessions/{session_id}` | Read session context |
+| `POST` | `/api/assistant/ask` | Language/field/document/location guidance |
 | `POST` | `/api/assistant/validate` | Validate one manually entered value |
-| `GET` | `/api/tts/health` | TTS provider/language capability |
-| `POST` | `/api/tts/speak` | Return same-language MP3 audio |
-| `GET` | `/api/location/search` | Search local demo location data |
-| `POST` | `/api/location/help` | Build cautious location guidance |
-| `POST` | `/api/location/reverse` | Honest MVP GPS fallback response |
+| `POST` | `/api/assistant/summary` | Review values and uploaded document status |
+| `POST` | `/api/stt/transcribe` | Audio transcription with local Whisper provider or browser fallback transcript |
+| `GET` | `/api/tts/health` | TTS status |
+| `POST` | `/api/tts/speak` | MP3 TTS |
+| `GET` | `/api/location/search?query=` | Location search |
+| `GET` | `/api/location/search?pincode=` | Pincode lookup |
+| `POST` | `/api/location/help` | Mandal/location guidance |
+| `POST` | `/api/location/reverse` | Honest GPS MVP fallback |
 
-Every assistant and location-help response preserves:
+Assistant responses always include `auto_fill: false` and
+`should_submit: false`.
+
+## Form Catalog
+
+Schemas are one JSON file per form under `app/data/forms/`. Each schema
+contains metadata, fields, localized help, required documents, file constraints,
+and assistant examples.
+
+`/api/services` returns 25+ catalog entries. Ten entries are ready detailed
+forms, including EWS Certificate. Catalog-only entries such as Loan Eligibility
+Card are marked `catalog_only` and `has_detailed_schema: false` so the frontend
+can show "Detailed guided form coming soon" instead of opening an incomplete
+form.
+
+## STT
+
+`POST /api/stt/transcribe` accepts multipart form data with an `audio` file and
+optional `language_hint`, `form_id`, `session_id`, and `fallback_transcript`.
+When `faster-whisper` is available, the backend uses a local Whisper provider.
+When it is not installed, the endpoint returns a clear 503 so the frontend can
+fall back to browser SpeechRecognition. Tests cover the browser fallback
+transcript path without requiring the optional model.
+
+## TTS
+
+`POST /api/tts/speak` accepts:
 
 ```json
 {
-  "auto_fill": false,
-  "should_submit": false
-}
-```
-
-## TTS request
-
-```json
-{
-  "text": "నమస్తే. ఇది NiyamGuard Telugu voice test.",
+  "text": "నమస్తే",
   "language_code": "te-IN",
   "detected_language": "telugu",
   "provider": "auto"
 }
 ```
 
-The response is `audio/mpeg` with:
+It returns `audio/mpeg` with `X-TTS-Language-Code`, `X-TTS-Provider`, and
+`X-TTS-Cache`. gTTS is used for `te-IN`, `hi-IN`, and `en-IN`; generated audio
+is cached in `app/storage/tts_cache/`.
 
-- `X-TTS-Language-Code`
-- `X-TTS-Provider`
-- `X-TTS-Cache` (`HIT` or `MISS`)
+## Location Help
 
-Cached files are named only with a SHA256 hash of provider, language, and text.
-Provider/network failure returns a clear `503` JSON response while the original
-text reply remains available to the frontend.
-
-## Language and conversation context
-
-The frontend sends `language: "auto"`. The backend detects Telugu/Hindi Unicode,
-romanized language markers, or English. Each session retains only conversation
-messages, the last detected language, and last discussed field. It never stores
-suggested values as filled form data.
-
-Summary requests with `language: "auto"` reuse the session's last detected
-language. Focused fields sent by the frontend and prior field context help with
-questions such as “what should I enter here?”
-
-## Location help
-
-`app/data/telangana_locations.json` contains limited demonstration records.
-Suggestions use cautious wording and require citizen confirmation. The reverse
-location endpoint does not invent a precise mandal from GPS coordinates.
+`app/data/telangana_locations.json` is a small MVP dataset. Responses use
+cautious wording such as “may be” and ask the citizen to confirm. GPS reverse
+lookup does not pretend to know the exact mandal.
 
 ## Tests
 
@@ -102,6 +94,7 @@ location endpoint does not invent a precise mandal from GPS coordinates.
 pytest
 ```
 
-The tests mock gTTS to avoid network dependency and cover language detection,
-localized guidance, session context, TTS audio/cache/errors, location searches,
-manual-control safety flags, validation, and summaries.
+Coverage includes endpoints, all seeded schemas, service search, language
+detection/switching, localized field explanations, income calculation, mandal
+help, document guidance, STT fallback behavior, TTS health/speak/errors,
+summary language, and safety flags.

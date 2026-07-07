@@ -1,0 +1,127 @@
+{
+  "form_id": "death_certificate",
+  "service_name": "Death Certificate",
+  "form_name": "Death Certificate Application",
+  "department": "Municipal / Panchayat",
+  "category": "Certificates",
+  "description": "Simplified form for requesting death certificate guidance.",
+  "fields": [
+    {
+      "key": "applicant_name",
+      "label": "Deceased Person Full Name",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter the full name of the person who passed away.",
+        "telugu": "మరణించిన వ్యక్తి పూర్తి పేరు టైప్ చేయండి.",
+        "hindi": "जिस व्यक्ति का निधन हुआ उसका पूरा नाम लिखें."
+      }
+    },
+    {
+      "key": "father_name",
+      "label": "Father / Spouse Name",
+      "type": "text",
+      "required": false,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter father or spouse name if known.",
+        "telugu": "తెలిస్తే తండ్రి లేదా spouse పేరు టైప్ చేయండి.",
+        "hindi": "पता हो तो पिता या spouse का नाम लिखें."
+      }
+    },
+    {
+      "key": "date_of_death",
+      "label": "Date of Death",
+      "type": "date",
+      "required": true,
+      "validation": "date",
+      "help": {
+        "english": "Select the date of death as per hospital or local record.",
+        "telugu": "Hospital లేదా local record ప్రకారం మరణ తేదీ ఎంచుకోండి.",
+        "hindi": "Hospital या local record के अनुसार मृत्यु तिथि चुनें."
+      }
+    },
+    {
+      "key": "death_place",
+      "label": "Place of Death",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter hospital, home, village, town, or city where death occurred.",
+        "telugu": "Death జరిగిన hospital, home, village, town లేదా city టైప్ చేయండి.",
+        "hindi": "Death जहाँ हुआ, hospital, home, village, town या city लिखें."
+      }
+    },
+    {
+      "key": "relation",
+      "label": "Applicant Relation",
+      "type": "text",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter your relation to the deceased person, such as son, daughter, spouse, or relative.",
+        "telugu": "మరణించిన వ్యక్తితో మీ సంబంధం son, daughter, spouse లేదా relativeలా టైప్ చేయండి.",
+        "hindi": "मृत व्यक्ति से अपना रिश्ता son, daughter, spouse या relative जैसा लिखें."
+      }
+    },
+    {
+      "key": "mobile_number",
+      "label": "Applicant Mobile Number",
+      "type": "phone",
+      "required": true,
+      "validation": "10_digits",
+      "help": {
+        "english": "Enter applicant 10-digit mobile number.",
+        "telugu": "Applicant 10 అంకెల మొబైల్ నంబర్ టైప్ చేయండి.",
+        "hindi": "Applicant का 10 अंकों का मोबाइल नंबर लिखें."
+      }
+    },
+    {
+      "key": "address",
+      "label": "Applicant Address",
+      "type": "textarea",
+      "required": true,
+      "validation": "non_empty",
+      "help": {
+        "english": "Enter applicant full address.",
+        "telugu": "Applicant పూర్తి చిరునామా టైప్ చేయండి.",
+        "hindi": "Applicant का पूरा पता लिखें."
+      }
+    }
+  ],
+  "required_documents": [
+    {
+      "key": "medical_certificate",
+      "label": "Medical Death Certificate",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Hospital death certificate", "Doctor certificate"],
+      "help": {
+        "english": "Upload hospital or doctor death certificate if available.",
+        "telugu": "Hospital లేదా doctor death certificate ఉంటే upload చేయండి.",
+        "hindi": "Hospital या doctor death certificate हो तो upload करें."
+      }
+    },
+    {
+      "key": "applicant_id",
+      "label": "Applicant ID Proof",
+      "required": true,
+      "accepted_file_types": ["pdf", "jpg", "jpeg", "png"],
+      "max_size_mb": 5,
+      "examples": ["Applicant Aadhaar"],
+      "help": {
+        "english": "Upload applicant Aadhaar or other ID proof.",
+        "telugu": "Applicant Aadhaar లేదా ID proof upload చేయండి.",
+        "hindi": "Applicant Aadhaar या ID proof upload करें."
+      }
+    }
+  ],
+  "assistant_examples": {
+    "english": ["What relation should I enter?"],
+    "telugu": ["relation lo emi rayali?", "medical certificate ledu"],
+    "hindi": ["relation mein kya likhna hai?"]
+  }
+}

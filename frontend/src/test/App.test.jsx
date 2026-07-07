@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -57,7 +63,7 @@ function teluguPurposeResponse() {
     success: true,
     field: "purpose",
     reply:
-      "అవును. ఈ సర్టిఫికేట్ scholarship కోసం కావాలంటే, Purpose బాక్స్‌లో Scholarship అని మీరే టైప్ చేయండి.",
+      "à°…à°µà±à°¨à±. à°ˆ certificate scholarship à°•à±‹à°¸à°‚ à°•à°¾à°µà°¾à°²à°‚à°Ÿà±‡ Purpose à°¬à°¾à°•à±à°¸à±â€Œà°²à±‹ Scholarship à°…à°¨à°¿ à°®à±€à°°à±‡ à°Ÿà±ˆà°ªà± à°šà±‡à°¯à°‚à°¡à°¿.",
     suggested_value: "Scholarship",
     related_values: {},
     location_matches: [],
@@ -73,10 +79,21 @@ function hindiPurposeResponse() {
   return {
     ...teluguPurposeResponse(),
     reply:
-      "हाँ। यह certificate scholarship के लिए चाहिए तो Purpose box में Scholarship स्वयं लिखें।",
+      "à¤¹à¤¾à¤à¥¤ à¤¯à¤¹ certificate scholarship à¤•à¥‡ à¤²à¤¿à¤ à¤šà¤¾à¤¹à¤¿à¤ à¤¤à¥‹ Purpose box à¤®à¥‡à¤‚ Scholarship à¤¸à¥à¤µà¤¯à¤‚ à¤²à¤¿à¤–à¥‡à¤‚.",
     detected_language: "hindi",
     language_code: "hi-IN",
   };
+}
+
+async function openIncomeForm(user) {
+  await screen.findByRole("heading", { name: "Choose a simplified service form" });
+  await user.click(screen.getAllByRole("button", { name: "Start Application" })[0]);
+  return screen.findByRole("heading", { name: "Income Certificate Application" });
+}
+
+async function openTextFallback(user) {
+  await user.click(screen.getByText("Having trouble? Type instead"));
+  return screen.getByLabelText("Type your question");
 }
 
 describe("NiyamGuard frontend", () => {
@@ -95,6 +112,14 @@ describe("NiyamGuard frontend", () => {
       removeEventListener: vi.fn(),
       speak: vi.fn((utterance) => utterance.onstart?.()),
     };
+    Object.defineProperty(window, "MediaRecorder", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(window, "scrollTo", {
+      configurable: true,
+      value: vi.fn(),
+    });
     vi.stubGlobal("Audio", FakeAudio);
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
@@ -108,269 +133,366 @@ describe("NiyamGuard frontend", () => {
       configurable: true,
       value: { getCurrentPosition: vi.fn() },
     });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn() },
+    });
   });
 
-  it("creates an auto-language session and keeps technical selectors hidden", async () => {
+  it("opens on the service catalog and hides technical selectors", async () => {
     const { fetchMock } = installApiMock();
     render(<App />);
 
     expect(
-      await screen.findByRole("heading", {
-        name: "Income Certificate Application",
-      }),
+      await screen.findByRole("heading", { name: "Choose a simplified service form" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Income Certificate")).toBeInTheDocument();
+    expect(screen.getAllByText("Ready form").length).toBeGreaterThan(0);
+    expect(screen.getByText("Catalog only / coming soon")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Detailed guided form coming soon" }),
+    ).toBeDisabled();
     expect(screen.queryByLabelText("Language")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Current field")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Start Voice Help" }),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Type your question")).toBeInTheDocument();
     expect(navigator.geolocation.getCurrentPosition).not.toHaveBeenCalled();
 
     const sessionCall = fetchMock.mock.calls.find(([url]) =>
       url.endsWith("/api/sessions"),
     );
-    expect(JSON.parse(sessionCall[1].body).language).toBe("auto");
-  });
-
-  it("sends language auto and the currently focused field", async () => {
-    const { fetchMock } = installApiMock();
-    const user = userEvent.setup();
-    render(<App />);
-
-    const incomeInput = await screen.findByLabelText(/Monthly Income/);
-    await user.click(incomeInput);
-    await user.type(
-      screen.getByLabelText("Type your question"),
-      "what should I enter here",
-    );
-    await user.click(screen.getByRole("button", { name: "Ask" }));
-
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some(([url]) =>
-          url.endsWith("/api/assistant/ask"),
-        ),
-      ).toBe(true),
-    );
-    const askCall = fetchMock.mock.calls.find(([url]) =>
-      url.endsWith("/api/assistant/ask"),
-    );
-    expect(JSON.parse(askCall[1].body)).toMatchObject({
-      current_field: "monthly_income",
+    expect(JSON.parse(sessionCall[1].body)).toEqual({
+      form_id: "catalog",
       language: "auto",
     });
   });
 
-  it("uses a matching English browser voice without calling backend TTS", async () => {
+  it("searches services from the catalog", async () => {
     const { fetchMock } = installApiMock();
     const user = userEvent.setup();
     render(<App />);
 
-    const incomeInput = await screen.findByLabelText(/Monthly Income/);
-    await user.type(
-      screen.getByLabelText("Type your question"),
-      "monthly income fifteen thousand what should I enter",
-    );
-    await user.click(screen.getByRole("button", { name: "Ask" }));
-
+    await user.type(await screen.findByLabelText("Search services"), "income");
     expect(
-      await screen.findAllByText(/You can enter 15000 in Monthly Income/),
-    ).not.toHaveLength(0);
-    await waitFor(() =>
-      expect(window.speechSynthesis.speak).toHaveBeenCalledOnce(),
-    );
-    const utterance = window.speechSynthesis.speak.mock.calls[0][0];
-    expect(utterance.lang).toBe("en-IN");
-    expect(utterance.voice.name).toBe("Test English India");
-    expect(utterance.rate).toBe(0.9);
-    expect(incomeInput).toHaveValue(null);
-    expect(
-      fetchMock.mock.calls.some(([url]) => url.endsWith("/api/tts/speak")),
-    ).toBe(false);
+      fetchMock.mock.calls.some(([url]) => url.includes("/api/services/search?q=income")),
+    ).toBe(true);
   });
 
-  it("uses backend MP3 for Telugu when no Telugu browser voice exists", async () => {
-    const { fetchMock } = installApiMock({ ask: teluguPurposeResponse() });
-    const user = userEvent.setup();
-    render(<App />);
-
-    const purposeInput = await screen.findByLabelText(/Purpose of Certificate/);
-    await user.type(
-      screen.getByLabelText("Type your question"),
-      "purpose lo scholarship ani rayacha",
-    );
-    await user.click(screen.getByRole("button", { name: "Ask" }));
-
-    expect(await screen.findAllByText(/అవును/)).not.toHaveLength(0);
-    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
-    expect(FakeAudio.instances[0].play).toHaveBeenCalled();
-    const ttsCall = fetchMock.mock.calls.find(([url]) =>
-      url.endsWith("/api/tts/speak"),
-    );
-    expect(JSON.parse(ttsCall[1].body)).toMatchObject({
-      language_code: "te-IN",
-      detected_language: "telugu",
-    });
-    expect(
-      screen.getByText(
-        "Browser voice for this language was not found. Using backend voice output.",
-      ),
-    ).toBeInTheDocument();
-    expect(purposeInput).toHaveValue("");
-  });
-
-  it("uses backend MP3 for Hindi when no Hindi browser voice exists", async () => {
-    const { fetchMock } = installApiMock({ ask: hindiPurposeResponse() });
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.type(
-      await screen.findByLabelText("Type your question"),
-      "purpose mein scholarship likhna hai kya",
-    );
-    await user.click(screen.getByRole("button", { name: "Ask" }));
-
-    expect(await screen.findAllByText(/हाँ/)).not.toHaveLength(0);
-    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
-    const ttsCall = fetchMock.mock.calls.find(([url]) =>
-      url.endsWith("/api/tts/speak"),
-    );
-    expect(JSON.parse(ttsCall[1].body).language_code).toBe("hi-IN");
-    expect(document.getElementById("purpose")).toHaveValue("");
-  });
-
-  it("Speak again replays the latest reply in its backend language", async () => {
-    installApiMock({ ask: teluguPurposeResponse() });
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.type(
-      await screen.findByLabelText("Type your question"),
-      "purpose lo scholarship ani rayacha",
-    );
-    await user.click(screen.getByRole("button", { name: "Ask" }));
-    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
-    FakeAudio.instances[0].onended?.();
-
-    await user.click(screen.getByRole("button", { name: "మళ్లీ వినండి" }));
-    await waitFor(() => expect(FakeAudio.instances).toHaveLength(2));
-    expect(FakeAudio.instances[1].play).toHaveBeenCalled();
-  });
-
-  it("can force backend voice from collapsed developer diagnostics", async () => {
-    const { fetchMock } = installApiMock();
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.type(
-      await screen.findByLabelText("Type your question"),
-      "monthly income fifteen thousand",
-    );
-    await user.click(screen.getByRole("button", { name: "Ask" }));
-    await waitFor(() =>
-      expect(window.speechSynthesis.speak).toHaveBeenCalledOnce(),
-    );
-
-    await user.click(screen.getByText("Developer Diagnostics"));
-    await user.click(
-      screen.getByRole("button", { name: "Force Backend Voice" }),
-    );
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some(([url]) => url.endsWith("/api/tts/speak")),
-      ).toBe(true),
-    );
-    expect(FakeAudio.instances).toHaveLength(1);
-  });
-
-  it("pauses recognition while speaking and resumes only while voice help is active", async () => {
+  it("lets the catalog assistant suggest a ready service", async () => {
     installApiMock();
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(
-      await screen.findByRole("button", { name: "Start Voice Help" }),
+    await user.type(
+      await screen.findByLabelText("Ask assistant about services"),
+      "Scholarship kosam income certificate kavali",
     );
-    const recognition = FakeRecognition.instances.at(-1);
-    recognition.emitFinal("monthly income fifteen thousand");
+    await user.click(screen.getAllByRole("button", { name: "Ask Assistant" })[0]);
 
-    await waitFor(() =>
-      expect(window.speechSynthesis.speak).toHaveBeenCalled(),
-    );
-    expect(recognition.stopCalls).toBeGreaterThan(0);
-    window.speechSynthesis.speak.mock.calls[0][0].onend();
-    await waitFor(() => expect(recognition.startCalls).toBeGreaterThan(1));
-
-    recognition.emitFinal("monthly income fifteen thousand");
-    await waitFor(() =>
-      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(2),
-    );
-    await user.click(screen.getByRole("button", { name: "Stop Voice Help" }));
-    const startsAfterStop = recognition.startCalls;
-    window.speechSynthesis.speak.mock.calls[1][0].onend();
-    await new Promise((resolve) => window.setTimeout(resolve, 350));
-    expect(recognition.startCalls).toBe(startsAfterStop);
+    expect(
+      await screen.findByText(/may need the Income Certificate form/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Income Certificate" })).toBeInTheDocument();
   });
 
-  it("falls back to backend audio when browser synthesis errors", async () => {
+  it("does not open catalog-only suggestions", async () => {
+    installApiMock({
+      ask: {
+        success: true,
+        field: null,
+        reply:
+          "It looks like you may need Loan Eligibility Card. I can explain general requirements, but the detailed guided form is coming soon.",
+        suggested_form_id: "loan_eligibility_card",
+        suggested_form_name: "Loan Eligibility Card",
+        related_values: {},
+        location_matches: [],
+        warning: null,
+        detected_language: "english",
+        language_code: "en-IN",
+        auto_fill: false,
+        should_submit: false,
+      },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(
+      await screen.findByLabelText("Ask assistant about services"),
+      "I need a loan eligibility card",
+    );
+    await user.click(screen.getAllByRole("button", { name: "Ask Assistant" })[0]);
+
+    expect(await screen.findByText("Detailed guided form coming soon.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Start Loan Eligibility Card" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the selected dynamic form and document section", async () => {
+    installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+
+    await openIncomeForm(user);
+    expect(screen.getByLabelText(/Monthly Income/)).toBeInTheDocument();
+    expect(screen.getByText("Upload guidance")).toBeInTheDocument();
+    expect(screen.getByLabelText("Upload Income Proof")).toBeInTheDocument();
+  });
+
+  it("shows only Start and Stop as main assistant controls", async () => {
+    installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    const assistant = screen.getByRole("complementary", {
+      name: "NiyamGuard Voice Assistant",
+    });
+    const mainControls = within(assistant.querySelector(".voice-controls")).getAllByRole(
+      "button",
+    );
+    expect(mainControls.map((button) => button.textContent)).toEqual(["Start", "Stop"]);
+    expect(screen.queryByText("Force Backend Voice")).not.toBeInTheDocument();
+    expect(screen.queryByText("Speak Again")).not.toBeInTheDocument();
+    expect(screen.queryByText("Raw JSON")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Having trouble? Type instead").closest("details"),
+    ).not.toHaveAttribute("open");
+  });
+
+  it("validates uploaded files locally", async () => {
+    installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    fireEvent.change(screen.getByLabelText("Upload Income Proof"), {
+      target: {
+        files: [new File(["bad"], "income.txt", { type: "text/plain" })],
+      },
+    });
+    expect(await screen.findByText(/File type .txt is not accepted/)).toBeInTheDocument();
+
+    await user.upload(
+      screen.getByLabelText("Upload Aadhaar Card"),
+      new File([new Uint8Array(1024 * 1024 * 6)], "aadhaar.pdf", {
+        type: "application/pdf",
+      }),
+    );
+    expect(await screen.findByText(/File is too large/)).toBeInTheDocument();
+  });
+
+  it("sends selected form id and focused field context", async () => {
     const { fetchMock } = installApiMock();
     const user = userEvent.setup();
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<App />);
+    await openIncomeForm(user);
 
-    await user.type(
-      await screen.findByLabelText("Type your question"),
-      "monthly income fifteen thousand",
-    );
+    await user.click(screen.getByLabelText(/Monthly Income/));
+    const input = await openTextFallback(user);
+    await user.type(input, "what should I enter here");
     await user.click(screen.getByRole("button", { name: "Ask" }));
+
     await waitFor(() =>
-      expect(window.speechSynthesis.speak).toHaveBeenCalled(),
+      expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/assistant/ask"))).toBe(true),
     );
-    window.speechSynthesis.speak.mock.calls[0][0].onerror({
-      error: "synthesis-failed",
+    const askCall = fetchMock.mock.calls.findLast(([url]) =>
+      url.endsWith("/api/assistant/ask"),
+    );
+    expect(JSON.parse(askCall[1].body)).toMatchObject({
+      form_id: "income_certificate",
+      current_field: "monthly_income",
+      current_document: null,
+      last_visible_section: "details",
+      language: "auto",
     });
-
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some(([url]) => url.endsWith("/api/tts/speak")),
-      ).toBe(true),
-    );
-    expect(FakeAudio.instances).toHaveLength(1);
-    expect(errorSpy).toHaveBeenCalledWith("Speech error", "synthesis-failed");
   });
 
-  it("keeps text visible when backend TTS fails", async () => {
-    installApiMock({ ask: teluguPurposeResponse(), ttsError: true });
+  it("sends focused document context for upload guidance", async () => {
+    const { fetchMock } = installApiMock();
     const user = userEvent.setup();
-    vi.spyOn(console, "error").mockImplementation(() => {});
     render(<App />);
+    await openIncomeForm(user);
 
-    await user.type(
-      await screen.findByLabelText("Type your question"),
-      "purpose lo scholarship ani rayacha",
-    );
+    fireEvent.focus(screen.getByLabelText("Upload Income Proof"));
+    const input = await openTextFallback(user);
+    await user.type(input, "what should I upload here");
     await user.click(screen.getByRole("button", { name: "Ask" }));
 
-    expect(await screen.findAllByText(/అవును/)).not.toHaveLength(0);
-    expect(
-      await screen.findByText(
-        "Could not generate voice output for this language. Please check internet or TTS provider. Text guidance is still visible.",
-      ),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/assistant/ask"))).toBe(true),
+    );
+    const askCall = fetchMock.mock.calls.findLast(([url]) =>
+      url.endsWith("/api/assistant/ask"),
+    );
+    expect(JSON.parse(askCall[1].body)).toMatchObject({
+      form_id: "income_certificate",
+      current_document: "income_proof",
+      last_visible_section: "documents",
+    });
   });
 
-  it("offers mandal quick help, speaks the response, and never fills location fields", async () => {
+  it("speaks the introduction before starting browser fallback recognition", async () => {
+    installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Speaking...");
+    expect(window.speechSynthesis.speak).toHaveBeenCalledOnce();
+    expect(window.speechSynthesis.speak.mock.calls[0][0].text).toContain(
+      "Namaste. I am NiyamGuard Voice Assistant",
+    );
+    const recognition = FakeRecognition.instances.at(-1);
+    expect(recognition.startCalls).toBe(0);
+    window.speechSynthesis.speak.mock.calls[0][0].onend();
+    await waitFor(() => expect(recognition.startCalls).toBe(1));
+    expect(screen.getByRole("status")).toHaveTextContent("Listening...");
+  });
+
+  it("moves through listening, thinking, and speaking states for voice input", async () => {
+    const { fetchMock } = installApiMock({ askDelayMs: 40 });
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    window.speechSynthesis.speak.mock.calls[0][0].onend();
+    const recognition = FakeRecognition.instances.at(-1);
+    await waitFor(() => expect(recognition.startCalls).toBe(1));
+    recognition.emitFinal("monthly income fifteen thousand");
+
+    expect(await screen.findByText("Thinking...")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/assistant/ask"))).toBe(true),
+    );
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Speaking..."));
+    expect(await screen.findAllByText(/You can enter 15000/)).not.toHaveLength(0);
+  });
+
+  it("uses a matching English browser voice without backend TTS", async () => {
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    const incomeInput = screen.getByLabelText(/Monthly Income/);
+    const input = await openTextFallback(user);
+    await user.type(input, "monthly income fifteen thousand");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(await screen.findAllByText(/You can enter 15000/)).not.toHaveLength(0);
+    await waitFor(() => expect(window.speechSynthesis.speak).toHaveBeenCalledOnce());
+    expect(window.speechSynthesis.speak.mock.calls[0][0].lang).toBe("en-IN");
+    expect(incomeInput).toHaveValue(null);
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/tts/speak"))).toBe(false);
+  });
+
+  it("uses backend TTS for Telugu and does not auto-fill", async () => {
+    const { fetchMock } = installApiMock({ ask: teluguPurposeResponse() });
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    const purposeInput = screen.getByLabelText(/Purpose of Certificate/);
+    const input = await openTextFallback(user);
+    await user.type(input, "purpose lo scholarship ani rayacha");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(await screen.findAllByText(/à°…à°µà±à°¨à±/)).not.toHaveLength(0);
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
+    const ttsCall = fetchMock.mock.calls.find(([url]) => url.endsWith("/api/tts/speak"));
+    expect(JSON.parse(ttsCall[1].body)).toMatchObject({
+      language_code: "te-IN",
+      detected_language: "telugu",
+    });
+    expect(purposeInput).toHaveValue("");
+  });
+
+  it("uses backend TTS for Hindi and does not auto-fill", async () => {
+    const { fetchMock } = installApiMock({ ask: hindiPurposeResponse() });
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    const input = await openTextFallback(user);
+    await user.type(input, "purpose mein scholarship likhna hai kya");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(await screen.findAllByText(/à¤¹à¤¾à¤/)).not.toHaveLength(0);
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
+    const ttsCall = fetchMock.mock.calls.find(([url]) => url.endsWith("/api/tts/speak"));
+    expect(JSON.parse(ttsCall[1].body).language_code).toBe("hi-IN");
+    expect(screen.getByLabelText(/Purpose of Certificate/)).toHaveValue("");
+  });
+
+  it("sends manually entered values and document status for review", async () => {
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    await user.type(screen.getByLabelText(/Purpose of Certificate/), "Scholarship");
+    await user.upload(
+      screen.getByLabelText("Upload Aadhaar Card"),
+      new File(["pdf"], "aadhaar.pdf", { type: "application/pdf" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Review My Details" }));
+
+    expect(await screen.findAllByText("Please review your details.")).not.toHaveLength(0);
+    const summaryCall = fetchMock.mock.calls.find(([url]) =>
+      url.endsWith("/api/assistant/summary"),
+    );
+    expect(JSON.parse(summaryCall[1].body)).toMatchObject({
+      form_id: "income_certificate",
+      language: "auto",
+      form_values: expect.objectContaining({ purpose: "Scholarship" }),
+      uploaded_documents: expect.objectContaining({
+        aadhaar: expect.objectContaining({ name: "aadhaar.pdf", uploaded: true }),
+      }),
+    });
+  });
+
+  it("keeps demo submit manual and never calls a submission endpoint", async () => {
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    fireEvent.submit(
+      screen.getByRole("button", { name: "Submit Manually (Demo)" }).closest("form"),
+    );
+    expect(screen.getByText("Demo only. No government application was submitted.")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => /submit/i.test(url))).toBe(false);
+  });
+
+  it("does not request geolocation until the user clicks the optional location button", async () => {
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
+    navigator.geolocation.getCurrentPosition.mockImplementation((success) =>
+      success({ coords: { latitude: 17.444, longitude: 78.377 } }),
+    );
+    render(<App />);
+    await openIncomeForm(user);
+
+    expect(navigator.geolocation.getCurrentPosition).not.toHaveBeenCalled();
+    await user.click(screen.getByText("Need mandal or location help?"));
+    await user.click(screen.getByRole("button", { name: "Use My Location to Help Find Mandal" }));
+    expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/location/reverse"))).toBe(true),
+    );
+    expect(screen.getByLabelText(/District/)).toHaveValue("");
+    expect(screen.getByLabelText(/Mandal/)).toHaveValue("");
+  });
+
+  it("offers mandal help without changing district or mandal fields", async () => {
     const locationReply = {
       success: true,
       field: "mandal",
       reply:
-        "మీ pincode ప్రకారం జిల్లా Rangareddy, మండలం Serilingampally ఉండవచ్చు. దయచేసి confirm చేయండి.",
+        "à°®à±€ pincode à°ªà±à°°à°•à°¾à°°à°‚ à°œà°¿à°²à±à°²à°¾ Rangareddy, à°®à°‚à°¡à°²à°‚ Serilingampally à°‰à°‚à°¡à°µà°šà±à°šà±. à°¦à°¯à°šà±‡à°¸à°¿ confirm à°šà±‡à°¯à°‚à°¡à°¿.",
       suggested_value: null,
-      related_values: {
-        district: "Rangareddy",
-        mandal: "Serilingampally",
-      },
+      related_values: { district: "Rangareddy", mandal: "Serilingampally" },
       location_matches: [],
       warning: null,
       detected_language: "telugu",
@@ -378,97 +500,35 @@ describe("NiyamGuard frontend", () => {
       auto_fill: false,
       should_submit: false,
     };
-    const { fetchMock } = installApiMock({ ask: locationReply });
+    installApiMock({ ask: locationReply });
     const user = userEvent.setup();
     render(<App />);
+    await openIncomeForm(user);
 
-    await user.click(
-      await screen.findByRole("button", {
-        name: "I don't know my mandal",
-      }),
-    );
-
+    await user.click(screen.getByText("Need mandal or location help?"));
+    await user.type(screen.getByLabelText("Pincode"), "500032");
+    await user.click(screen.getByRole("button", { name: "Find mandal" }));
     expect(await screen.findAllByText(/Serilingampally/)).not.toHaveLength(0);
-    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
-    expect(document.getElementById("district")).toHaveValue("");
-    expect(document.getElementById("mandal")).toHaveValue("");
-    const askCall = fetchMock.mock.calls.find(([url]) =>
-      url.endsWith("/api/assistant/ask"),
-    );
-    expect(JSON.parse(askCall[1].body)).toMatchObject({
-      message: "na mandal teliyadu",
-      language: "auto",
-    });
+    expect(screen.getByLabelText(/District/)).toHaveValue("");
+    expect(screen.getByLabelText(/Mandal/)).toHaveValue("");
   });
 
-  it("requests geolocation only after the user clicks the optional button", async () => {
-    const { fetchMock } = installApiMock();
+  it("keeps text visible when backend TTS fails", async () => {
+    installApiMock({ ask: teluguPurposeResponse(), ttsError: true });
     const user = userEvent.setup();
-    navigator.geolocation.getCurrentPosition.mockImplementation((success) =>
-      success({ coords: { latitude: 17.444, longitude: 78.377 } }),
-    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
     render(<App />);
+    await openIncomeForm(user);
 
-    await screen.findByRole("button", {
-      name: "Use My Location to Help Find Mandal",
-    });
-    expect(navigator.geolocation.getCurrentPosition).not.toHaveBeenCalled();
+    const input = await openTextFallback(user);
+    await user.type(input, "purpose lo scholarship ani rayacha");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "Use My Location to Help Find Mandal",
-      }),
-    );
-    expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledOnce();
-    await waitFor(() =>
-      expect(
-        fetchMock.mock.calls.some(([url]) =>
-          url.endsWith("/api/location/reverse"),
-        ),
-      ).toBe(true),
-    );
-    expect(document.getElementById("district")).toHaveValue("");
-    expect(document.getElementById("mandal")).toHaveValue("");
-  });
-
-  it("sends only manually typed values for review", async () => {
-    const { fetchMock } = installApiMock();
-    const user = userEvent.setup();
-    render(<App />);
-
-    const purposeInput = await screen.findByLabelText(/Purpose of Certificate/);
-    await user.type(purposeInput, "Scholarship");
-    await user.click(screen.getByRole("button", { name: "Review My Details" }));
-
+    expect(await screen.findAllByText(/à°…à°µà±à°¨à±/)).not.toHaveLength(0);
     expect(
-      await screen.findAllByText("Please review your details."),
-    ).not.toHaveLength(0);
-    const summaryCall = fetchMock.mock.calls.find(([url]) =>
-      url.endsWith("/api/assistant/summary"),
-    );
-    expect(JSON.parse(summaryCall[1].body)).toMatchObject({
-      language: "auto",
-      form_values: expect.objectContaining({ purpose: "Scholarship" }),
-    });
-  });
-
-  it("keeps submission manual and never calls a submission API", async () => {
-    const { fetchMock } = installApiMock();
-    render(<App />);
-    await screen.findByRole("heading", {
-      name: "Income Certificate Application",
-    });
-
-    fireEvent.submit(
-      screen
-        .getByRole("button", { name: "Submit Manually (Demo)" })
-        .closest("form"),
-    );
-    expect(
-      screen.getByText(/No government application was submitted/i),
+      await screen.findByText(
+        "Could not generate voice output for this language. Please check internet or TTS provider. Text guidance is still visible.",
+      ),
     ).toBeInTheDocument();
-    expect(
-      fetchMock.mock.calls.some(([url]) => /submit/i.test(url)),
-    ).toBe(false);
   });
 });
