@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import DynamicFormPage from "./components/DynamicFormPage";
+import AdminPortal from "./components/AdminPortal";
 import ServiceCatalog from "./components/ServiceCatalog";
 import VoiceAssistantPanel from "./components/VoiceAssistantPanel";
 import {
@@ -43,7 +44,7 @@ function publicDocumentState(uploadedDocuments) {
   );
 }
 
-export default function App() {
+function CitizenApp() {
   const [services, setServices] = useState([]);
   const [catalogStatus, setCatalogStatus] = useState("loading");
   const [catalogSessionId, setCatalogSessionId] = useState("");
@@ -401,4 +402,9 @@ export default function App() {
       </footer>
     </div>
   );
+}
+
+export default function App() {
+  const isAdminPath = window.location.pathname.startsWith("/admin");
+  return isAdminPath ? <AdminPortal /> : <CitizenApp />;
 }

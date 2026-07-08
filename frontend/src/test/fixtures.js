@@ -160,6 +160,64 @@ export const services = [
   },
 ];
 
+export const adminSummary = {
+  total_circulars: 2,
+  pending_extractions: 0,
+  verified_rules: 2,
+  connected_systems: 5,
+  compliance_findings: 4,
+  drifted_findings: 3,
+  critical_findings: 1,
+  open_conflicts: 1,
+  recent_audit_events: 2,
+};
+
+export const complianceFindings = [
+  {
+    id: "find_rule_001_sys_meeseva_portal",
+    service_id: "income_certificate",
+    rule_key: "validity",
+    expected_value: "6 months",
+    actual_value: "12 months",
+    status: "drifted",
+    recommended_fix: "Update portal validation rule from 12 months to 6 months.",
+    connected_system_id: "sys_meeseva_portal",
+  },
+];
+
+export const priorityFindings = [
+  {
+    finding_id: "find_rule_001_sys_meeseva_portal",
+    score: 100,
+    priority_level: "critical",
+    reason: "Portal validity mismatch affects citizens immediately.",
+  },
+];
+
+export const conflicts = [
+  {
+    id: "conf_rule_001_rule_conflict_001",
+    service_id: "income_certificate",
+    rule_key: "validity",
+    severity: "high",
+    status: "open",
+    summary: "Two active verified rules have different values.",
+  },
+];
+
+export const knowledgeRules = [
+  {
+    id: "rule_001",
+    rule_name: "Income Certificate Validity",
+    service_id: "income_certificate",
+    current_value: "6",
+    previous_value: "12",
+    unit: "months",
+    status: "active",
+    source_clause: "Income certificate must be issued within 6 months.",
+  },
+];
+
 export function jsonResponse(payload, status = 200) {
   return Promise.resolve({
     ok: status >= 200 && status < 300,
@@ -207,6 +265,68 @@ export function installApiMock(overrides = {}) {
   const fetchMock = vi.fn((url, options = {}) => {
     if (url.endsWith("/api/forms")) {
       return jsonResponse({ success: true, forms: overrides.services || services });
+    }
+    if (url.endsWith("/api/compliance/run")) {
+      return jsonResponse({ success: true, findings: complianceFindings });
+    }
+    if (url.endsWith("/api/dashboard/recalculate-priority")) {
+      return jsonResponse({ success: true, priority_findings: priorityFindings });
+    }
+    if (url.endsWith("/api/conflicts/scan")) {
+      return jsonResponse({ success: true, conflicts });
+    }
+    if (url.endsWith("/api/admin/summary")) {
+      return jsonResponse({ success: true, summary: adminSummary });
+    }
+    if (url.endsWith("/api/admin/module-status")) {
+      return jsonResponse({
+        success: true,
+        modules: [
+          { name: "central_verified_knowledge_base", status: "ready" },
+          { name: "compliance_verification_engine", status: "ready" },
+          { name: "public_verified_rule_apis", status: "ready" },
+        ],
+      });
+    }
+    if (url.endsWith("/api/compliance/findings")) {
+      return jsonResponse({ success: true, findings: complianceFindings });
+    }
+    if (url.endsWith("/api/dashboard/priority-findings")) {
+      return jsonResponse({ success: true, priority_findings: priorityFindings });
+    }
+    if (url.endsWith("/api/conflicts")) {
+      return jsonResponse({ success: true, conflicts });
+    }
+    if (url.endsWith("/api/knowledge/rules")) {
+      return jsonResponse({ success: true, rules: knowledgeRules });
+    }
+    if (url.endsWith("/api/reports/summary")) {
+      return jsonResponse({
+        success: true,
+        summary: {
+          circulars: 2,
+          verified_rules: 2,
+          connected_systems: 5,
+          compliance_findings: 4,
+          conflicts: 1,
+          priority_scores: 4,
+        },
+      });
+    }
+    if (url.includes("/api/cascade/finding/")) {
+      return jsonResponse({
+        success: true,
+        trace: {
+          id: "trace_find_rule_001_sys_meeseva_portal",
+          impact_summary: "Portal mismatch can cause wrong approval or rejection risk.",
+          nodes_json: [
+            { id: "node_1", label: "Circular Changed" },
+            { id: "node_2", label: "Portal Not Updated" },
+            { id: "node_3", label: "Citizen Applies Under Wrong Rule" },
+          ],
+          edges_json: [{ from: "node_1", to: "node_2" }],
+        },
+      });
     }
     if (url.includes("/api/services/search")) {
       return jsonResponse({ success: true, services: overrides.services || services });

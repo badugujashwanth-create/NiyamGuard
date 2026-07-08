@@ -98,6 +98,7 @@ async function openTextFallback(user) {
 
 describe("NiyamGuard frontend", () => {
   beforeEach(() => {
+    window.history.pushState({}, "", "/");
     FakeRecognition.instances = [];
     FakeAudio.instances = [];
     window.SpeechRecognition = FakeRecognition;
@@ -530,5 +531,53 @@ describe("NiyamGuard frontend", () => {
         "Could not generate voice output for this language. Please check internet or TTS provider. Text guidance is still visible.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("admin dashboard renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByText("Verified Rules")).toBeInTheDocument();
+    expect(screen.getByText("Priority Findings")).toBeInTheDocument();
+  });
+
+  it("admin compliance page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin/compliance");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Compliance" })).toBeInTheDocument();
+    expect(screen.getByText("Compliance Findings")).toBeInTheDocument();
+    expect(screen.getByText("Update portal validation rule from 12 months to 6 months.")).toBeInTheDocument();
+  });
+
+  it("admin conflict page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin/conflicts");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Conflicts" })).toBeInTheDocument();
+    expect(screen.getByText("Two active verified rules have different values.")).toBeInTheDocument();
+  });
+
+  it("admin knowledge base page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin/knowledge-base");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Knowledge Base" })).toBeInTheDocument();
+    expect(screen.getByText("Income Certificate Validity")).toBeInTheDocument();
+  });
+
+  it("admin reports page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin/reports");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Reports" })).toBeInTheDocument();
+    expect(screen.getByText("Export Compliance CSV")).toBeInTheDocument();
+    expect(screen.getByText("Export Rules JSON")).toBeInTheDocument();
   });
 });

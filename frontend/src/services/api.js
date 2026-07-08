@@ -216,3 +216,55 @@ export function reverseLocation({ latitude, longitude, language = "auto" }) {
     body: JSON.stringify({ latitude, longitude, language }),
   });
 }
+
+export function getAdminSummary() {
+  return request("/api/admin/summary");
+}
+
+export function getModuleStatus() {
+  return request("/api/admin/module-status");
+}
+
+export function runCompliance() {
+  return request("/api/compliance/run", { method: "POST" });
+}
+
+export function getComplianceFindings() {
+  return request("/api/compliance/findings");
+}
+
+export function getCascadeForFinding(findingId) {
+  return request(`/api/cascade/finding/${encodeURIComponent(findingId)}`);
+}
+
+export function recalculatePriority() {
+  return request("/api/dashboard/recalculate-priority", { method: "POST" });
+}
+
+export function getPriorityFindings() {
+  return request("/api/dashboard/priority-findings");
+}
+
+export function getDashboardSummary() {
+  return request("/api/dashboard/summary");
+}
+
+export function scanConflicts() {
+  return request("/api/conflicts/scan", { method: "POST" });
+}
+
+export function getConflicts() {
+  return request("/api/conflicts");
+}
+
+export function getKnowledgeRules() {
+  return request("/api/knowledge/rules");
+}
+
+export function getReportsSummary() {
+  return request("/api/reports/summary");
+}
+
+export function reportExportUrl(type, format) {
+  return `${API_BASE_URL}/api/reports/export?type=${encodeURIComponent(type)}&format=${encodeURIComponent(format)}`;
+}
