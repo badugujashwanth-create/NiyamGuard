@@ -13,6 +13,50 @@ This repo is implemented independently. It does not import or merge code from th
 
 This is a demo MVP. It does not submit real applications to the government and does not replace official verification.
 
+## Final MVP Status
+
+NiyamGuard AI completed MVP modules:
+
+- Citizen Voice/Form Assistant
+- Service Catalog and Dynamic Forms
+- Telugu/Hindi/English voice guidance
+- Government Verified Knowledge Base
+- Connected Systems Registry
+- Compliance Drift Detection
+- Cascade Impact Tracing
+- Priority Dashboard
+- Conflict Detection
+- Reports and Export
+- Public Verified Rule APIs
+- Admin UI
+- Demo Dashboard
+
+Recommended judge/demo entry point:
+
+```text
+http://127.0.0.1:5173/demo
+```
+
+The demo dashboard links to the citizen portal, admin portal, compliance run,
+verified public rule, and report exports without showing raw JSON in the normal UI.
+
+## One-Command Demo Run
+
+From the repo root:
+
+```powershell
+cd D:\niyam\niyamguard-call-assistant
+powershell -ExecutionPolicy Bypass -File .\scripts\start-demo.ps1
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5173/demo
+http://127.0.0.1:5173/admin
+http://127.0.0.1:5173
+```
+
 ## Government-Core Modules Completed
 
 1. Central Verified Knowledge Base
@@ -25,8 +69,9 @@ This is a demo MVP. It does not submit real applications to the government and d
 8. Reports & Export Module
 9. Public Verified Rule APIs
 10. Minimal Admin UI in the existing React frontend
-11. Demo Seed Data
-12. Tests
+11. Final Demo Dashboard
+12. Demo Seed Data
+13. Tests
 
 ## Government-Core Data Models
 
@@ -117,10 +162,17 @@ Seeded scenario:
 6. Run `POST /api/conflicts/scan`.
 7. Run `GET /api/public/rules/latest?service_id=income_certificate&rule_key=validity`.
 8. Export `GET /api/reports/export?type=compliance&format=csv`.
-9. Open admin UI at `http://127.0.0.1:5173/admin`.
+9. Open demo dashboard at `http://127.0.0.1:5173/demo`.
+10. Open admin UI at `http://127.0.0.1:5173/admin`.
+11. Open citizen portal and ask `income certificate validity entha` to show the verified GO-138 source card.
 
 ## Government-Core Known Limitations
 
+- This is a demo MVP.
+- It does not submit real applications to the government.
+- It does not replace official verification.
+- Some demo data is seeded locally.
+- Live MeeSeva integration is future scope.
 - JSON demo storage is for MVP/demo use, not production concurrency.
 - Circular extraction is seeded/demo data, not a live LLM extraction pipeline.
 - No official government portal, MeeSeva, OTP, CAPTCHA, payment, or submission integration.
@@ -225,7 +277,7 @@ py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python -m app.seed_demo
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8000
 ```
 
 Frontend:
@@ -236,8 +288,17 @@ npm install
 npm run dev
 ```
 
+Open:
+
+```text
+http://127.0.0.1:5173/demo
+http://127.0.0.1:5173/admin
+http://127.0.0.1:5173
+```
+
 Open `http://127.0.0.1:5173` for the citizen voice assistant.
 Open `http://127.0.0.1:5173/admin` for the government-core admin dashboard.
+Open `http://127.0.0.1:5173/demo` for the final presentation dashboard.
 
 ## Tests
 

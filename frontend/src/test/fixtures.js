@@ -167,21 +167,98 @@ export const adminSummary = {
   connected_systems: 5,
   compliance_findings: 4,
   drifted_findings: 3,
-  critical_findings: 1,
+  critical_findings: 3,
   open_conflicts: 1,
   recent_audit_events: 2,
 };
 
+export const connectedSystems = [
+  {
+    id: "sys_meeseva_portal",
+    name: "MeeSeva Income Certificate Portal",
+    system_type: "portal",
+    service_id: "income_certificate",
+  },
+  {
+    id: "sys_officer_sop",
+    name: "Officer SOP Manual",
+    system_type: "sop",
+    service_id: "income_certificate",
+  },
+  {
+    id: "sys_public_faq",
+    name: "Public FAQ",
+    system_type: "faq",
+    service_id: "income_certificate",
+  },
+  {
+    id: "sys_simplified_form",
+    name: "Simplified Citizen Form",
+    system_type: "form",
+    service_id: "income_certificate",
+  },
+];
+
 export const complianceFindings = [
   {
     id: "find_rule_001_sys_meeseva_portal",
+    verified_rule_id: "rule_001",
     service_id: "income_certificate",
     rule_key: "validity",
     expected_value: "6 months",
     actual_value: "12 months",
     status: "drifted",
+    severity: "high",
+    finding_summary: "MeeSeva Income Certificate Portal still shows 12 months.",
     recommended_fix: "Update portal validation rule from 12 months to 6 months.",
+    citizen_impact_reason: "Citizens may follow an outdated requirement and face rejection.",
+    source_clause: "Income certificate must be issued within 6 months.",
     connected_system_id: "sys_meeseva_portal",
+  },
+  {
+    id: "find_rule_001_sys_officer_sop",
+    verified_rule_id: "rule_001",
+    service_id: "income_certificate",
+    rule_key: "validity",
+    expected_value: "6 months",
+    actual_value: "12 months",
+    status: "drifted",
+    severity: "high",
+    finding_summary: "Officer SOP Manual still shows 12 months.",
+    recommended_fix: "Update Officer SOP Manual from 12 months to 6 months.",
+    citizen_impact_reason: "Officers may ask citizens to follow the old rule.",
+    source_clause: "Income certificate must be issued within 6 months.",
+    connected_system_id: "sys_officer_sop",
+  },
+  {
+    id: "find_rule_001_sys_public_faq",
+    verified_rule_id: "rule_001",
+    service_id: "income_certificate",
+    rule_key: "validity",
+    expected_value: "6 months",
+    actual_value: "12 months",
+    status: "drifted",
+    severity: "medium",
+    finding_summary: "Public FAQ still shows 12 months.",
+    recommended_fix: "Update Public FAQ from 12 months to 6 months.",
+    citizen_impact_reason: "Citizens may read stale validity guidance.",
+    source_clause: "Income certificate must be issued within 6 months.",
+    connected_system_id: "sys_public_faq",
+  },
+  {
+    id: "find_rule_001_sys_simplified_form",
+    verified_rule_id: "rule_001",
+    service_id: "income_certificate",
+    rule_key: "validity",
+    expected_value: "6 months",
+    actual_value: "6 months",
+    status: "compliant",
+    severity: "low",
+    finding_summary: "Simplified Citizen Form reflects the current rule.",
+    recommended_fix: "No fix required.",
+    citizen_impact_reason: "No current citizen impact detected.",
+    source_clause: "Income certificate must be issued within 6 months.",
+    connected_system_id: "sys_simplified_form",
   },
 ];
 
@@ -199,15 +276,20 @@ export const conflicts = [
     id: "conf_rule_001_rule_conflict_001",
     service_id: "income_certificate",
     rule_key: "validity",
+    conflict_type: "active_value_conflict",
+    rule_a_id: "rule_001",
+    rule_b_id: "rule_conflict_001",
     severity: "high",
     status: "open",
     summary: "Two active verified rules have different values.",
+    recommendation: "Resolve by superseding the older rule.",
   },
 ];
 
 export const knowledgeRules = [
   {
     id: "rule_001",
+    circular_id: "circ_001",
     rule_name: "Income Certificate Validity",
     service_id: "income_certificate",
     current_value: "6",
@@ -216,7 +298,31 @@ export const knowledgeRules = [
     status: "active",
     source_clause: "Income certificate must be issued within 6 months.",
   },
+  {
+    id: "rule_conflict_001",
+    circular_id: "circ_000",
+    rule_name: "Income Certificate Validity",
+    service_id: "income_certificate",
+    current_value: "12",
+    previous_value: null,
+    unit: "months",
+    status: "active",
+    source_clause: "Income certificate validity is 12 months from date of issue.",
+  },
 ];
+
+export const publicRule = {
+  success: true,
+  verified: true,
+  answer: "Income Certificate validity is currently 6 months.",
+  source: {
+    circular_id: "circ_001",
+    circular_number: "GO-138",
+    department: "Revenue",
+    effective_date: "2026-07-01",
+    confidence: 0.91,
+  },
+};
 
 export function jsonResponse(payload, status = 200) {
   return Promise.resolve({
@@ -269,6 +375,34 @@ export function installApiMock(overrides = {}) {
     if (url.endsWith("/api/compliance/run")) {
       return jsonResponse({ success: true, findings: complianceFindings });
     }
+    if (url.endsWith("/api/integration/health")) {
+      return jsonResponse({
+        module: "niyamguard_government_core",
+        status: "online",
+        version: "1.0.0",
+        features: [
+          "verified_knowledge_base",
+          "connected_systems_registry",
+          "compliance_verification",
+          "cascade_tracing",
+          "priority_dashboard",
+          "conflict_detection",
+          "reports_export",
+          "public_rule_api",
+        ],
+        counts: {
+          verified_rules: 2,
+          connected_systems: 5,
+          findings: 4,
+        },
+      });
+    }
+    if (url.endsWith("/api/dashboard/summary")) {
+      return jsonResponse({ success: true, summary: adminSummary });
+    }
+    if (url.includes("/api/public/rules/latest")) {
+      return jsonResponse(overrides.publicRule || publicRule);
+    }
     if (url.endsWith("/api/dashboard/recalculate-priority")) {
       return jsonResponse({ success: true, priority_findings: priorityFindings });
     }
@@ -283,10 +417,19 @@ export function installApiMock(overrides = {}) {
         success: true,
         modules: [
           { name: "central_verified_knowledge_base", status: "ready" },
+          { name: "connected_systems_registry", status: "ready" },
           { name: "compliance_verification_engine", status: "ready" },
+          { name: "cascade_tracing_impact_analysis", status: "ready" },
+          { name: "priority_dashboard", status: "ready" },
+          { name: "cross_circular_conflict_detection", status: "ready" },
+          { name: "government_admin_apis", status: "ready" },
+          { name: "reports_export_module", status: "ready" },
           { name: "public_verified_rule_apis", status: "ready" },
         ],
       });
+    }
+    if (url.endsWith("/api/connected-systems")) {
+      return jsonResponse({ success: true, systems: connectedSystems });
     }
     if (url.endsWith("/api/compliance/findings")) {
       return jsonResponse({ success: true, findings: complianceFindings });

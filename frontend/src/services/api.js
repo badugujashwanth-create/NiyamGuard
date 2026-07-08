@@ -210,6 +210,19 @@ export function getTtsHealth() {
   return request("/api/tts/health");
 }
 
+export function getIntegrationHealth() {
+  return request("/api/integration/health");
+}
+
+export function getLatestPublicRule(
+  serviceId = "income_certificate",
+  ruleKey = "validity",
+) {
+  return request(
+    `/api/public/rules/latest?service_id=${encodeURIComponent(serviceId)}&rule_key=${encodeURIComponent(ruleKey)}`,
+  );
+}
+
 export function reverseLocation({ latitude, longitude, language = "auto" }) {
   return request("/api/location/reverse", {
     method: "POST",
@@ -227,6 +240,10 @@ export function getModuleStatus() {
 
 export function runCompliance() {
   return request("/api/compliance/run", { method: "POST" });
+}
+
+export function getConnectedSystems() {
+  return request("/api/connected-systems");
 }
 
 export function getComplianceFindings() {

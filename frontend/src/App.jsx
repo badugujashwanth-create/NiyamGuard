@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import DynamicFormPage from "./components/DynamicFormPage";
 import AdminPortal from "./components/AdminPortal";
+import DemoDashboard from "./components/DemoDashboard";
 import ServiceCatalog from "./components/ServiceCatalog";
 import VoiceAssistantPanel from "./components/VoiceAssistantPanel";
 import {
@@ -10,6 +11,7 @@ import {
   generateSummary,
   getForm,
   getForms,
+  getLatestPublicRule,
   reverseLocation,
   searchServices,
 } from "./services/api";
@@ -42,6 +44,69 @@ function publicDocumentState(uploadedDocuments) {
         : null,
     ]),
   );
+}
+
+function detectQuestionLanguage(text) {
+  const normalized = text.toLowerCase();
+  if (/[\u0c00-\u0c7f]/.test(text) || /\b(entha|enti|aa|kavali|cheppandi|lo|kosam)\b/.test(normalized)) {
+    return { detected_language: "telugu", language_code: "te-IN" };
+  }
+  if (/[\u0900-\u097f]/.test(text) || /\b(kya|kitne|hai|abhi|bataiye|anusaar|ke liye)\b/.test(normalized)) {
+    return { detected_language: "hindi", language_code: "hi-IN" };
+  }
+  return { detected_language: "english", language_code: "en-IN" };
+}
+
+function isIncomeValidityQuestion(text, formId) {
+  const normalized = text.toLowerCase();
+  const mentionsValidity =
+    /\b(validity|valid|months?|rule|entha|enti)\b/.test(normalized) ||
+    /validity|valid/.test(normalized);
+  const mentionsIncomeCertificate =
+    /\b(income certificate|certificate|income)\b/.test(normalized) ||
+    formId === "income_certificate";
+  return mentionsValidity && mentionsIncomeCertificate;
+}
+
+function formatVerifiedRuleReply(ruleResponse, language) {
+  const source = ruleResponse.source || {};
+  const circular = source.circular_number || "source not available";
+  const department = source.department || "department not available";
+  const value = valueFromRuleResponse(ruleResponse);
+  if (!ruleResponse?.verified) {
+    if (language.detected_language === "telugu") {
+      return "Verified rule source dorakaledu. Dayachesi official government source nunchi verify cheyyandi.";
+    }
+    if (language.detected_language === "hindi") {
+      return "Verified rule source available nahi hai. Kripya official government source se verify karein.";
+    }
+    return "Verified rule source is not available. Please verify from the official government source.";
+  }
+  if (language.detected_language === "telugu") {
+    return `ప్రస్తుత verified rule ప్రకారం Income Certificate validity ${value}. Source: ${circular}, ${department} Department.`;
+  }
+  if (language.detected_language === "hindi") {
+    return `Verified rule के अनुसार Income Certificate validity अभी ${value} है. Source: ${circular}, ${department} Department.`;
+  }
+  return `According to the verified rule, Income Certificate validity is currently ${value}. Source: ${circular}, ${department} Department.`;
+}
+
+function valueFromRuleResponse(ruleResponse) {
+  const answer = ruleResponse?.answer || "";
+  const match = answer.match(/currently\s+(.+?)\.?$/i);
+  return match?.[1]?.replace(/\.$/, "") || "source not available";
+}
+
+function sourceCardFromRule(ruleResponse) {
+  const source = ruleResponse?.source;
+  if (!source) return null;
+  return {
+    circular: source.circular_number,
+    department: source.department,
+    rule: "Income Certificate Validity",
+    currentValue: valueFromRuleResponse(ruleResponse),
+    confidence: source.confidence,
+  };
 }
 
 function CitizenApp() {
@@ -199,6 +264,48 @@ function CitizenApp() {
     setGlobalError("");
     setMessages((current) => [...current, message("user", text)]);
     try {
+      if (isIncomeValidityQuestion(text, activeFormId)) {
+        const language = detectQuestionLanguage(text);
+        try {
+          const ruleResponse = await getLatestPublicRule(
+            "income_certificate",
+            "validity",
+          );
+          return applyAssistantResponse({
+            success: Boolean(ruleResponse.success),
+            field: null,
+            reply: formatVerifiedRuleReply(ruleResponse, language),
+            suggested_value: null,
+            related_values: {},
+            location_matches: [],
+            warning: ruleResponse.source
+              ? null
+              : "Source not available. Please verify from official government source.",
+            detected_language: language.detected_language,
+            language_code: language.language_code,
+            auto_fill: false,
+            should_submit: false,
+            verified_rule: true,
+            verified_source: sourceCardFromRule(ruleResponse),
+          });
+        } catch (ruleError) {
+          return applyAssistantResponse({
+            success: false,
+            field: null,
+            reply: formatVerifiedRuleReply({ verified: false }, language),
+            suggested_value: null,
+            related_values: {},
+            location_matches: [],
+            warning: ruleError.message,
+            detected_language: language.detected_language,
+            language_code: language.language_code,
+            auto_fill: false,
+            should_submit: false,
+            verified_rule: true,
+            verified_source: null,
+          });
+        }
+      }
       const response = await askAssistant({
         sessionId,
         formId: activeFormId,
@@ -406,5 +513,7 @@ function CitizenApp() {
 
 export default function App() {
   const isAdminPath = window.location.pathname.startsWith("/admin");
+  const isDemoPath = window.location.pathname.startsWith("/demo");
+  if (isDemoPath) return <DemoDashboard />;
   return isAdminPath ? <AdminPortal /> : <CitizenApp />;
 }
