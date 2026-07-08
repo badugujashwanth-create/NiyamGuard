@@ -7,11 +7,16 @@ import ServiceCatalog from "./components/ServiceCatalog";
 import VoiceAssistantPanel from "./components/VoiceAssistantPanel";
 import {
   askAssistant,
+  askChat,
   createSession,
   generateSummary,
+  getAccessToken,
   getForm,
   getForms,
   getLatestPublicRule,
+  getStoredUser,
+  login as loginAdmin,
+  logout as logoutAdmin,
   reverseLocation,
   searchServices,
 } from "./services/api";
@@ -60,7 +65,7 @@ function detectQuestionLanguage(text) {
 function isIncomeValidityQuestion(text, formId) {
   const normalized = text.toLowerCase();
   const mentionsValidity =
-    /\b(validity|valid|months?|rule|entha|enti)\b/.test(normalized) ||
+    /\b(validity|valid|months?|rule|entha)\b/.test(normalized) ||
     /validity|valid/.test(normalized);
   const mentionsIncomeCertificate =
     /\b(income certificate|certificate|income)\b/.test(normalized) ||
@@ -106,7 +111,116 @@ function sourceCardFromRule(ruleResponse) {
     rule: "Income Certificate Validity",
     currentValue: valueFromRuleResponse(ruleResponse),
     confidence: source.confidence,
+    effectiveDate: source.effective_date,
+    whySelected: "Matched income certificate validity against the latest verified public rule.",
   };
+}
+
+function titleCase(value = "") {
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function isCitizenKnowledgeQuestion(text, formId) {
+  const normalized = text.toLowerCase();
+  const asksFormFieldHelp =
+    /\b(purpose|monthly income|field|box|mandal|pincode|what should i enter|rayacha|likhna)\b/.test(
+      normalized,
+    ) && !/\b(document|documents|docs|eligib|process|apply|validity|fee|timeline|old rule|new rule)\b/.test(normalized);
+  if (asksFormFieldHelp) return false;
+
+  const hasIntent = /\b(document|documents|docs|proof|eligib|qualify|process|apply|steps|validity|valid|fee|cost|timeline|days|old rule|new rule|compare|which service|which form)\b/.test(
+    normalized,
+  ) || /\b(enti|entha|kavali|kaise|kya)\b/.test(normalized);
+  const hasKnownService =
+    /\b(income certificate|residence certificate|caste certificate|community certificate|ews|scholarship|post matric|pension|old age|widow|disability|birth certificate|death certificate|family member|ration card|food security)\b/.test(
+      normalized,
+    ) || formId !== "catalog";
+
+  return hasIntent && hasKnownService;
+}
+
+function sourceCardFromChat(chatResponse) {
+  const firstReference = chatResponse?.source?.references?.[0] || {};
+  return {
+    circular:
+      firstReference.circular_number ||
+      firstReference.label ||
+      chatResponse?.source?.label ||
+      "NiyamGuard Knowledge Base",
+    department: firstReference.department || "Citizen Services Knowledge",
+    rule: titleCase(chatResponse?.intent || "Citizen Knowledge"),
+    currentValue:
+      firstReference.current_value ||
+      titleCase(chatResponse?.scheme_or_service || chatResponse?.source?.type || "Guidance"),
+    confidence: chatResponse?.confidence,
+    effectiveDate: firstReference.effective_date,
+    lastUpdated: firstReference.last_updated,
+    whySelected: `Matched this question to ${titleCase(chatResponse?.intent || "knowledge")} guidance for ${titleCase(chatResponse?.scheme_or_service || "citizen services")}.`,
+  };
+}
+
+function LoginPage({ onLoginSuccess }) {
+  const [email, setEmail] = useState("admin@niyamguard.local");
+  const [password, setPassword] = useState("Admin@12345");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await loginAdmin(email, password);
+      onLoginSuccess(response.user);
+    } catch (loginError) {
+      setError(loginError.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <main className="login-shell">
+      <section className="login-panel" aria-labelledby="login-title">
+        <div className="login-brand">
+          <span className="brand-emblem" aria-hidden="true">NG</span>
+          <div>
+            <p>Secure government access</p>
+            <h1 id="login-title">NiyamGuard Admin Login</h1>
+          </div>
+        </div>
+        <form className="login-form" onSubmit={handleSubmit}>
+          <label htmlFor="admin-email">Email</label>
+          <input
+            autoComplete="username"
+            id="admin-email"
+            onChange={(event) => setEmail(event.target.value)}
+            type="email"
+            value={email}
+          />
+          <label htmlFor="admin-password">Password</label>
+          <input
+            autoComplete="current-password"
+            id="admin-password"
+            onChange={(event) => setPassword(event.target.value)}
+            type="password"
+            value={password}
+          />
+          {error ? <p className="login-error" role="alert">{error}</p> : null}
+          <button className="button button-primary" disabled={submitting} type="submit">
+            {submitting ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
+        <p className="login-hint">Demo admin: admin@niyamguard.local / Admin@12345</p>
+        <div className="login-links">
+          <a href="/demo">Open public demo</a>
+          <a href="/">Open citizen portal</a>
+        </div>
+      </section>
+    </main>
+  );
 }
 
 function CitizenApp() {
@@ -305,6 +419,34 @@ function CitizenApp() {
             verified_source: null,
           });
         }
+      }
+      if (isCitizenKnowledgeQuestion(text, activeFormId)) {
+        const chatResponse = await askChat({
+          message: text,
+          language: "auto",
+          context: {
+            service_id: activeFormId === "catalog" ? undefined : activeFormId,
+            form_id: activeFormId,
+          },
+          profile: {},
+        });
+        return applyAssistantResponse({
+          success: Boolean(chatResponse.success),
+          field: null,
+          reply: chatResponse.answer,
+          suggested_value: null,
+          related_values: {},
+          location_matches: [],
+          warning: chatResponse.fallback
+            ? "No verified source was available for this question."
+            : null,
+          detected_language: chatResponse.language || "english",
+          language_code: chatResponse.language_code || "en-IN",
+          auto_fill: false,
+          should_submit: false,
+          verified_rule: true,
+          verified_source: sourceCardFromChat(chatResponse),
+        });
       }
       const response = await askAssistant({
         sessionId,
@@ -512,8 +654,59 @@ function CitizenApp() {
 }
 
 export default function App() {
-  const isAdminPath = window.location.pathname.startsWith("/admin");
-  const isDemoPath = window.location.pathname.startsWith("/demo");
-  if (isDemoPath) return <DemoDashboard />;
-  return isAdminPath ? <AdminPortal /> : <CitizenApp />;
+  const [path, setPath] = useState(window.location.pathname);
+  const [currentUser, setCurrentUser] = useState(() => getStoredUser());
+
+  useEffect(() => {
+    function handlePopState() {
+      setPath(window.location.pathname);
+    }
+    function handleAuthChanged(event) {
+      setCurrentUser(event.detail?.user || getStoredUser());
+    }
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("niyamguard:auth-changed", handleAuthChanged);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("niyamguard:auth-changed", handleAuthChanged);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (path.startsWith("/admin") && !getAccessToken()) {
+      window.history.replaceState({}, "", "/login");
+      setPath("/login");
+    }
+  }, [path, currentUser]);
+
+  function navigate(nextPath) {
+    window.history.pushState({}, "", nextPath);
+    setPath(nextPath);
+  }
+
+  async function handleLogout() {
+    await logoutAdmin().catch(() => {});
+    setCurrentUser(null);
+    navigate("/login");
+  }
+
+  function handleLoginSuccess(user) {
+    setCurrentUser(user);
+    navigate("/admin");
+  }
+
+  if (path.startsWith("/demo")) return <DemoDashboard />;
+  if (path.startsWith("/login")) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+  if (path.startsWith("/admin")) {
+    return (
+      <AdminPortal
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onUnauthorized={() => navigate("/login")}
+      />
+    );
+  }
+  return <CitizenApp />;
 }

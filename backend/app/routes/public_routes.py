@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Query
 
-from app.config import APP_VERSION
+from app.config import APP_VERSION, APP_NAME, settings
 from app.services import knowledge_base_service
 from app.services.platform_store import read_store
 
-router = APIRouter(tags=["public"])
+router = APIRouter(tags=["Public APIs"])
 
 
 @router.get("/api/public/rules/latest")
@@ -60,7 +60,21 @@ def integration_health() -> dict:
     return {
         "module": "niyamguard_government_core",
         "status": "online",
+        "app": APP_NAME,
+        "environment": settings.app_env,
         "version": APP_VERSION,
+        "modules": [
+            "knowledge_base",
+            "connected_systems",
+            "compliance",
+            "cascade",
+            "priority",
+            "conflicts",
+            "reports",
+            "public_rules",
+            "voice_assistant",
+            "forms",
+        ],
         "features": [
             "verified_knowledge_base",
             "connected_systems_registry",

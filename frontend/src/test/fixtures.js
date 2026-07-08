@@ -324,6 +324,63 @@ export const publicRule = {
   },
 };
 
+export const adminUser = {
+  id: "user_admin",
+  email: "admin@niyamguard.local",
+  role: "admin",
+  is_active: true,
+  created_at: "2026-07-09T00:00:00+00:00",
+  updated_at: "2026-07-09T00:00:00+00:00",
+};
+
+export const auditEvents = [
+  {
+    id: "audit_001",
+    actor_user_id: "user_admin",
+    actor_email: "admin@niyamguard.local",
+    actor_role: "admin",
+    action: "login_success",
+    entity_type: "auth",
+    entity_id: "user_admin",
+    request_id: "req_001",
+    created_at: "2026-07-09T00:00:00+00:00",
+  },
+  {
+    id: "audit_002",
+    actor_user_id: "user_admin",
+    actor_email: "admin@niyamguard.local",
+    actor_role: "admin",
+    action: "report_exported",
+    entity_type: "report",
+    entity_id: "compliance",
+    request_id: "req_002",
+    created_at: "2026-07-09T00:05:00+00:00",
+  },
+];
+
+export const chatAnswer = {
+  success: true,
+  answer:
+    "For Post-Matric Scholarship, the usual documents are: Valid Income Certificate, Caste Certificate if applicable, Previous year mark sheet, Bonafide certificate, Bank passbook copy.",
+  language: "english",
+  language_code: "en-IN",
+  intent: "documents",
+  scheme_or_service: "post_matric_scholarship",
+  source: {
+    type: "local_knowledge",
+    label: "NiyamGuard seeded citizen knowledge",
+    references: [
+      {
+        service_id: "post_matric_scholarship",
+        label: "NiyamGuard local scholarship knowledge linked to Income Certificate GO-138.",
+      },
+    ],
+  },
+  confidence: 0.78,
+  verified: true,
+  fallback: false,
+};
+
 export function jsonResponse(payload, status = 200) {
   return Promise.resolve({
     ok: status >= 200 && status < 300,
@@ -369,6 +426,63 @@ export function installApiMock(overrides = {}) {
   }
 
   const fetchMock = vi.fn((url, options = {}) => {
+    if (url.endsWith("/api/auth/login")) {
+      const requestBody = JSON.parse(options.body);
+      if (requestBody.email === "admin@niyamguard.local" && requestBody.password === "Admin@12345") {
+        return jsonResponse({
+          success: true,
+          access_token: "test-access-token",
+          refresh_token: "test-refresh-token",
+          token_type: "bearer",
+          user: adminUser,
+        });
+      }
+      return jsonResponse({ detail: "Invalid email or password." }, 401);
+    }
+    if (url.endsWith("/api/auth/logout")) {
+      return jsonResponse({ success: true });
+    }
+    if (url.endsWith("/api/auth/me")) {
+      return jsonResponse({ success: true, user: overrides.user || adminUser });
+    }
+    if (url.endsWith("/api/auth/users")) {
+      if ((options.method || "GET").toUpperCase() === "POST") {
+        const requestBody = JSON.parse(options.body);
+        return jsonResponse({
+          success: true,
+          user: {
+            id: "user_created",
+            email: requestBody.email,
+            role: requestBody.role,
+            is_active: requestBody.is_active,
+            created_at: "2026-07-09T00:10:00+00:00",
+            updated_at: "2026-07-09T00:10:00+00:00",
+          },
+        });
+      }
+      return jsonResponse({ success: true, users: [overrides.user || adminUser] });
+    }
+    if (url.endsWith("/api/audit/events")) {
+      return jsonResponse({ success: true, events: overrides.auditEvents || auditEvents });
+    }
+    if (url.endsWith("/api/audit/verify")) {
+      return jsonResponse({ success: true, valid: true, checked_events: 2 });
+    }
+    if (url.endsWith("/api/demo/run")) {
+      return jsonResponse({ success: true, summary: { findings: 4, priority_scores: 4, conflicts: 1 } });
+    }
+    if (url.includes("/api/reports/export") || url.includes("/api/demo/reports/export")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: () => "attachment; filename=test.csv" },
+        json: () => Promise.resolve({ success: true }),
+        blob: () => Promise.resolve(new Blob(["report"], { type: "text/csv" })),
+      });
+    }
+    if (url.endsWith("/api/chat")) {
+      return jsonResponse(overrides.chat || chatAnswer);
+    }
     if (url.endsWith("/api/forms")) {
       return jsonResponse({ success: true, forms: overrides.services || services });
     }

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.security.rbac import require_roles
 from app.services import knowledge_base_service as service
 
-router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
+router = APIRouter(prefix="/api/knowledge", tags=["Knowledge Base"])
 
 
 @router.get("/rules")
@@ -33,7 +34,7 @@ def search(q: str = Query(default="")) -> dict:
     return {"success": True, "rules": [item.model_dump() for item in service.search_rules(q)]}
 
 
-@router.post("/rules/{rule_id}/supersede-older")
+@router.post("/rules/{rule_id}/supersede-older", dependencies=[Depends(require_roles("admin", "reviewer"))])
 def supersede_older(rule_id: str) -> dict:
     rule = service.supersede_older_rules(rule_id)
     if rule is None:

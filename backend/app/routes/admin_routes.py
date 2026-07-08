@@ -1,8 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.security.rbac import require_roles
 from app.services.platform_store import read_store
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+router = APIRouter(
+    prefix="/api/admin",
+    tags=["Admin"],
+    dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))],
+)
 
 
 MODULES = [

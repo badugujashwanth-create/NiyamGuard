@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  createUser,
+  downloadReport,
   getAdminSummary,
+  getAuditEvents,
   getCascadeForFinding,
   getComplianceFindings,
   getConnectedSystems,
@@ -10,10 +13,11 @@ import {
   getModuleStatus,
   getPriorityFindings,
   getReportsSummary,
+  getUsers,
   recalculatePriority,
-  reportExportUrl,
   runCompliance,
   scanConflicts,
+  verifyAudit,
 } from "../services/api";
 
 const pages = [
@@ -23,6 +27,8 @@ const pages = [
   { path: "/admin/conflicts", label: "Conflicts" },
   { path: "/admin/knowledge-base", label: "Knowledge Base" },
   { path: "/admin/reports", label: "Reports" },
+  { path: "/admin/audit", label: "Audit" },
+  { path: "/admin/users", label: "Users" },
 ];
 
 const circularById = {
@@ -53,10 +59,11 @@ function ruleValue(rule) {
   return `${sourceCircular(rule)}: ${rule.current_value} ${rule.unit || ""}`.trim();
 }
 
-export default function AdminPortal() {
+export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
   const [path, setPath] = useState(window.location.pathname);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reportStatus, setReportStatus] = useState("");
   const [summary, setSummary] = useState(null);
   const [moduleStatus, setModuleStatus] = useState([]);
   const [systems, setSystems] = useState([]);
@@ -66,6 +73,10 @@ export default function AdminPortal() {
   const [rules, setRules] = useState([]);
   const [reports, setReports] = useState(null);
   const [trace, setTrace] = useState(null);
+  const [auditEvents, setAuditEvents] = useState([]);
+  const [auditVerification, setAuditVerification] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [usersError, setUsersError] = useState("");
 
   useEffect(() => {
     function handlePopState() {
@@ -81,9 +92,11 @@ export default function AdminPortal() {
       setLoading(true);
       setError("");
       try {
-        await runCompliance();
-        await recalculatePriority();
-        await scanConflicts();
+        if (["admin", "reviewer"].includes(currentUser?.role)) {
+          await runCompliance();
+          await recalculatePriority();
+          await scanConflicts();
+        }
         const [
           adminSummary,
           modules,
@@ -93,6 +106,8 @@ export default function AdminPortal() {
           conflictList,
           knowledge,
           reportSummary,
+          auditList,
+          auditVerify,
         ] = await Promise.all([
           getAdminSummary(),
           getModuleStatus(),
@@ -102,6 +117,8 @@ export default function AdminPortal() {
           getConflicts(),
           getKnowledgeRules(),
           getReportsSummary(),
+          getAuditEvents(),
+          verifyAudit(),
         ]);
         if (!active) return;
         const nextFindings = compliance.findings || [];
@@ -113,12 +130,26 @@ export default function AdminPortal() {
         setConflicts(conflictList.conflicts || []);
         setRules(knowledge.rules || []);
         setReports(reportSummary.summary);
+        setAuditEvents(auditList.events || []);
+        setAuditVerification(auditVerify);
+        if (currentUser?.role === "admin") {
+          try {
+            const userList = await getUsers();
+            if (active) setUsers(userList.users || []);
+          } catch (userLoadError) {
+            if (active) setUsersError(userLoadError.message);
+          }
+        }
         const firstDrift = nextFindings.find((item) => item.status === "drifted");
         if (firstDrift) {
           const cascade = await getCascadeForFinding(firstDrift.id);
           if (active) setTrace(cascade.trace);
         }
       } catch (loadError) {
+        if (loadError.status === 401) {
+          onUnauthorized?.();
+          return;
+        }
         if (active) setError(loadError.message);
       } finally {
         if (active) setLoading(false);
@@ -128,7 +159,7 @@ export default function AdminPortal() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [currentUser?.role]);
 
   function navigate(nextPath) {
     window.history.pushState({}, "", nextPath);
@@ -189,16 +220,24 @@ export default function AdminPortal() {
             <h2>{pages.find((page) => page.path === activePage)?.label || "Dashboard"}</h2>
           </div>
           <div className="admin-header-actions">
+            <div className="admin-user-chip" aria-label="Current user">
+              <span>{currentUser?.email || "Signed in"}</span>
+              <StatusPill tone="blue">{currentUser?.role || "user"}</StatusPill>
+            </div>
             <a className="button button-secondary" href="/demo">
               Demo dashboard
             </a>
             <a className="button button-secondary" href="/">
               Citizen app
             </a>
+            <button className="button button-secondary" onClick={onLogout} type="button">
+              Logout
+            </button>
           </div>
         </header>
 
         {error ? <div className="global-error" role="alert">{error}</div> : null}
+        {reportStatus ? <p className="admin-action-status">{reportStatus}</p> : null}
         {loading ? <p className="admin-loading">Loading government-core demo data...</p> : null}
 
         {!loading && activePage === "/admin" ? (
@@ -207,6 +246,15 @@ export default function AdminPortal() {
             conflicts={conflicts}
             findings={findings}
             moduleStatus={moduleStatus}
+            onExport={async (type, format) => {
+              setReportStatus(`Preparing ${titleCase(type)} ${format.toUpperCase()} export...`);
+              try {
+                const result = await downloadReport(type, format);
+                setReportStatus(`Downloaded ${result.filename}.`);
+              } catch (downloadError) {
+                setReportStatus(downloadError.message);
+              }
+            }}
             priorityFindings={priorityFindings}
             reports={reports}
             rules={rules}
@@ -236,7 +284,37 @@ export default function AdminPortal() {
         ) : null}
 
         {!loading && activePage === "/admin/reports" ? (
-          <ReportsPage reports={reports} />
+          <ReportsPage
+            onExport={async (type, format) => {
+              setReportStatus(`Preparing ${titleCase(type)} ${format.toUpperCase()} export...`);
+              try {
+                const result = await downloadReport(type, format);
+                setReportStatus(`Downloaded ${result.filename}.`);
+              } catch (downloadError) {
+                setReportStatus(downloadError.message);
+              }
+            }}
+            reports={reports}
+          />
+        ) : null}
+
+        {!loading && activePage === "/admin/audit" ? (
+          <AuditPage events={auditEvents} verification={auditVerification} />
+        ) : null}
+
+        {!loading && activePage === "/admin/users" && currentUser?.role !== "admin" ? (
+          <UnauthorizedPage />
+        ) : null}
+
+        {!loading && activePage === "/admin/users" && currentUser?.role === "admin" ? (
+          <UsersPage
+            error={usersError}
+            onCreateUser={async (payload) => {
+              const response = await createUser(payload);
+              setUsers((current) => [...current, response.user].sort((a, b) => a.email.localeCompare(b.email)));
+            }}
+            users={users}
+          />
         ) : null}
       </main>
     </div>
@@ -248,6 +326,7 @@ function DashboardPage({
   conflicts,
   findings,
   moduleStatus,
+  onExport,
   priorityFindings,
   reports,
   rules,
@@ -328,15 +407,15 @@ function DashboardPage({
             Current report summary includes {numberOrZero(reports?.compliance_findings)} compliance findings.
           </p>
           <div className="admin-report-actions">
-            <a className="button button-primary" href={reportExportUrl("compliance", "csv")}>
+            <button className="button button-primary" onClick={() => void onExport("compliance", "csv")} type="button">
               Export Compliance CSV
-            </a>
-            <a className="button button-secondary" href={reportExportUrl("conflicts", "csv")}>
+            </button>
+            <button className="button button-secondary" onClick={() => void onExport("conflicts", "csv")} type="button">
               Export Conflicts CSV
-            </a>
-            <a className="button button-secondary" href={reportExportUrl("rules", "json")}>
+            </button>
+            <button className="button button-secondary" onClick={() => void onExport("rules", "json")} type="button">
               Export Rules JSON
-            </a>
+            </button>
           </div>
         </section>
       </div>
@@ -527,25 +606,28 @@ function KnowledgePage({ moduleStatus, rules }) {
   );
 }
 
-function ReportsPage({ reports }) {
+function ReportsPage({ reports, onExport }) {
   const reportCards = [
     {
       title: "Export Compliance CSV",
-      href: reportExportUrl("compliance", "csv"),
+      type: "compliance",
+      format: "csv",
       description: "A row-by-row record of expected rule, actual system value, severity, fix, and citizen impact.",
       metric: `${numberOrZero(reports?.compliance_findings)} findings`,
       tone: "primary",
     },
     {
       title: "Export Conflicts CSV",
-      href: reportExportUrl("conflicts", "csv"),
+      type: "conflicts",
+      format: "csv",
       description: "Circular conflicts that need officer resolution before policy reaches citizens.",
       metric: `${numberOrZero(reports?.conflicts)} conflicts`,
       tone: "secondary",
     },
     {
       title: "Export Rules JSON",
-      href: reportExportUrl("rules", "json"),
+      type: "rules",
+      format: "json",
       description: "Machine-readable verified rules for downstream systems and public API integrations.",
       metric: `${numberOrZero(reports?.verified_rules)} rules`,
       tone: "secondary",
@@ -573,14 +655,171 @@ function ReportsPage({ reports }) {
               </div>
             </div>
             <p>{report.description}</p>
-            <a
+            <button
               className={`button ${report.tone === "primary" ? "button-primary" : "button-secondary"}`}
-              href={report.href}
+              onClick={() => void onExport(report.type, report.format)}
+              type="button"
             >
               {report.title}
-            </a>
+            </button>
           </article>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function AuditPage({ events, verification }) {
+  return (
+    <section className="admin-section">
+      <div className="admin-page-summary">
+        <div>
+          <h3>Audit Log</h3>
+          <p>Important government-core actions are recorded with actor, request, and hash-chain metadata.</p>
+        </div>
+        <StatusPill tone={verification?.valid ? "green" : "red"}>
+          {verification?.valid ? "Hash chain verified" : "Verification warning"}
+        </StatusPill>
+      </div>
+      <div className="admin-table-wrap">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Action</th>
+              <th>Actor</th>
+              <th>Entity</th>
+              <th>Request</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.length ? (
+              events.map((event) => (
+                <tr key={event.id}>
+                  <td>{event.created_at}</td>
+                  <td>{titleCase(event.action)}</td>
+                  <td>{event.actor_email || "system"}</td>
+                  <td>{event.entity_type || "-"} {event.entity_id || ""}</td>
+                  <td>{event.request_id || "-"}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5">No audit events yet.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function UsersPage({ error, users, onCreateUser }) {
+  const [form, setForm] = useState({
+    email: "",
+    password: "User@12345",
+    role: "viewer",
+    is_active: true,
+  });
+  const [status, setStatus] = useState("");
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setStatus("Creating user...");
+    try {
+      await onCreateUser(form);
+      setForm({
+        email: "",
+        password: "User@12345",
+        role: "viewer",
+        is_active: true,
+      });
+      setStatus("User created.");
+    } catch (createError) {
+      setStatus(createError.message);
+    }
+  }
+
+  return (
+    <section className="admin-section">
+      <div className="admin-page-summary">
+        <div>
+          <h3>User Management</h3>
+          <p>Admin users can create officer, reviewer, viewer, and citizen accounts.</p>
+        </div>
+      </div>
+      {error ? <div className="global-error" role="alert">{error}</div> : null}
+      <form className="admin-user-form" onSubmit={handleSubmit}>
+        <label htmlFor="new-user-email">
+          Email
+          <input
+            id="new-user-email"
+            onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+            required
+            type="email"
+            value={form.email}
+          />
+        </label>
+        <label htmlFor="new-user-password">
+          Password
+          <input
+            id="new-user-password"
+            minLength="8"
+            onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+            required
+            type="password"
+            value={form.password}
+          />
+        </label>
+        <label htmlFor="new-user-role">
+          Role
+          <select
+            id="new-user-role"
+            onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
+            value={form.role}
+          >
+            <option value="admin">admin</option>
+            <option value="reviewer">reviewer</option>
+            <option value="viewer">viewer</option>
+            <option value="citizen">citizen</option>
+          </select>
+        </label>
+        <button className="button button-primary" type="submit">Create User</button>
+      </form>
+      {status ? <p className="admin-action-status">{status}</p> : null}
+      <div className="admin-table-wrap">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.email}</td>
+                <td>{user.role}</td>
+                <td>{user.is_active ? "active" : "disabled"}</td>
+                <td>{user.created_at}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function UnauthorizedPage() {
+  return (
+    <section className="admin-section">
+      <div className="admin-panel">
+        <h3>403 - You do not have permission</h3>
+        <p>This page requires the admin role.</p>
       </div>
     </section>
   );

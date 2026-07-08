@@ -1,5 +1,5 @@
-def test_connected_systems_list_works(client) -> None:
-    response = client.get("/api/connected-systems")
+def test_connected_systems_list_works(client, viewer_headers) -> None:
+    response = client.get("/api/connected-systems", headers=viewer_headers)
     body = response.json()
     assert response.status_code == 200
     names = {item["name"] for item in body["systems"]}
@@ -8,9 +8,10 @@ def test_connected_systems_list_works(client) -> None:
     assert "Public FAQ" in names
 
 
-def test_snapshot_creation_works(client) -> None:
+def test_snapshot_creation_works(client, reviewer_headers) -> None:
     response = client.post(
         "/api/connected-systems/sys_meeseva_portal/snapshots",
+        headers=reviewer_headers,
         json={
             "service_id": "income_certificate",
             "rule_key": "validity",
@@ -25,7 +26,7 @@ def test_snapshot_creation_works(client) -> None:
     assert body["snapshot"]["displayed_value"] == "6"
 
 
-def test_seeded_systems_exist(client) -> None:
-    response = client.get("/api/connected-systems/sys_simplified_form")
+def test_seeded_systems_exist(client, viewer_headers) -> None:
+    response = client.get("/api/connected-systems/sys_simplified_form", headers=viewer_headers)
     assert response.status_code == 200
     assert response.json()["system"]["name"] == "Simplified Citizen Form"

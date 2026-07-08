@@ -457,6 +457,24 @@ function VerifiedSourceCard({ source }) {
               : "Source not available"}
           </dd>
         </div>
+        {source.effectiveDate ? (
+          <div>
+            <dt>Effective Date</dt>
+            <dd>{source.effectiveDate}</dd>
+          </div>
+        ) : null}
+        {source.lastUpdated ? (
+          <div>
+            <dt>Last Updated</dt>
+            <dd>{source.lastUpdated}</dd>
+          </div>
+        ) : null}
+        {source.whySelected ? (
+          <div>
+            <dt>Why Selected</dt>
+            <dd>{source.whySelected}</dd>
+          </div>
+        ) : null}
       </dl>
     </div>
   );

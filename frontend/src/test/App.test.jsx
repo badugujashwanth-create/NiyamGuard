@@ -9,7 +9,8 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "../App";
-import { installApiMock } from "./fixtures";
+import { setAuthSession } from "../services/api";
+import { adminUser, installApiMock } from "./fixtures";
 
 class FakeRecognition {
   static instances = [];
@@ -94,6 +95,14 @@ async function openIncomeForm(user) {
 async function openTextFallback(user) {
   await user.click(screen.getByText("Having trouble? Type instead"));
   return screen.getByLabelText("Type your question");
+}
+
+function seedAdminSession(user = adminUser) {
+  setAuthSession({
+    accessToken: "test-access-token",
+    refreshToken: "test-refresh-token",
+    user,
+  });
 }
 
 describe("NiyamGuard frontend", () => {
@@ -545,6 +554,37 @@ describe("NiyamGuard frontend", () => {
     expect(screen.queryByText(/"success"/)).not.toBeInTheDocument();
   });
 
+  it("login page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/login");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveValue("admin@niyamguard.local");
+    expect(screen.getByText(/Demo admin:/)).toBeInTheDocument();
+  });
+
+  it("protects admin routes when unauthenticated", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/login");
+  });
+
+  it("admin login succeeds and opens the dashboard", async () => {
+    installApiMock();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/login");
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: "Sign In" }));
+
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByText("admin@niyamguard.local")).toBeInTheDocument();
+  });
+
   it("citizen assistant answers validity questions from verified public rule API", async () => {
     const { fetchMock } = installApiMock();
     const user = userEvent.setup();
@@ -571,8 +611,26 @@ describe("NiyamGuard frontend", () => {
     expect(screen.queryByText(/"source"/)).not.toBeInTheDocument();
   });
 
+  it("citizen assistant answers scheme document questions from sourced chat knowledge", async () => {
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    const input = await openTextFallback(user);
+    await user.type(input, "scholarship documents enti");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(await screen.findByText(/For Post-Matric Scholarship/)).toBeInTheDocument();
+    expect(screen.getByText("Verified Source")).toBeInTheDocument();
+    expect(screen.getByText("Citizen Services Knowledge")).toBeInTheDocument();
+    expect(screen.getByText("78%")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/chat"))).toBe(true);
+  });
+
   it("admin dashboard renders", async () => {
     installApiMock();
+    seedAdminSession();
     window.history.pushState({}, "", "/admin");
     render(<App />);
 
@@ -588,6 +646,7 @@ describe("NiyamGuard frontend", () => {
 
   it("admin compliance page renders", async () => {
     installApiMock();
+    seedAdminSession();
     window.history.pushState({}, "", "/admin/compliance");
     render(<App />);
 
@@ -605,6 +664,7 @@ describe("NiyamGuard frontend", () => {
 
   it("admin conflict page renders", async () => {
     installApiMock();
+    seedAdminSession();
     window.history.pushState({}, "", "/admin/conflicts");
     render(<App />);
 
@@ -617,6 +677,7 @@ describe("NiyamGuard frontend", () => {
 
   it("admin knowledge base page renders", async () => {
     installApiMock();
+    seedAdminSession();
     window.history.pushState({}, "", "/admin/knowledge-base");
     render(<App />);
 
@@ -626,6 +687,7 @@ describe("NiyamGuard frontend", () => {
 
   it("admin reports page renders", async () => {
     installApiMock();
+    seedAdminSession();
     window.history.pushState({}, "", "/admin/reports");
     render(<App />);
 
@@ -633,5 +695,42 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getAllByText("Export Compliance CSV").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Export Conflicts CSV").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Export Rules JSON").length).toBeGreaterThan(0);
+  });
+
+  it("admin audit page renders", async () => {
+    installApiMock();
+    seedAdminSession();
+    window.history.pushState({}, "", "/admin/audit");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Audit" })).toBeInTheDocument();
+    expect(screen.getByText("Audit Log")).toBeInTheDocument();
+    expect(screen.getByText("Hash chain verified")).toBeInTheDocument();
+    expect(screen.getByText("Login Success")).toBeInTheDocument();
+  });
+
+  it("admin users page renders", async () => {
+    installApiMock();
+    seedAdminSession();
+    window.history.pushState({}, "", "/admin/users");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Users" })).toBeInTheDocument();
+    expect(screen.getByText("User Management")).toBeInTheDocument();
+    expect(screen.getAllByText("admin@niyamguard.local").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Create User" })).toBeInTheDocument();
+  });
+
+  it("admin logout clears the session", async () => {
+    installApiMock();
+    seedAdminSession();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/admin");
+    render(<App />);
+
+    await screen.findByRole("heading", { name: "Dashboard" });
+    await user.click(screen.getByRole("button", { name: "Logout" }));
+
+    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
   });
 });

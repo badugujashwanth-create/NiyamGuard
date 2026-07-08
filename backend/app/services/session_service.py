@@ -1,5 +1,4 @@
 import json
-import os
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,12 +40,10 @@ class SessionService:
         return data
 
     def _write(self, sessions: dict[str, dict]) -> None:
-        temporary_path = self.storage_path.with_suffix(".tmp")
-        temporary_path.write_text(
+        self.storage_path.write_text(
             json.dumps(sessions, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
-        os.replace(temporary_path, self.storage_path)
 
     def create(self, form_id: str, language: LanguagePreference) -> Session:
         session = Session(

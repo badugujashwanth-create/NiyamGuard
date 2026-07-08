@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.config import SESSION_STORAGE_PATH
 from app.main import app
+from app.services.auth_service import seed_default_users
 from app.services.platform_store import reset_demo_store
 
 
@@ -12,14 +13,37 @@ from app.services.platform_store import reset_demo_store
 def clean_session_storage() -> None:
     SESSION_STORAGE_PATH.write_text("{}\n", encoding="utf-8")
     reset_demo_store(persist=True)
+    seed_default_users()
     yield
     SESSION_STORAGE_PATH.write_text("{}\n", encoding="utf-8")
     reset_demo_store(persist=True)
+    seed_default_users()
 
 
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app)
+
+
+def _login_headers(client: TestClient, email: str, password: str) -> dict[str, str]:
+    response = client.post("/api/auth/login", json={"email": email, "password": password})
+    assert response.status_code == 200
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+
+
+@pytest.fixture
+def admin_headers(client: TestClient) -> dict[str, str]:
+    return _login_headers(client, "admin@niyamguard.local", "Admin@12345")
+
+
+@pytest.fixture
+def reviewer_headers(client: TestClient) -> dict[str, str]:
+    return _login_headers(client, "reviewer@niyamguard.local", "Reviewer@12345")
+
+
+@pytest.fixture
+def viewer_headers(client: TestClient) -> dict[str, str]:
+    return _login_headers(client, "viewer@niyamguard.local", "Viewer@12345")
 
 
 @pytest.fixture

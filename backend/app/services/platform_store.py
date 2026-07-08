@@ -1,19 +1,18 @@
 import json
 from copy import deepcopy
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from app.models.platform_store_models import PolicyDataStore
+from app.repositories.audit_repository import audit_repository
+from app.repositories.policy_store_repository import PolicyStoreRepository
+from app.services.time import now_iso
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 STORAGE_DIR = BASE_DIR / "storage"
 DATA_PATH = STORAGE_DIR / "platform_demo.json"
-
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+_repository = PolicyStoreRepository()
 
 
 def _empty_store() -> dict[str, list[Any]]:
@@ -21,14 +20,21 @@ def _empty_store() -> dict[str, list[Any]]:
 
 
 def read_store() -> PolicyDataStore:
+    db_store = _repository.load()
+    if db_store is not None:
+        db_store.audit_events = audit_repository.list(limit=500) or db_store.audit_events
+        return db_store
     if not DATA_PATH.exists():
         return PolicyDataStore(**deepcopy(DEMO_DATA))
     with DATA_PATH.open("r", encoding="utf-8") as handle:
-        return PolicyDataStore(**json.load(handle))
+        store = PolicyDataStore(**json.load(handle))
+        store.audit_events = audit_repository.list(limit=500) or store.audit_events
+        return store
 
 
 def write_store(store: PolicyDataStore) -> PolicyDataStore:
     STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+    _repository.replace(store)
     with DATA_PATH.open("w", encoding="utf-8") as handle:
         json.dump(store.model_dump(), handle, indent=2, ensure_ascii=False)
     return store
@@ -37,19 +43,25 @@ def write_store(store: PolicyDataStore) -> PolicyDataStore:
 def reset_demo_store(persist: bool = True) -> PolicyDataStore:
     store = PolicyDataStore(**deepcopy(DEMO_DATA))
     if persist:
+        audit_repository.replace_from_legacy(store.audit_events)
         write_store(store)
     return store
 
 
+def ensure_demo_store_seeded() -> PolicyDataStore:
+    if _repository.has_records():
+        return read_store()
+    return reset_demo_store(persist=True)
+
+
 def add_audit_event(store: PolicyDataStore, action: str, payload: dict[str, Any]) -> None:
-    store.audit_events.append(
-        {
-            "id": f"audit_{len(store.audit_events) + 1:03d}",
-            "action": action,
-            "payload": payload,
-            "timestamp": now_iso(),
-        }
+    event = audit_repository.create(
+        action=action,
+        details=payload,
+        entity_type=payload.get("entity_type"),
+        entity_id=payload.get("entity_id"),
     )
+    store.audit_events.append(event)
 
 
 DEMO_DATA = {

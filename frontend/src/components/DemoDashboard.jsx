@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  demoReportExportUrl,
   getDashboardSummary,
   getIntegrationHealth,
   getLatestPublicRule,
-  reportExportUrl,
-  runCompliance,
-  scanConflicts,
+  runDemo,
 } from "../services/api";
 
 const demoCards = [
@@ -136,8 +135,7 @@ export default function DemoDashboard() {
     setActionStatus("Running compliance verification...");
     setError("");
     try {
-      await runCompliance();
-      await scanConflicts();
+      await runDemo();
       await refreshDemoData();
       setActionStatus("Compliance demo complete: drift and conflict data refreshed.");
     } catch (actionError) {
@@ -286,13 +284,13 @@ export default function DemoDashboard() {
             is detected and prioritized.
           </p>
           <div className="demo-export-actions">
-            <a className="button button-primary" href={reportExportUrl("compliance", "csv")}>
+            <a className="button button-primary" href={demoReportExportUrl("compliance", "csv")}>
               Export Compliance CSV
             </a>
-            <a className="button button-secondary" href={reportExportUrl("conflicts", "csv")}>
+            <a className="button button-secondary" href={demoReportExportUrl("conflicts", "csv")}>
               Export Conflicts CSV
             </a>
-            <a className="button button-secondary" href={reportExportUrl("rules", "json")}>
+            <a className="button button-secondary" href={demoReportExportUrl("rules", "json")}>
               Export Rules JSON
             </a>
           </div>
