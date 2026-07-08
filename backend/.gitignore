@@ -6,5 +6,6 @@ __pycache__/
 .coverage
 htmlcov/
 app/storage/sessions.json
+app/storage/platform_demo.json
 app/storage/tts_cache/*.mp3
 app/storage/tts_cache/*.tmp

@@ -6,6 +6,8 @@ import {
   generateSummary,
   getForm,
   getForms,
+  getIntegrationHealth,
+  getLatestPublicRule,
   requestTtsAudio,
   reverseLocation,
   searchServices,
@@ -83,6 +85,16 @@ describe("API client", () => {
     expect(fetch.mock.calls[0][0]).toContain("/api/forms");
     expect(fetch.mock.calls[1][0]).toContain("/api/forms/income_certificate");
     expect(fetch.mock.calls[2][0]).toContain("/api/services/search?q=income");
+  });
+
+  it("fetches integration health and public verified rules", async () => {
+    await getIntegrationHealth();
+    await getLatestPublicRule("income_certificate", "validity");
+
+    expect(fetch.mock.calls[0][0]).toContain("/api/integration/health");
+    expect(fetch.mock.calls[1][0]).toContain(
+      "/api/public/rules/latest?service_id=income_certificate&rule_key=validity",
+    );
   });
 
   it("requests backend TTS audio with language metadata", async () => {

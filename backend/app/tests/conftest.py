@@ -5,13 +5,16 @@ from fastapi.testclient import TestClient
 
 from app.config import SESSION_STORAGE_PATH
 from app.main import app
+from app.services.platform_store import reset_demo_store
 
 
 @pytest.fixture(autouse=True)
 def clean_session_storage() -> None:
     SESSION_STORAGE_PATH.write_text("{}\n", encoding="utf-8")
+    reset_demo_store(persist=True)
     yield
     SESSION_STORAGE_PATH.write_text("{}\n", encoding="utf-8")
+    reset_demo_store(persist=True)
 
 
 @pytest.fixture

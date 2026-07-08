@@ -98,6 +98,7 @@ async function openTextFallback(user) {
 
 describe("NiyamGuard frontend", () => {
   beforeEach(() => {
+    window.history.pushState({}, "", "/");
     FakeRecognition.instances = [];
     FakeAudio.instances = [];
     window.SpeechRecognition = FakeRecognition;
@@ -530,5 +531,107 @@ describe("NiyamGuard frontend", () => {
         "Could not generate voice output for this language. Please check internet or TTS provider. Text guidance is still visible.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("demo dashboard renders live presentation sections", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/demo");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "NiyamGuard AI Demo" })).toBeInTheDocument();
+    expect(screen.getByText("Government Admin Portal")).toBeInTheDocument();
+    expect(screen.getByText("Run Compliance Demo")).toBeInTheDocument();
+    expect(screen.getByText(/GO-138 changed Income Certificate validity/)).toBeInTheDocument();
+    expect(screen.queryByText(/"success"/)).not.toBeInTheDocument();
+  });
+
+  it("citizen assistant answers validity questions from verified public rule API", async () => {
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    const input = await openTextFallback(user);
+    await user.type(input, "income certificate validity entha");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(await screen.findByText(/Income Certificate validity 6 months/)).toBeInTheDocument();
+    expect(screen.getByText("Verified Source")).toBeInTheDocument();
+    expect(screen.getByText("GO-138")).toBeInTheDocument();
+    expect(screen.getAllByText("Revenue").length).toBeGreaterThan(0);
+    expect(screen.getByText("91%")).toBeInTheDocument();
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        url.includes("/api/public/rules/latest?service_id=income_certificate&rule_key=validity"),
+      ),
+    ).toBe(true);
+    expect(
+      fetchMock.mock.calls.some(([url]) => url.endsWith("/api/assistant/ask")),
+    ).toBe(false);
+    expect(screen.queryByText(/"source"/)).not.toBeInTheDocument();
+  });
+
+  it("admin dashboard renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByText("NiyamGuard compares verified circular rules against portals, forms, SOPs, and FAQs to detect policy drift before citizens are harmed.")).toBeInTheDocument();
+    expect(screen.getByText("Verified Rules").closest("article")).toHaveTextContent("2");
+    expect(screen.getByText("Connected Systems").closest("article")).toHaveTextContent("5");
+    expect(screen.getByText("Compliance Findings").closest("article")).toHaveTextContent("4");
+    expect(screen.getByText("Drifted Systems").closest("article")).toHaveTextContent("3");
+    expect(screen.getByText("Open Conflicts").closest("article")).toHaveTextContent("1");
+    expect(screen.getByText("High Priority Findings")).toBeInTheDocument();
+  });
+
+  it("admin compliance page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin/compliance");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Compliance" })).toBeInTheDocument();
+    expect(screen.getByText("Compliance Findings")).toBeInTheDocument();
+    expect(screen.getByText("3 drifted systems")).toBeInTheDocument();
+    expect(screen.getByText("1 compliant system")).toBeInTheDocument();
+    expect(screen.getByText("MeeSeva Income Certificate Portal")).toBeInTheDocument();
+    expect(screen.getByText("Officer SOP Manual")).toBeInTheDocument();
+    expect(screen.getByText("Public FAQ")).toBeInTheDocument();
+    expect(screen.getByText("Simplified Citizen Form")).toBeInTheDocument();
+    expect(screen.getByText("Update portal validation rule from 12 months to 6 months.")).toBeInTheDocument();
+    expect(screen.queryByText(/"findings"/)).not.toBeInTheDocument();
+  });
+
+  it("admin conflict page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin/conflicts");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Conflicts" })).toBeInTheDocument();
+    expect(screen.getByText(/old GO-112 saying 12 months/)).toBeInTheDocument();
+    expect(screen.getByText("GO-138: 6 months")).toBeInTheDocument();
+    expect(screen.getByText("GO-112: 12 months")).toBeInTheDocument();
+    expect(screen.getByText(/keep GO-138 active and supersede GO-112/)).toBeInTheDocument();
+  });
+
+  it("admin knowledge base page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin/knowledge-base");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Knowledge Base" })).toBeInTheDocument();
+    expect(screen.getAllByText("Income Certificate Validity").length).toBeGreaterThan(0);
+  });
+
+  it("admin reports page renders", async () => {
+    installApiMock();
+    window.history.pushState({}, "", "/admin/reports");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Reports" })).toBeInTheDocument();
+    expect(screen.getAllByText("Export Compliance CSV").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Export Conflicts CSV").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Export Rules JSON").length).toBeGreaterThan(0);
   });
 });

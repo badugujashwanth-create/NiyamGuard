@@ -1,8 +1,9 @@
 # NiyamGuard Backend
 
-FastAPI backend for the NiyamGuard AI Voice/Form Assistant. It serves the form
-catalog, dynamic form schemas, assistant guidance, validation, review summaries,
-location help, and backend MP3 TTS fallback.
+FastAPI backend for NiyamGuard AI. It serves the Voice/Form Assistant and the
+government-core platform APIs for verified policy rules, connected systems,
+compliance verification, cascade tracing, priority scoring, conflicts, reports,
+and public verified-rule lookup.
 
 The assistant guides the citizen but does not submit the application. The citizen remains in control.
 
@@ -13,6 +14,7 @@ cd D:\niyam\niyamguard-call-assistant\backend
 py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+python -m app.seed_demo
 uvicorn app.main:app --reload
 ```
 
@@ -23,6 +25,7 @@ Swagger docs: `http://127.0.0.1:8000/docs`.
 | Method | Endpoint | Purpose |
 |---|---|---|
 | `GET` | `/` | Health |
+| `GET` | `/api/integration/health` | Government-core integration health |
 | `GET` | `/api/forms` | Catalog of seeded forms |
 | `GET` | `/api/forms/income-certificate` | Backward-compatible income form |
 | `GET` | `/api/forms/{form_id}` | Dynamic form schema |
@@ -40,6 +43,18 @@ Swagger docs: `http://127.0.0.1:8000/docs`.
 | `GET` | `/api/location/search?pincode=` | Pincode lookup |
 | `POST` | `/api/location/help` | Mandal/location guidance |
 | `POST` | `/api/location/reverse` | Honest GPS MVP fallback |
+| `GET` | `/api/knowledge/rules` | Verified policy rules |
+| `GET` | `/api/knowledge/rules/latest` | Latest verified rule lookup |
+| `GET` | `/api/connected-systems` | Connected systems registry |
+| `POST` | `/api/compliance/run` | Run compliance drift detection |
+| `GET` | `/api/compliance/findings` | Compliance findings |
+| `GET` | `/api/cascade/finding/{finding_id}` | Cascade impact trace |
+| `GET` | `/api/dashboard/summary` | Priority dashboard summary |
+| `POST` | `/api/conflicts/scan` | Cross-circular conflict scan |
+| `GET` | `/api/admin/summary` | Government admin summary |
+| `GET` | `/api/reports/summary` | Reports summary |
+| `GET` | `/api/reports/export` | CSV/JSON/HTML report export |
+| `GET` | `/api/public/rules/latest` | Citizen-safe verified rule answer |
 
 Assistant responses always include `auto_fill: false` and
 `should_submit: false`.
@@ -97,4 +112,12 @@ pytest
 Coverage includes endpoints, all seeded schemas, service search, language
 detection/switching, localized field explanations, income calculation, mandal
 help, document guidance, STT fallback behavior, TTS health/speak/errors,
-summary language, and safety flags.
+summary language, safety flags, verified policy rules, connected systems,
+compliance drift detection, cascade tracing, priority scoring, conflict
+detection, admin summaries, reports/export, and public verified-rule APIs.
+
+## Independence and Safety
+
+This repo is implemented independently. It does not import or merge code from the citizen chatbot or voice assistant repos. Those modules will integrate later through public APIs.
+
+This is a demo MVP. It does not submit real applications to the government and does not replace official verification.

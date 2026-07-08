@@ -352,6 +352,14 @@ export default function VoiceAssistantPanel({
         </p>
       </div>
 
+      {assistantReply?.warning ? (
+        <p className="reply-warning">{assistantReply.warning}</p>
+      ) : null}
+
+      {assistantReply?.verified_rule ? (
+        <VerifiedSourceCard source={assistantReply.verified_source} />
+      ) : null}
+
       {synthesisError || lastVoiceWarning || browserSpeechError ? (
         <p className="support-message support-error">
           {synthesisError || lastVoiceWarning || browserSpeechError}
@@ -408,5 +416,48 @@ export default function VoiceAssistantPanel({
         {locationStatus ? <p className="support-message">{locationStatus}</p> : null}
       </details>
     </aside>
+  );
+}
+
+function VerifiedSourceCard({ source }) {
+  if (!source) {
+    return (
+      <div className="verified-source-card verified-source-missing">
+        <h3>Verified Source</h3>
+        <p>Source not available. Please verify from official government source.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="verified-source-card" aria-label="Verified Source">
+      <h3>Verified Source</h3>
+      <dl>
+        <div>
+          <dt>Circular</dt>
+          <dd>{source.circular || "Source not available"}</dd>
+        </div>
+        <div>
+          <dt>Department</dt>
+          <dd>{source.department || "Source not available"}</dd>
+        </div>
+        <div>
+          <dt>Rule</dt>
+          <dd>{source.rule || "Income Certificate Validity"}</dd>
+        </div>
+        <div>
+          <dt>Current Value</dt>
+          <dd>{source.currentValue || "Source not available"}</dd>
+        </div>
+        <div>
+          <dt>Confidence</dt>
+          <dd>
+            {source.confidence
+              ? `${Math.round(Number(source.confidence) * 100)}%`
+              : "Source not available"}
+          </dd>
+        </div>
+      </dl>
+    </div>
   );
 }
