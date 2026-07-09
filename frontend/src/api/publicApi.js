@@ -16,3 +16,13 @@ export function getDashboardSummary() {
   return request("/api/dashboard/summary", {}, { auth: false });
 }
 
+export function recommendSchemes(profile) {
+  return request(
+    "/api/scheme-finder/recommend",
+    {
+      method: "POST",
+      body: JSON.stringify(profile),
+    },
+    { auth: false },
+  );
+}

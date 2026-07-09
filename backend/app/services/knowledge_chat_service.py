@@ -6,6 +6,8 @@ from typing import Any
 from app.config import settings
 from app.data_pipeline.rag_retriever import retrieve
 from app.schemas.chat_schemas import ChatResponse, ChatSource
+from app.services.hybrid_intelligence.hybrid_answer_service import answer_question
+from app.services.hybrid_intelligence.source_card_builder import chat_source
 from app.services import knowledge_base_service
 from app.services.language_helper import detect_language
 from app.services.ollama_client import AIClientFactory
@@ -249,6 +251,42 @@ def _references_from_chunks(chunks: list[dict[str, Any]]) -> list[dict[str, Any]
     return references
 
 
+def _chat_source_from_hybrid(hybrid: dict[str, Any]) -> tuple[ChatSource, str | None, bool, bool]:
+    method = str(hybrid.get("method") or "")
+    sources = hybrid.get("sources") or []
+    if method == "exact_rule_engine":
+        return ChatSource(**chat_source("Verified NiyamGuard Knowledge Base", sources)), "deterministic", bool(hybrid["verified"]), False
+    if method == "decision_table":
+        references = [
+            {
+                "chunk_id": source.get("chunk_id") or f"svc_{source.get('service_id')}",
+                "service_id": source.get("service_id"),
+                "title": source.get("label"),
+                "source_type": "seed_demo",
+                "source_label": source.get("label"),
+                "verified": False,
+                "score": source.get("score"),
+            }
+            for source in sources
+        ]
+        return ChatSource(type="rag", label="NiyamGuard knowledge index", references=references), "fallback", False, True
+    if method == "rag_search":
+        references = [
+            {
+                "chunk_id": source.get("chunk_id"),
+                "service_id": source.get("service_id"),
+                "title": source.get("label"),
+                "source_type": source.get("type"),
+                "source_label": source.get("label"),
+                "verified": bool(source.get("verified")),
+                "score": source.get("score"),
+            }
+            for source in sources
+        ]
+        return ChatSource(type="rag", label="NiyamGuard knowledge index", references=references), hybrid.get("provider"), bool(hybrid["verified"]), bool(hybrid["fallback"])
+    return ChatSource(**chat_source("NiyamGuard Hybrid Intelligence", sources)), hybrid.get("provider") or method, bool(hybrid["verified"]), bool(hybrid["fallback"])
+
+
 def _rag_answer(
     message: str,
     detected_language: str,
@@ -288,6 +326,27 @@ def _rag_answer(
 
 def answer_chat(message: str, language: str = "auto", context: dict[str, Any] | None = None, profile: dict[str, Any] | None = None) -> ChatResponse:
     context = context or {}
+    hybrid = answer_question(message, language=language, context=context, profile=profile or {})
+    if hybrid.get("method"):
+        sources = hybrid.get("sources") or []
+        source, provider, verified, fallback = _chat_source_from_hybrid(hybrid)
+        return ChatResponse(
+            success=True,
+            answer=hybrid["answer"],
+            language=hybrid["language"],
+            language_code=hybrid["language_code"],
+            intent=hybrid["intent"],
+            scheme_or_service=hybrid.get("service_id"),
+            source=source,
+            method=hybrid.get("method"),
+            sources=sources,
+            confidence=hybrid["confidence"],
+            verified=verified,
+            fallback=fallback,
+            provider=provider,
+            limitations=hybrid.get("limitations"),
+        )
+
     detected = detect_language(message, None if language == "auto" else language)
     detected_language = str(detected["detected_language"])
     language_code = str(detected["language_code"])

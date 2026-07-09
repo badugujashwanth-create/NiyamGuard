@@ -5,16 +5,19 @@ from fastapi.testclient import TestClient
 
 from app.config import SESSION_STORAGE_PATH
 from app.main import app
+from app.security.rate_limit import _attempts
 from app.services.auth_service import seed_default_users
 from app.services.platform_store import reset_demo_store
 
 
 @pytest.fixture(autouse=True)
 def clean_session_storage() -> None:
+    _attempts.clear()
     SESSION_STORAGE_PATH.write_text("{}\n", encoding="utf-8")
     reset_demo_store(persist=True)
     seed_default_users()
     yield
+    _attempts.clear()
     SESSION_STORAGE_PATH.write_text("{}\n", encoding="utf-8")
     reset_demo_store(persist=True)
     seed_default_users()
@@ -42,8 +45,18 @@ def reviewer_headers(client: TestClient) -> dict[str, str]:
 
 
 @pytest.fixture
+def officer_headers(client: TestClient) -> dict[str, str]:
+    return _login_headers(client, "officer@niyamguard.local", "Officer@12345")
+
+
+@pytest.fixture
 def viewer_headers(client: TestClient) -> dict[str, str]:
     return _login_headers(client, "viewer@niyamguard.local", "Viewer@12345")
+
+
+@pytest.fixture
+def citizen_headers(client: TestClient) -> dict[str, str]:
+    return _login_headers(client, "citizen@niyamguard.local", "Citizen@12345")
 
 
 @pytest.fixture

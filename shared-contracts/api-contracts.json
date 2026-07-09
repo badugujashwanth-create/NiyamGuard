@@ -1,0 +1,41 @@
+{
+  "version": "2026-07-09",
+  "modules": {
+    "government_policy_backend": {
+      "base_url": "http://127.0.0.1:8002",
+      "health": "GET /api/integration/health",
+      "required_endpoints": [
+        "POST /api/circulars/upload",
+        "GET /api/circulars",
+        "POST /api/rule-candidates/{candidate_id}/approve",
+        "POST /api/policy-updates/{candidate_id}/publish",
+        "GET /api/public/rules/latest?service_id=income_certificate&rule_key=validity",
+        "GET /api/conflicts",
+        "GET /api/reports/export?type=conflicts&format=csv"
+      ]
+    },
+    "citizen_knowledge_chatbot": {
+      "base_url": "http://127.0.0.1:8001",
+      "health": "GET /api/integration/health",
+      "required_endpoints": [
+        "POST /api/chat"
+      ]
+    },
+    "voice_form_assistant": {
+      "base_url": "http://127.0.0.1:8000",
+      "health": "GET /api/integration/health",
+      "required_endpoints": [
+        "GET /api/forms",
+        "POST /api/assistant/ask",
+        "POST /api/scheme-finder/recommend",
+        "POST /api/chat"
+      ]
+    }
+  },
+  "safety": [
+    "No real government submission.",
+    "No live MeeSeva login.",
+    "No OTP, CAPTCHA, or payment handling.",
+    "If verified data is missing, return a clear unavailable response."
+  ]
+}

@@ -19,6 +19,11 @@ const STATE_LABELS = {
 
 function sourceBadges(source) {
   const badges = [];
+  if (source?.method === "exact_rule_engine") badges.push("Exact Rule");
+  if (source?.method === "decision_table") badges.push("Decision Table");
+  if (source?.method === "rag_search") badges.push("RAG Search");
+  if (source?.method === "local_llm") badges.push("Local LLM");
+  if (source?.method === "safe_fallback") badges.push("Safe Fallback");
   if (source?.sourceType === "verified_rule" || source?.verified) badges.push("Verified Rule");
   if (source?.sourceType === "rag") badges.push("RAG Source");
   if (source?.sourceSourceType === "seed_demo" || /seed/i.test(source?.circular || "")) {

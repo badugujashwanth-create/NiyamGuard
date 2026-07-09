@@ -2,11 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   demoReportExportUrl,
+  applyMockDemoPatch,
   getAIStatus,
   getDashboardSummary,
   getIntegrationHealth,
   getLatestPublicRule,
+  getMockSystems,
+  resetMockSystems,
   runDemo,
+  runSelfUpdateScenario,
 } from "../services/api";
 
 const demoCards = [
@@ -51,6 +55,13 @@ const demoCards = [
     demonstrates: "Guides citizens through forms in Telugu, Hindi, and English without auto-submitting.",
     href: "/",
     sample: "Ask: income certificate validity entha.",
+  },
+  {
+    title: "Citizen Scheme Finder",
+    status: "Ready",
+    demonstrates: "Suggests possible services from simple profile answers with cautious source-labelled guidance.",
+    href: "/scheme-finder",
+    sample: "Select student + scholarship and show Income Certificate recommendation.",
   },
   {
     title: "Public Verified Rule API",
@@ -99,21 +110,24 @@ export default function DemoDashboard() {
   const [summary, setSummary] = useState(null);
   const [aiStatus, setAiStatus] = useState(null);
   const [verifiedRule, setVerifiedRule] = useState(null);
+  const [mockSystems, setMockSystems] = useState({});
   const [loading, setLoading] = useState(true);
   const [actionStatus, setActionStatus] = useState("");
   const [error, setError] = useState("");
 
   async function refreshDemoData() {
-    const [healthResponse, summaryResponse, ruleResponse, aiResponse] = await Promise.all([
+    const [healthResponse, summaryResponse, ruleResponse, aiResponse, mockResponse] = await Promise.all([
       getIntegrationHealth(),
       getDashboardSummary(),
       getLatestPublicRule("income_certificate", "validity"),
       getAIStatus(),
+      getMockSystems(),
     ]);
     setHealth(healthResponse);
     setSummary(summaryResponse.summary);
     setVerifiedRule(ruleResponse);
     setAiStatus(aiResponse);
+    setMockSystems(mockResponse.systems || {});
   }
 
   useEffect(() => {
@@ -142,6 +156,45 @@ export default function DemoDashboard() {
       await runDemo();
       await refreshDemoData();
       setActionStatus("Compliance demo complete: drift and conflict data refreshed.");
+    } catch (actionError) {
+      setError(actionError.message);
+      setActionStatus("");
+    }
+  }
+
+  async function runSelfUpdateDemo(applyDemoPatch = false) {
+    setActionStatus(applyDemoPatch ? "Running self-update scenario and patching mock systems..." : "Running self-update scenario...");
+    setError("");
+    try {
+      await runSelfUpdateScenario({ applyDemoPatch, resetMockSystems: applyDemoPatch });
+      await refreshDemoData();
+      setActionStatus(applyDemoPatch ? "Self-update scenario complete: mock systems now show 6 months." : "Self-update workflow complete: propagation tasks are ready.");
+    } catch (actionError) {
+      setError(actionError.message);
+      setActionStatus("");
+    }
+  }
+
+  async function resetMockDemo() {
+    setActionStatus("Resetting mock systems to outdated 12-month values...");
+    setError("");
+    try {
+      await resetMockSystems();
+      await refreshDemoData();
+      setActionStatus("Mock systems reset. MeeSeva and FAQ now show outdated values.");
+    } catch (actionError) {
+      setError(actionError.message);
+      setActionStatus("");
+    }
+  }
+
+  async function patchMockDemo() {
+    setActionStatus("Applying demo patch to mock connected systems...");
+    setError("");
+    try {
+      await applyMockDemoPatch();
+      await refreshDemoData();
+      setActionStatus("Mock systems patched to the verified 6-month rule.");
     } catch (actionError) {
       setError(actionError.message);
       setActionStatus("");
@@ -255,6 +308,41 @@ export default function DemoDashboard() {
           <li>RAG Source badge means the answer was grounded in retrieved knowledge chunks.</li>
           <li>Seed Demo Data badge means the source is useful for demos but not official.</li>
           <li>Fallback badge means Ollama was unavailable and a deterministic template answered.</li>
+        </ol>
+      </section>
+
+      <section className="demo-story" aria-labelledby="self-update-demo-title">
+        <div>
+          <p className="eyebrow">Live connected system demo</p>
+          <h2 id="self-update-demo-title">Self-updating policy engine</h2>
+          <p>
+            Start with the mock MeeSeva and public FAQ pages showing stale 12-month
+            validity. Run the update workflow to publish the verified rule, then
+            patch the mock systems to show 6 months from GO-138.
+          </p>
+          <div className="demo-export-actions">
+            <button className="button button-secondary" onClick={resetMockDemo} type="button">
+              Reset Mock Systems
+            </button>
+            <button className="button button-secondary" onClick={() => void runSelfUpdateDemo(false)} type="button">
+              Run Update Workflow
+            </button>
+            <button className="button button-primary" onClick={() => void runSelfUpdateDemo(true)} type="button">
+              Run and Patch
+            </button>
+            <button className="button button-secondary" onClick={patchMockDemo} type="button">
+              Patch Only
+            </button>
+          </div>
+        </div>
+        <ol>
+          {Object.values(mockSystems).map((system) => (
+            <li key={system.id}>
+              {system.system_name}: {system.displayed_value || system.faq_value} / {system.sync_status}
+            </li>
+          ))}
+          <li><a href="/mock/meeseva">Open mock MeeSeva portal</a></li>
+          <li><a href="/mock/public-faq">Open mock public FAQ</a></li>
         </ol>
       </section>
 

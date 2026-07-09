@@ -6,7 +6,10 @@ venv/
 
 backend/niyamguard.db
 backend/*.db
+niyamguard.db
 backend/app/storage/*.tmp
+backend/app/storage/documents/
+backend/app/storage/certificates/
 
 frontend/dist/
 frontend/node_modules/
@@ -14,11 +17,16 @@ frontend/node_modules/
 data/datasets/*
 data/processed/*
 data/rag_index/*
+data/search_index/*
+data/vector_index/*
 !data/datasets/.gitkeep
 !data/processed/.gitkeep
 !data/rag_index/.gitkeep
+!data/search_index/.gitkeep
+!data/vector_index/.gitkeep
 data/training/*
 !data/training/.gitkeep
 !data/training/niyamguard_qa_sample.jsonl
+data/source_registry.json
 
 apps/

@@ -23,21 +23,36 @@ from app.routes.audit_routes import router as audit_router
 from app.routes.auth_routes import router as auth_router
 from app.routes.cascade_routes import router as cascade_router
 from app.routes.chat_routes import router as chat_router
+from app.routes.circular_routes import router as circular_router
+from app.routes.compliance_update_routes import router as compliance_update_router
 from app.routes.compliance_routes import router as compliance_router
 from app.routes.conflict_routes import router as conflict_router
 from app.routes.connected_system_routes import router as connected_system_router
 from app.routes.dashboard_routes import router as dashboard_router
 from app.routes.dataset_routes import router as dataset_router
 from app.routes.demo_routes import router as demo_router
+from app.routes.demo_self_update_routes import router as demo_self_update_router
 from app.routes.form_routes import router as form_router
 from app.routes.health_routes import router as health_router
+from app.routes.hybrid_intelligence_routes import router as hybrid_intelligence_router
+from app.routes.knowledge_update_routes import router as knowledge_update_router
 from app.routes.knowledge_routes import router as knowledge_router
 from app.routes.location_routes import router as location_router
+from app.routes.mock_system_routes import router as mock_system_router
+from app.routes.policy_update_routes import router as policy_update_router
 from app.routes.public_routes import router as public_router
+from app.routes.propagation_routes import router as propagation_router
+from app.routes.readiness_routes import router as readiness_router
 from app.routes.report_routes import router as report_router
+from app.routes.rule_candidate_routes import router as rule_candidate_router
+from app.routes.scheduler_routes import router as scheduler_router
+from app.routes.scheme_finder_routes import router as scheme_finder_router
+from app.routes.service_portal_routes import router as service_portal_router
 from app.routes.session_routes import router as session_router
+from app.routes.source_routes import router as source_router
 from app.routes.stt_routes import router as stt_router
 from app.routes.tts_routes import router as tts_router
+from app.routes.virtual_government_routes import router as virtual_government_router
 from app.services.auth_service import seed_default_users
 from app.services.platform_store import ensure_demo_store_seeded
 
@@ -80,6 +95,7 @@ ensure_demo_store_seeded()
 seed_default_users()
 
 app.include_router(health_router)
+app.include_router(hybrid_intelligence_router)
 app.include_router(auth_router)
 app.include_router(form_router)
 app.include_router(session_router)
@@ -90,17 +106,31 @@ app.include_router(tts_router)
 app.include_router(stt_router)
 app.include_router(location_router)
 app.include_router(knowledge_router)
+app.include_router(knowledge_update_router)
 app.include_router(connected_system_router)
 app.include_router(compliance_router)
+app.include_router(compliance_update_router)
 app.include_router(cascade_router)
 app.include_router(dashboard_router)
 app.include_router(dataset_router)
 app.include_router(conflict_router)
+app.include_router(source_router)
+app.include_router(circular_router)
+app.include_router(rule_candidate_router)
+app.include_router(policy_update_router)
+app.include_router(propagation_router)
+app.include_router(readiness_router)
+app.include_router(scheduler_router)
+app.include_router(mock_system_router)
+app.include_router(scheme_finder_router)
+app.include_router(service_portal_router)
 app.include_router(admin_router)
 app.include_router(report_router)
 app.include_router(public_router)
 app.include_router(audit_router)
 app.include_router(demo_router)
+app.include_router(demo_self_update_router)
+app.include_router(virtual_government_router)
 
 
 @app.get("/", tags=["health"])

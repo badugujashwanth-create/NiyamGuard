@@ -6,8 +6,10 @@ from fastapi import APIRouter, HTTPException
 
 from app.schemas.chat_schemas import ChatRequest, ChatResponse
 from app.services import cascade_trace_service, compliance_service, priority_service
+from app.repositories.dataset_repository import dataset_repository
+from app.services.ai import AIProviderFactory
+from app.services.ai.prompt_builder import circular_summary_prompt
 from app.services.knowledge_chat_service import answer_chat
-from app.services.ollama_client import AIClientFactory
 from app.services.platform_store import read_store
 
 router = APIRouter(prefix="/api/ai", tags=["Local AI"])
@@ -15,7 +17,7 @@ router = APIRouter(prefix="/api/ai", tags=["Local AI"])
 
 @router.get("/status")
 def ai_status() -> dict[str, Any]:
-    return AIClientFactory.status()
+    return AIProviderFactory.status()
 
 
 def _finding_payload(finding_id: str) -> dict[str, Any]:
@@ -45,13 +47,63 @@ def _finding_payload(finding_id: str) -> dict[str, Any]:
 
 @router.post("/impact-summary")
 def generate_impact_summary(payload: dict[str, Any]) -> dict[str, Any]:
-    return AIClientFactory.get_client().generate_impact_summary(payload)
+    return AIProviderFactory.get_client().generate_impact_summary(payload)
 
 
 @router.post("/finding/{finding_id}/impact-summary")
 def finding_impact_summary(finding_id: str) -> dict[str, Any]:
     payload = _finding_payload(finding_id)
-    return AIClientFactory.get_client().generate_impact_summary(payload)
+    return AIProviderFactory.get_client().generate_impact_summary(payload)
+
+
+def _circular_payload(identifier: str) -> dict[str, Any] | None:
+    normalized = identifier.casefold()
+    store = read_store()
+    for circular in store.circulars:
+        if circular.id.casefold() == normalized or circular.circular_number.casefold() == normalized:
+            return circular.model_dump()
+    record = dataset_repository.get_record("regulatory_circulars", identifier)
+    if record:
+        return record["payload"]
+    for item in dataset_repository.all_records("regulatory_circulars"):
+        payload = item["payload"]
+        if normalized in {
+            str(payload.get("circular_id", "")).casefold(),
+            str(payload.get("title", "")).casefold(),
+        }:
+            return payload
+    return None
+
+
+@router.post("/circular-summary")
+def circular_summary(payload: dict[str, Any]) -> dict[str, Any]:
+    circular_id = str(payload.get("circular_id") or payload.get("circular_number") or "").strip()
+    circular = _circular_payload(circular_id) if circular_id else payload.get("circular")
+    if not isinstance(circular, dict) or not circular:
+        raise HTTPException(status_code=404, detail="Circular not found in available dataset.")
+    fallback_text = (
+        f"{circular.get('circular_number') or circular.get('circular_id')}: {circular.get('title')}. "
+        f"Effective date: {circular.get('effective_date')}. "
+        f"Summary: {circular.get('summary') or circular.get('source_text') or circular.get('full_text') or 'Not found in available dataset.'}"
+    )
+    result = AIProviderFactory.get_client().generate_text(
+        circular_summary_prompt(circular),
+        {"fallback_text": fallback_text},
+    )
+    return {
+        "success": True,
+        "provider": result.get("provider"),
+        "model": result.get("model"),
+        "fallback": bool(result.get("fallback")),
+        "summary": result.get("text") or fallback_text,
+        "source": {
+            "type": "regulatory_circular",
+            "id": circular.get("id") or circular.get("circular_id"),
+            "circular_number": circular.get("circular_number") or circular.get("circular_id"),
+            "effective_date": circular.get("effective_date"),
+            "verified": True,
+        },
+    }
 
 
 @router.post("/chat", response_model=ChatResponse)

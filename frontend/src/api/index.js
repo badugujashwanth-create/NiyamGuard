@@ -9,3 +9,4 @@ export * from "./reportsApi";
 export * from "./chatApi";
 export * from "./aiApi";
 export * from "./datasetApi";
+export * from "./servicePortalApi";
