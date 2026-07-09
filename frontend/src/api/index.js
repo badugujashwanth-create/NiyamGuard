@@ -7,3 +7,5 @@ export * from "./adminApi";
 export * from "./complianceApi";
 export * from "./reportsApi";
 export * from "./chatApi";
+export * from "./aiApi";
+export * from "./datasetApi";

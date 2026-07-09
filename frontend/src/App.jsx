@@ -112,6 +112,9 @@ function sourceCardFromRule(ruleResponse) {
     currentValue: valueFromRuleResponse(ruleResponse),
     confidence: source.confidence,
     effectiveDate: source.effective_date,
+    sourceType: "verified_rule",
+    verified: true,
+    provider: "deterministic",
     whySelected: "Matched income certificate validity against the latest verified public rule.",
   };
 }
@@ -146,6 +149,7 @@ function sourceCardFromChat(chatResponse) {
   return {
     circular:
       firstReference.circular_number ||
+      firstReference.source_label ||
       firstReference.label ||
       chatResponse?.source?.label ||
       "NiyamGuard Knowledge Base",
@@ -157,6 +161,11 @@ function sourceCardFromChat(chatResponse) {
     confidence: chatResponse?.confidence,
     effectiveDate: firstReference.effective_date,
     lastUpdated: firstReference.last_updated,
+    sourceType: chatResponse?.source?.type,
+    sourceSourceType: firstReference.source_type,
+    verified: Boolean(chatResponse?.verified),
+    provider: chatResponse?.provider,
+    fallback: Boolean(chatResponse?.fallback),
     whySelected: `Matched this question to ${titleCase(chatResponse?.intent || "knowledge")} guidance for ${titleCase(chatResponse?.scheme_or_service || "citizen services")}.`,
   };
 }

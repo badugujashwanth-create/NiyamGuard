@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  askDatasetQA,
   createUser,
   downloadReport,
+  generateAIFindingSummary,
+  getAIStatus,
   getAdminSummary,
   getAuditEvents,
   getCascadeForFinding,
   getComplianceFindings,
   getConnectedSystems,
+  getDatasetDemoFlow,
+  getDatasetStatus,
   getConflicts,
   getKnowledgeRules,
   getModuleStatus,
@@ -26,6 +31,7 @@ const pages = [
   { path: "/admin/cascade", label: "Cascade" },
   { path: "/admin/conflicts", label: "Conflicts" },
   { path: "/admin/knowledge-base", label: "Knowledge Base" },
+  { path: "/admin/regulatory-ai", label: "Regulatory AI" },
   { path: "/admin/reports", label: "Reports" },
   { path: "/admin/audit", label: "Audit" },
   { path: "/admin/users", label: "Users" },
@@ -72,6 +78,13 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
   const [conflicts, setConflicts] = useState([]);
   const [rules, setRules] = useState([]);
   const [reports, setReports] = useState(null);
+  const [aiStatus, setAiStatus] = useState(null);
+  const [datasetStatus, setDatasetStatus] = useState(null);
+  const [datasetFlow, setDatasetFlow] = useState(null);
+  const [datasetAnswer, setDatasetAnswer] = useState(null);
+  const [datasetQuestion, setDatasetQuestion] = useState("Why is ORG-0029 high risk?");
+  const [aiSummaries, setAiSummaries] = useState({});
+  const [aiSummaryStatus, setAiSummaryStatus] = useState("");
   const [trace, setTrace] = useState(null);
   const [auditEvents, setAuditEvents] = useState([]);
   const [auditVerification, setAuditVerification] = useState(null);
@@ -106,6 +119,9 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           conflictList,
           knowledge,
           reportSummary,
+          ai,
+          dataStatus,
+          dataFlow,
           auditList,
           auditVerify,
         ] = await Promise.all([
@@ -117,6 +133,9 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           getConflicts(),
           getKnowledgeRules(),
           getReportsSummary(),
+          getAIStatus(),
+          getDatasetStatus(),
+          getDatasetDemoFlow("ORG-0029"),
           getAuditEvents(),
           verifyAudit(),
         ]);
@@ -130,6 +149,9 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
         setConflicts(conflictList.conflicts || []);
         setRules(knowledge.rules || []);
         setReports(reportSummary.summary);
+        setAiStatus(ai);
+        setDatasetStatus(dataStatus);
+        setDatasetFlow(dataFlow);
         setAuditEvents(auditList.events || []);
         setAuditVerification(auditVerify);
         if (currentUser?.role === "admin") {
@@ -258,6 +280,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
             priorityFindings={priorityFindings}
             reports={reports}
             rules={rules}
+            aiStatus={aiStatus}
           />
         ) : null}
 
@@ -268,6 +291,19 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
             findings={findings}
             rulesById={rulesById}
             systemsById={systemsById}
+            aiSummaries={aiSummaries}
+            aiSummaryStatus={aiSummaryStatus}
+            aiStatus={aiStatus}
+            onGenerateSummary={async (findingId) => {
+              setAiSummaryStatus(`Generating AI summary for ${findingId}...`);
+              try {
+                const result = await generateAIFindingSummary(findingId);
+                setAiSummaries((current) => ({ ...current, [findingId]: result }));
+                setAiSummaryStatus("AI summary ready.");
+              } catch (summaryError) {
+                setAiSummaryStatus(summaryError.message);
+              }
+            }}
           />
         ) : null}
 
@@ -281,6 +317,20 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
 
         {!loading && activePage === "/admin/knowledge-base" ? (
           <KnowledgePage moduleStatus={moduleStatus} rules={rules} />
+        ) : null}
+
+        {!loading && activePage === "/admin/regulatory-ai" ? (
+          <RegulatoryAIPage
+            answer={datasetAnswer}
+            flow={datasetFlow}
+            onAsk={async (question) => {
+              setDatasetQuestion(question);
+              const response = await askDatasetQA({ question });
+              setDatasetAnswer(response);
+            }}
+            question={datasetQuestion}
+            status={datasetStatus}
+          />
         ) : null}
 
         {!loading && activePage === "/admin/reports" ? (
@@ -322,6 +372,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
 }
 
 function DashboardPage({
+  aiStatus,
   cards,
   conflicts,
   findings,
@@ -400,6 +451,23 @@ function DashboardPage({
           </div>
         </section>
 
+        <section className="admin-panel">
+          <h3>Local AI Status</h3>
+          <p>
+            Ollama explains verified findings and RAG answers only from retrieved
+            sources. Deterministic compliance remains separate.
+          </p>
+          <div className="admin-mini-metrics">
+            <StatusPill tone={aiStatus?.status === "online" ? "green" : "red"}>
+              {aiStatus?.status === "online" ? "Ollama AI" : "Fallback"}
+            </StatusPill>
+            <StatusPill tone="blue">{aiStatus?.model || "qwen2.5:7b-instruct"}</StatusPill>
+            <StatusPill tone={aiStatus?.rag_enabled ? "green" : "red"}>
+              RAG Knowledge Index
+            </StatusPill>
+          </div>
+        </section>
+
         <section className="admin-panel admin-panel-wide">
           <h3>Report Export</h3>
           <p>
@@ -424,9 +492,13 @@ function DashboardPage({
 }
 
 function CompliancePage({
+  aiSummaries,
+  aiSummaryStatus,
+  aiStatus,
   compliantFindings,
   driftedFindings,
   findings,
+  onGenerateSummary,
   rulesById,
   systemsById,
 }) {
@@ -445,11 +517,13 @@ function CompliancePage({
           <StatusPill tone="green">{compliantFindings.length} compliant system</StatusPill>
         </div>
       </div>
+      {aiSummaryStatus ? <p className="admin-action-status">{aiSummaryStatus}</p> : null}
 
       <div className="admin-finding-grid">
         {findings.map((finding) => {
           const system = systemsById[finding.connected_system_id];
           const rule = rulesById[finding.verified_rule_id];
+          const aiSummary = aiSummaries[finding.id];
           return (
             <article className={`admin-finding-card finding-${finding.status}`} key={finding.id}>
               <div className="admin-card-heading">
@@ -481,6 +555,32 @@ function CompliancePage({
               </dl>
               <p><strong>Recommended fix:</strong> {finding.recommended_fix}</p>
               <p><strong>Citizen impact:</strong> {finding.citizen_impact_reason}</p>
+              <div className="admin-ai-actions">
+                <button
+                  className="button button-secondary"
+                  onClick={() => void onGenerateSummary(finding.id)}
+                  type="button"
+                >
+                  Generate AI Summary
+                </button>
+                <div className="source-badges" aria-label="AI source badges">
+                  <span>Verified Rule</span>
+                  <span>{aiStatus?.status === "online" ? "Ollama AI" : "Fallback"}</span>
+                </div>
+              </div>
+              {aiSummary ? (
+                <section className="admin-ai-summary" aria-label="AI impact summary">
+                  <h4>AI Impact Summary</h4>
+                  <p>{aiSummary.summary}</p>
+                  <p><strong>Citizen:</strong> {aiSummary.citizen_friendly_explanation}</p>
+                  <p><strong>Officer:</strong> {aiSummary.officer_friendly_explanation}</p>
+                  <div className="source-badges">
+                    <span>{aiSummary.provider === "ollama" ? "Ollama AI" : "Fallback"}</span>
+                    <span>Verified Rule</span>
+                    <span>{aiSummary.source?.circular || "Source available"}</span>
+                  </div>
+                </section>
+              ) : null}
             </article>
           );
         })}
@@ -603,6 +703,226 @@ function KnowledgePage({ moduleStatus, rules }) {
         </div>
       </section>
     </section>
+  );
+}
+
+function recordPayload(record) {
+  return record?.payload || {};
+}
+
+function RegulatoryAIPage({ answer, flow, onAsk, question, status }) {
+  const [draft, setDraft] = useState(question);
+  const collections = status?.collections || {};
+  const summaryCards = [
+    ["Regulatory circulars", collections.regulatory_circulars || 0],
+    ["Internal policies", collections.internal_policies || 0],
+    ["Obligations", collections.obligations || 0],
+    ["Compliance gaps", collections.gap_findings || 0],
+    ["Drift alerts", collections.regulatory_drift_cases || 0],
+    ["Risk scores", collections.risk_scoring_labels || 0],
+    ["Audit logs", collections.dataset_audit_events || 0],
+  ];
+  const regulation = recordPayload(flow?.regulation);
+  const obligation = recordPayload(flow?.obligation);
+  const policy = recordPayload(flow?.internal_policy);
+  const gap = recordPayload(flow?.gap);
+  const drift = recordPayload(flow?.drift);
+  const risk = recordPayload(flow?.risk);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (!draft.trim()) return;
+    await onAsk(draft.trim());
+  }
+
+  return (
+    <section className="admin-section">
+      <div className="admin-page-summary">
+        <div>
+          <h3>Regulatory AI Dataset Explorer</h3>
+          <p>
+            These cards are backed by the synthetic dataset pack: circulars,
+            policies, obligations, evidence, gaps, drift, risk labels, and audit events.
+          </p>
+        </div>
+        <StatusPill tone={status?.loaded_records ? "green" : "red"}>
+          {status?.loaded_records || 0} records
+        </StatusPill>
+      </div>
+
+      <div className="admin-card-grid">
+        {summaryCards.map(([label, value]) => (
+          <article className="admin-stat-card" key={label}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+            <p>Loaded from {status?.pack_version || "dataset pack"}.</p>
+          </article>
+        ))}
+      </div>
+
+      <section className="admin-panel">
+        <h3>AI Q&A</h3>
+        <form className="dataset-qa-form" onSubmit={handleSubmit}>
+          <label htmlFor="dataset-question">
+            Ask from dataset
+            <input
+              id="dataset-question"
+              onChange={(event) => setDraft(event.target.value)}
+              value={draft}
+            />
+          </label>
+          <button className="button button-primary" type="submit">Ask Dataset</button>
+        </form>
+        {answer ? (
+          <div className="dataset-answer">
+            <p>{answer.answer}</p>
+            <div className="source-badges">
+              <span>{answer.provider || "dataset"}</span>
+              <span>{answer.fallback ? "Fallback" : "Dataset Source"}</span>
+            </div>
+            <ul className="admin-compact-list">
+              {(answer.references || []).slice(0, 3).map((reference) => (
+                <li key={reference.chunk_id}>
+                  <strong>{reference.source?.type || "source"}</strong>
+                  <span>{reference.title || reference.service_id}</span>
+                  <em>{Math.round((reference.score || 0) * 100)}%</em>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
+
+      <div className="admin-finding-grid">
+        <DatasetRecordCard
+          eyebrow="Regulatory circular"
+          title={regulation.title}
+          rows={[
+            ["Circular", regulation.circular_id],
+            ["Regulator", regulation.regulator_code],
+            ["Sector", regulation.sector],
+            ["Effective", regulation.effective_date],
+            ["Severity", regulation.severity],
+          ]}
+          text={regulation.summary}
+        />
+        <DatasetRecordCard
+          eyebrow="Extracted obligation"
+          title={obligation.obligation_id}
+          rows={[
+            ["Actor", obligation.accountable_actor],
+            ["Action", obligation.action_required],
+            ["Frequency", obligation.frequency],
+            ["Evidence", obligation.evidence_required],
+            ["Risk", obligation.penalty_risk],
+          ]}
+          text={obligation.obligation_text}
+        />
+        <DatasetRecordCard
+          eyebrow="Internal policy"
+          title={policy.policy_title}
+          rows={[
+            ["Policy", policy.policy_id],
+            ["Org", policy.org_id],
+            ["Department", policy.department],
+            ["Owner", policy.owner_role],
+            ["Status", policy.status],
+          ]}
+          text={policy.policy_text}
+        />
+        <DatasetRecordCard
+          eyebrow="Policy gap"
+          title={gap.finding_id}
+          rows={[
+            ["Severity", gap.severity],
+            ["Type", gap.finding_type],
+            ["Owner", gap.owner_team],
+            ["Status", gap.status],
+            ["Target", gap.target_date],
+          ]}
+          text={gap.recommended_fix || gap.finding_summary}
+        />
+        <DatasetRecordCard
+          eyebrow="Drift alert"
+          title={drift.drift_id}
+          rows={[
+            ["Type", drift.drift_type],
+            ["Old", drift.old_requirement],
+            ["New", drift.new_requirement],
+            ["Score", drift.drift_score],
+            ["Label", drift.ground_truth_label],
+          ]}
+          text={drift.recommended_action}
+        />
+        <DatasetRecordCard
+          eyebrow="Risk score"
+          title={risk.org_id}
+          rows={[
+            ["Band", risk.risk_band],
+            ["Score", risk.risk_score],
+            ["Open findings", risk.open_findings_count],
+            ["Weak evidence", risk.bad_evidence_count],
+            ["Source", risk.label_source],
+          ]}
+          text={flow?.risk_explanation}
+        />
+      </div>
+
+      <div className="admin-insight-grid">
+        <section className="admin-panel">
+          <h3>Evidence Review</h3>
+          <ul className="admin-compact-list">
+            {(flow?.evidence || []).slice(0, 3).map((record) => {
+              const payload = recordPayload(record);
+              return (
+                <li key={payload.evidence_id}>
+                  <strong>{payload.status}</strong>
+                  <span>{payload.evidence_title}</span>
+                  <em>{payload.evidence_score}</em>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+        <section className="admin-panel">
+          <h3>Audit Trail</h3>
+          <ul className="admin-compact-list">
+            {(flow?.audit_trail || []).slice(0, 5).map((record) => {
+              const payload = recordPayload(record);
+              return (
+                <li key={payload.audit_id}>
+                  <strong>{payload.event_type}</strong>
+                  <span>{payload.entity_type} {payload.entity_id}</span>
+                  <em>{payload.success}</em>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      </div>
+    </section>
+  );
+}
+
+function DatasetRecordCard({ eyebrow, title, rows, text }) {
+  return (
+    <article className="admin-finding-card">
+      <div className="admin-card-heading">
+        <div>
+          <span>{eyebrow}</span>
+          <h3>{title || "Not found in available dataset"}</h3>
+        </div>
+      </div>
+      <dl>
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value || "Not found"}</dd>
+          </div>
+        ))}
+      </dl>
+      <p>{text || "Not found in available dataset."}</p>
+    </article>
   );
 }
 

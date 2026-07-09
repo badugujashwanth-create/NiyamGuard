@@ -11,4 +11,14 @@ backend/app/storage/*.tmp
 frontend/dist/
 frontend/node_modules/
 
+data/datasets/*
+data/processed/*
+data/rag_index/*
+!data/datasets/.gitkeep
+!data/processed/.gitkeep
+!data/rag_index/.gitkeep
+data/training/*
+!data/training/.gitkeep
+!data/training/niyamguard_qa_sample.jsonl
+
 apps/

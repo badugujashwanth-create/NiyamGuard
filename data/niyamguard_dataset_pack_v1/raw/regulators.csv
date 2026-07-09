@@ -1,0 +1,7 @@
+regulator_code,regulator_name,scope,country,notes
+RBI,Reserve Bank of India,Banking / NBFC / Payments,India / Synthetic Demo,Synthetic reference row for NiyamGuard demo and testing only.
+SEBI,Securities and Exchange Board of India,Capital Markets / Trading / Mutual Funds,India / Synthetic Demo,Synthetic reference row for NiyamGuard demo and testing only.
+IRDAI,Insurance Regulatory and Development Authority of India,Insurance,India / Synthetic Demo,Synthetic reference row for NiyamGuard demo and testing only.
+NPCI,National Payments Corporation of India,Digital Payments / UPI,India / Synthetic Demo,Synthetic reference row for NiyamGuard demo and testing only.
+FIU-IND,Financial Intelligence Unit India,AML / Suspicious Transaction Reporting,India / Synthetic Demo,Synthetic reference row for NiyamGuard demo and testing only.
+MOF,Ministry of Finance,Financial Services / Governance,India / Synthetic Demo,Synthetic reference row for NiyamGuard demo and testing only.

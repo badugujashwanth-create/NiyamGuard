@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   demoReportExportUrl,
+  getAIStatus,
   getDashboardSummary,
   getIntegrationHealth,
   getLatestPublicRule,
@@ -96,20 +97,23 @@ function valueFromPublicRule(rule) {
 export default function DemoDashboard() {
   const [health, setHealth] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [aiStatus, setAiStatus] = useState(null);
   const [verifiedRule, setVerifiedRule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionStatus, setActionStatus] = useState("");
   const [error, setError] = useState("");
 
   async function refreshDemoData() {
-    const [healthResponse, summaryResponse, ruleResponse] = await Promise.all([
+    const [healthResponse, summaryResponse, ruleResponse, aiResponse] = await Promise.all([
       getIntegrationHealth(),
       getDashboardSummary(),
       getLatestPublicRule("income_certificate", "validity"),
+      getAIStatus(),
     ]);
     setHealth(healthResponse);
     setSummary(summaryResponse.summary);
     setVerifiedRule(ruleResponse);
+    setAiStatus(aiResponse);
   }
 
   useEffect(() => {
@@ -155,8 +159,19 @@ export default function DemoDashboard() {
       ],
       ["Admin Dashboard", true, "Ready"],
       ["Citizen Portal", true, "Ready"],
+      [
+        "AI Provider Status",
+        aiStatus?.status === "online",
+        aiStatus?.status === "online" ? "Online" : "Fallback",
+      ],
+      [
+        "Ollama Local LLM",
+        aiStatus?.status === "online",
+        aiStatus?.model || "qwen2.5:7b-instruct",
+      ],
+      ["RAG Knowledge Index", Boolean(aiStatus?.rag_enabled), aiStatus?.rag_enabled ? "Enabled" : "Off"],
     ],
-    [health, summary],
+    [aiStatus, health, summary],
   );
 
   return (
@@ -222,6 +237,24 @@ export default function DemoDashboard() {
           {storySteps.map((step) => (
             <li key={step}>{step}</li>
           ))}
+        </ol>
+      </section>
+
+      <section className="demo-story" aria-labelledby="demo-ai-title">
+        <div>
+          <p className="eyebrow">Where AI is used</p>
+          <h2 id="demo-ai-title">Local explanations, deterministic decisions</h2>
+          <p>
+            NiyamGuard uses deterministic verification for official compliance decisions.
+            A local LLM through Ollama is used only to explain verified findings and answer
+            citizen questions from retrieved knowledge sources.
+          </p>
+        </div>
+        <ol>
+          <li>Verified Rule badge means the answer came from approved policy data.</li>
+          <li>RAG Source badge means the answer was grounded in retrieved knowledge chunks.</li>
+          <li>Seed Demo Data badge means the source is useful for demos but not official.</li>
+          <li>Fallback badge means Ollama was unavailable and a deterministic template answered.</li>
         </ol>
       </section>
 

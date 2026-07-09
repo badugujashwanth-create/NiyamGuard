@@ -48,6 +48,7 @@ py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python -m app.seed_demo
+python -m app.data_pipeline.dataset_pack_loader --import-db --build-rag
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -67,6 +68,89 @@ http://127.0.0.1:5173/login
 http://127.0.0.1:5173/admin
 http://127.0.0.1:5173
 ```
+
+## Dataset Pack
+
+The synthetic dataset pack is extracted at:
+
+```text
+data/niyamguard_dataset_pack_v1/
+```
+
+It contains regulatory circulars, internal policies, obligations, policy mappings,
+controls, compliance evidence, gap findings, drift cases, risk labels, audit logs,
+organizations, users, RAG documents, QA pairs, intent data, instruction JSONL, and
+API test cases. The data is synthetic demo data, not official regulatory advice.
+
+Import and index it:
+
+```powershell
+cd D:\niyam\niyamguard-call-assistant\backend
+python -m app.data_pipeline.dataset_pack_loader --import-db --build-rag
+```
+
+Useful dataset APIs:
+
+```text
+GET  /api/dataset/status
+POST /api/dataset/qa
+GET  /api/dataset/obligations/search?q=privacy
+GET  /api/dataset/gaps?org_id=ORG-0029
+GET  /api/dataset/evidence?org_id=ORG-0029
+GET  /api/dataset/drift?org_id=ORG-0029
+GET  /api/dataset/risk/ORG-0029
+GET  /api/dataset/audit?org_id=ORG-0029
+GET  /api/dataset/demo-flow?org_id=ORG-0029
+```
+
+Admin UI: open `/admin/regulatory-ai` to explore circulars, policies,
+obligations, gaps, drift, risk, evidence, audit events, and dataset-grounded Q&A.
+
+## Local LLM and RAG
+
+AI is optional and safe by default:
+
+```env
+AI_PROVIDER=ollama
+AI_ENABLED=false
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen2.5:7b-instruct
+OLLAMA_FALLBACK_MODEL=llama3.2:3b
+RAG_ENABLED=true
+RAG_INDEX_PATH=./data/rag_index
+DATASET_PACK_DIR=./data/niyamguard_dataset_pack_v1
+```
+
+Run Ollama only when available:
+
+```powershell
+ollama pull qwen2.5:7b-instruct
+ollama run qwen2.5:7b-instruct
+```
+
+Without Ollama, deterministic fallbacks still answer from retrieved dataset
+sources or return `Not found in available dataset.`.
+
+## Evaluation and Fine-Tune Prep
+
+These scripts use the dataset for testing and preparation only. They do not run
+expensive model training.
+
+```powershell
+python scripts/evaluate_qa_dataset.py
+python scripts/test_intent_classifier.py
+python scripts/prepare_finetune_jsonl.py
+```
+
+## Hackathon Demo Flow
+
+1. Open `/admin/regulatory-ai`.
+2. Ask: `Why is ORG-0029 high risk?`
+3. Show retrieved dataset references from QA/RAG.
+4. Show the linked regulatory circular and extracted obligation.
+5. Show the internal policy, policy gap, and drift alert.
+6. Show risk score explanation, evidence records, and audit trail.
+7. Point out that Ollama is optional and fallback is deterministic.
 
 ## Docker Run
 
@@ -118,6 +202,11 @@ VITE_API_BASE_URL=http://127.0.0.1:8000
 - `GET /api/public/rules/latest?service_id=income_certificate&rule_key=validity`
 - `POST /api/chat`
 - `GET /api/audit/events`
+- `GET /api/ai/status`
+- `POST /api/ai/finding/{finding_id}/impact-summary`
+- `GET /api/dataset/status`
+- `POST /api/dataset/qa`
+- `GET /api/dataset/demo-flow`
 
 Version aliases are also available under `/api/v1/...`.
 
@@ -144,5 +233,7 @@ npm run build
 
 - Live MeeSeva integration, official government APIs, production cloud deployment, secrets manager, and full security audit are future steps.
 - Circular extraction is still demo-oriented unless a verified extraction pipeline is added.
+- Dataset pack records are synthetic and useful for demos, RAG, tests, and model-prep only.
+- Fine-tuning is future scope; current AI uses RAG plus local Ollama/fallback templates.
 - The app guides citizens but never submits official applications, handles OTP, CAPTCHA, payments, or official portal login.
 - Demo/local knowledge is useful for presentation and testing, but official deployments need verified government data feeds and legal approval.

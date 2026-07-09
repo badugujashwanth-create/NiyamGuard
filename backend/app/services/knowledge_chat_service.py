@@ -3,9 +3,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.config import settings
+from app.data_pipeline.rag_retriever import retrieve
 from app.schemas.chat_schemas import ChatResponse, ChatSource
 from app.services import knowledge_base_service
 from app.services.language_helper import detect_language
+from app.services.ollama_client import AIClientFactory
 
 
 LOCAL_KNOWLEDGE: dict[str, dict[str, Any]] = {
@@ -159,16 +162,18 @@ def _intent(message: str) -> str:
 
 
 def _service_from_message(message: str, context: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None]:
-    context_service = context.get("service_id") or context.get("form_id")
-    if context_service in LOCAL_KNOWLEDGE:
-        return context_service, LOCAL_KNOWLEDGE[context_service]
     normalized = message.casefold().replace("_", " ")
     best: tuple[str, dict[str, Any]] | None = None
     for service_id, item in LOCAL_KNOWLEDGE.items():
         if any(alias in normalized for alias in item["aliases"]):
             if best is None or len(item["name"]) > len(best[1]["name"]):
                 best = (service_id, item)
-    return best if best else (None, None)
+    if best:
+        return best
+    context_service = context.get("service_id") or context.get("form_id")
+    if context_service in LOCAL_KNOWLEDGE:
+        return context_service, LOCAL_KNOWLEDGE[context_service]
+    return None, None
 
 
 def _source(source_type: str, label: str, references: list[dict[str, Any]] | None = None) -> ChatSource:
@@ -210,7 +215,7 @@ def _fallback(language: str, intent: str) -> ChatResponse:
     elif language == "hindi":
         answer = "Verified data available nahi hai. Kripya official government source se verify karein."
     else:
-        answer = "Verified data is not available for this question. Please verify from the official government source."
+        answer = "Verified data is not available for this question."
     return ChatResponse(
         success=True,
         answer=answer,
@@ -222,6 +227,62 @@ def _fallback(language: str, intent: str) -> ChatResponse:
         confidence=0.35,
         verified=False,
         fallback=True,
+        provider="deterministic",
+    )
+
+
+def _references_from_chunks(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    references = []
+    for chunk in chunks:
+        source = chunk.get("source") or {}
+        references.append(
+            {
+                "chunk_id": chunk.get("chunk_id"),
+                "service_id": chunk.get("service_id"),
+                "title": chunk.get("title"),
+                "source_type": source.get("type"),
+                "source_label": source.get("label"),
+                "verified": bool(source.get("verified", False)),
+                "score": chunk.get("score"),
+            }
+        )
+    return references
+
+
+def _rag_answer(
+    message: str,
+    detected_language: str,
+    language_code: str,
+    intent: str,
+    service_id: str | None,
+) -> ChatResponse | None:
+    if not settings.rag_enabled:
+        return None
+    chunks = retrieve(message, top_k=settings.rag_top_k)
+    if not chunks:
+        return _fallback(detected_language, intent)
+    client = AIClientFactory.get_client()
+    ai_result = client.answer_with_context(message, chunks, detected_language)
+    references = ai_result.get("references") or _references_from_chunks(chunks)
+    best_service = service_id or chunks[0].get("service_id")
+    best_score = max(float(chunk.get("score") or 0) for chunk in chunks)
+    verified = bool(references) and all(bool(reference.get("verified")) for reference in references)
+    return ChatResponse(
+        success=True,
+        answer=str(ai_result.get("answer") or "Verified data is not available for this question."),
+        language=detected_language,
+        language_code=language_code,
+        intent=intent,
+        scheme_or_service=str(best_service) if best_service else None,
+        source=_source(
+            "rag",
+            "NiyamGuard knowledge index",
+            references,
+        ),
+        confidence=round(best_score, 2),
+        verified=verified,
+        fallback=bool(ai_result.get("fallback", True)),
+        provider=str(ai_result.get("provider") or "fallback"),
     )
 
 
@@ -260,7 +321,13 @@ def answer_chat(message: str, language: str = "auto", context: dict[str, Any] | 
             confidence=0.91,
             verified=True,
             fallback=False,
+            provider="deterministic",
         )
+
+    if intent in {"documents", "eligibility", "process", "fee", "timeline"}:
+        rag_response = _rag_answer(message, detected_language, language_code, intent, service_id)
+        if rag_response is not None:
+            return rag_response
 
     if item is None:
         return _fallback(detected_language, intent)
@@ -295,4 +362,5 @@ def answer_chat(message: str, language: str = "auto", context: dict[str, Any] | 
         confidence=0.78,
         verified=True,
         fallback=False,
+        provider="deterministic",
     )

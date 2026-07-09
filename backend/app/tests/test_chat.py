@@ -32,8 +32,9 @@ def test_chat_old_age_pension_eligibility_is_safe(client) -> None:
     assert response.status_code == 200
     assert body["intent"] == "eligibility"
     assert body["scheme_or_service"] == "old_age_pension"
-    assert body["verified"] is True
-    assert body["source"]["type"] == "local_knowledge"
+    assert body["verified"] is False
+    assert body["source"]["type"] == "rag"
+    assert body["source"]["references"][0]["source_type"] == "seed_demo"
 
 
 def test_chat_unknown_rule_uses_no_hallucination_fallback(client) -> None:

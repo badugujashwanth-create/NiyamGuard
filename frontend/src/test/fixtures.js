@@ -361,24 +361,188 @@ export const auditEvents = [
 export const chatAnswer = {
   success: true,
   answer:
-    "For Post-Matric Scholarship, the usual documents are: Valid Income Certificate, Caste Certificate if applicable, Previous year mark sheet, Bonafide certificate, Bank passbook copy.",
+    "For Post-Matric Scholarship, the retrieved source lists these documents: Valid Income Certificate; Caste Certificate if applicable; Previous year mark sheet; Bonafide certificate; Bank passbook copy.",
   language: "english",
   language_code: "en-IN",
   intent: "documents",
   scheme_or_service: "post_matric_scholarship",
   source: {
-    type: "local_knowledge",
-    label: "NiyamGuard seeded citizen knowledge",
+    type: "rag",
+    label: "NiyamGuard knowledge index",
     references: [
       {
+        chunk_id: "chunk_post_matric_scholarship",
         service_id: "post_matric_scholarship",
-        label: "NiyamGuard local scholarship knowledge linked to Income Certificate GO-138.",
+        title: "Post-Matric Scholarship",
+        source_type: "seed_demo",
+        source_label: "NiyamGuard demo knowledge base",
+        verified: false,
+        score: 0.78,
       },
     ],
   },
   confidence: 0.78,
-  verified: true,
+  verified: false,
+  fallback: true,
+  provider: "fallback",
+};
+
+export const aiStatus = {
+  enabled: false,
+  provider: "ollama",
+  configured: false,
+  model: "qwen2.5:7b-instruct",
+  rag_enabled: true,
+  status: "fallback",
+  message: "Ollama is unavailable. Deterministic fallback is active.",
+};
+
+export const aiImpactSummary = {
+  success: true,
+  provider: "fallback",
+  model: "deterministic-template",
+  summary: "MeeSeva Income Certificate Portal is drifted. It shows 12 months, while the verified rule expects 6 months.",
+  citizen_friendly_explanation: "A citizen may receive outdated guidance if this connected system is not updated.",
+  officer_friendly_explanation: "Update MeeSeva Income Certificate Portal to match the verified rule value 6 months.",
+  risk_explanation: "Portal validity mismatch affects citizens immediately.",
+  recommended_action: "Update portal validation rule from 12 months to 6 months.",
+  source: {
+    rule: "Income Certificate Validity",
+    circular: "GO-138",
+    verified: true,
+  },
+  fallback: true,
+  limitations: "AI summary is explanatory only. Verified rules remain the source of truth.",
+};
+
+export const datasetStatus = {
+  success: true,
+  pack_version: "niyamguard_dataset_pack_v1",
+  pack_available: true,
+  loaded_records: 18531,
+  collections: {
+    regulatory_circulars: 220,
+    internal_policies: 314,
+    obligations: 758,
+    gap_findings: 594,
+    regulatory_drift_cases: 500,
+    risk_scoring_labels: 30,
+    dataset_audit_events: 2500,
+    policy_qa_pairs: 900,
+  },
+  rag_index_ready: true,
+};
+
+export const datasetAnswer = {
+  success: true,
+  answer:
+    "Intent: explain_risk_score. NiyamGuard should retrieve linked regulatory text, obligation mappings, evidence, and risk labels; then provide a concise compliance answer with citations to internal records.",
+  provider: "dataset",
   fallback: false,
+  references: [
+    {
+      chunk_id: "chunk_qa_org_0029",
+      title: "Why is ORG-0029 high risk?",
+      service_id: "ORG-0029",
+      score: 0.86,
+      source: { type: "policy_qa_pair", label: "QA-000217", verified: false },
+      metadata: { org_id: "ORG-0029", obligation_id: "OBL-000409", circular_id: "CIR-00195" },
+    },
+  ],
+};
+
+export const datasetFlow = {
+  success: true,
+  org_id: "ORG-0029",
+  question: "What changed for ORG-0029 and what should compliance fix first?",
+  regulation: {
+    payload: {
+      circular_id: "CIR-00192",
+      regulator_code: "IRDAI",
+      sector: "Mutual Funds",
+      title: "IRDAI circular on data privacy requirements for mutual funds entities",
+      effective_date: "2025-10-02",
+      severity: "Medium",
+      summary: "Synthetic Data Privacy requirement for Mutual Funds firms to review investor disclosures.",
+    },
+  },
+  obligation: {
+    payload: {
+      obligation_id: "OBL-000664",
+      accountable_actor: "Legal Reviewer",
+      action_required: "update the internal policy and maintain approval evidence",
+      frequency: "Quarterly",
+      evidence_required: "Data retention proof",
+      penalty_risk: "High",
+      obligation_text: "Legal Reviewer must update the internal policy and maintain approval evidence.",
+    },
+  },
+  internal_policy: {
+    payload: {
+      policy_id: "POL-000301",
+      org_id: "ORG-0029",
+      policy_title: "Data Retention and Privacy Policy",
+      department: "Compliance",
+      owner_role: "Compliance Officer",
+      status: "Active",
+      policy_text: "Policy defines ownership, review cadence, exception handling, and evidence retention.",
+    },
+  },
+  gap: {
+    payload: {
+      finding_id: "FND-000301",
+      severity: "High",
+      finding_type: "Policy Wording Gap",
+      owner_team: "Compliance",
+      status: "Open",
+      target_date: "2026-08-07",
+      recommended_fix: "Update policy clause, assign owner, and add evidence workflow.",
+    },
+  },
+  drift: {
+    payload: {
+      drift_id: "DRF-000301",
+      drift_type: "New Control Required",
+      old_requirement: "periodic audit",
+      new_requirement: "continuous monitoring dashboard",
+      drift_score: "67",
+      ground_truth_label: "Minor Drift",
+      recommended_action: "Revise policy, update controls, and collect new evidence.",
+    },
+  },
+  risk: {
+    payload: {
+      org_id: "ORG-0029",
+      risk_band: "Medium",
+      risk_score: "56",
+      open_findings_count: "15",
+      bad_evidence_count: "20",
+      label_source: "synthetic_rule_based_ground_truth",
+    },
+  },
+  risk_explanation:
+    "ORG-0029 has risk band Medium with score 56. Top factors: coverage=64.9; open_findings=15; weak_evidence=20.",
+  evidence: [
+    {
+      payload: {
+        evidence_id: "EVD-0000046",
+        status: "Accepted",
+        evidence_title: "Cybersecurity evidence package 46",
+        evidence_score: "96",
+      },
+    },
+  ],
+  audit_trail: [
+    {
+      payload: {
+        audit_id: "AUD-0000146",
+        event_type: "CREATE",
+        entity_type: "user",
+        entity_id: "USE-005080",
+        success: "true",
+      },
+    },
+  ],
 };
 
 export function jsonResponse(payload, status = 200) {
@@ -482,6 +646,21 @@ export function installApiMock(overrides = {}) {
     }
     if (url.endsWith("/api/chat")) {
       return jsonResponse(overrides.chat || chatAnswer);
+    }
+    if (url.endsWith("/api/ai/status")) {
+      return jsonResponse(overrides.aiStatus || aiStatus);
+    }
+    if (url.includes("/api/ai/finding/") && url.endsWith("/impact-summary")) {
+      return jsonResponse(overrides.aiImpactSummary || aiImpactSummary);
+    }
+    if (url.endsWith("/api/dataset/status")) {
+      return jsonResponse(overrides.datasetStatus || datasetStatus);
+    }
+    if (url.includes("/api/dataset/demo-flow")) {
+      return jsonResponse(overrides.datasetFlow || datasetFlow);
+    }
+    if (url.endsWith("/api/dataset/qa")) {
+      return jsonResponse(overrides.datasetAnswer || datasetAnswer);
     }
     if (url.endsWith("/api/forms")) {
       return jsonResponse({ success: true, forms: overrides.services || services });

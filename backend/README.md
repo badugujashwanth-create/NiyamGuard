@@ -15,6 +15,7 @@ py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python -m app.seed_demo
+python -m app.data_pipeline.dataset_pack_loader --import-db --build-rag
 uvicorn app.main:app --reload
 ```
 
@@ -55,6 +56,17 @@ Swagger docs: `http://127.0.0.1:8000/docs`.
 | `GET` | `/api/reports/summary` | Reports summary |
 | `GET` | `/api/reports/export` | CSV/JSON/HTML report export |
 | `GET` | `/api/public/rules/latest` | Citizen-safe verified rule answer |
+| `GET` | `/api/ai/status` | Local Ollama/fallback and RAG status |
+| `POST` | `/api/ai/finding/{finding_id}/impact-summary` | Explanatory AI summary for verified compliance finding |
+| `GET` | `/api/dataset/status` | Synthetic dataset pack import/index status |
+| `POST` | `/api/dataset/qa` | Dataset-grounded regulatory Q&A |
+| `GET` | `/api/dataset/obligations/search` | Obligation search |
+| `GET` | `/api/dataset/gaps` | Policy-to-obligation gaps and mappings |
+| `GET` | `/api/dataset/evidence` | Compliance evidence review records |
+| `GET` | `/api/dataset/drift` | Regulatory drift cases |
+| `GET` | `/api/dataset/risk/{org_id}` | Risk score explanation |
+| `GET` | `/api/dataset/audit` | Synthetic dataset audit trail |
+| `GET` | `/api/dataset/demo-flow` | End-to-end demo bundle |
 
 Assistant responses always include `auto_fill: false` and
 `should_submit: false`.
@@ -115,6 +127,15 @@ help, document guidance, STT fallback behavior, TTS health/speak/errors,
 summary language, safety flags, verified policy rules, connected systems,
 compliance drift detection, cascade tracing, priority scoring, conflict
 detection, admin summaries, reports/export, and public verified-rule APIs.
+
+Dataset utilities:
+
+```powershell
+python -m app.data_pipeline.dataset_pack_loader --import-db --build-rag
+python ..\scripts\evaluate_qa_dataset.py
+python ..\scripts\test_intent_classifier.py
+python ..\scripts\prepare_finetune_jsonl.py
+```
 
 ## Independence and Safety
 

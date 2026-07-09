@@ -1,0 +1,252 @@
+[
+  {
+    "service_id": "income_certificate",
+    "title": "Income Certificate",
+    "description": "A certificate used to show family or household income for scholarships, fee reimbursement, pensions, admissions, and other welfare workflows.",
+    "eligibility": [
+      "Applicant should be able to provide identity, address, and income proof requested by the department.",
+      "The exact eligibility depends on the official department rule for the target scheme."
+    ],
+    "required_documents": ["Aadhaar Card", "Address proof", "Income proof", "Passport size photo if requested"],
+    "process_steps": [
+      "Choose Income Certificate in the citizen service portal.",
+      "Enter personal, address, income, and purpose details.",
+      "Upload required proof documents.",
+      "Review all details and submit manually through the official government channel."
+    ],
+    "validity": {
+      "value": "6 months",
+      "source": "GO-138 demo reference; authoritative value must come from VerifiedPolicyRule",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "residence_certificate",
+    "title": "Residence Certificate",
+    "description": "A certificate used to show that a citizen resides in a locality for education, employment, or welfare workflows.",
+    "eligibility": ["Applicant should have residence proof for the claimed address."],
+    "required_documents": ["Aadhaar Card", "Address proof", "Ration card if available"],
+    "process_steps": ["Fill residence details.", "Attach address proof.", "Submit through the official service channel."],
+    "validity": {
+      "value": "Verified validity not available in seed data",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "caste_certificate",
+    "title": "Caste Certificate",
+    "description": "A certificate used to support caste or community status claims for eligible official workflows.",
+    "eligibility": ["Applicant must belong to the claimed community and provide supporting proof requested by the department."],
+    "required_documents": ["Aadhaar Card", "Parent caste proof if available", "Address proof", "School record if requested"],
+    "process_steps": ["Enter applicant and family details.", "Attach community proof.", "Officer verifies and approves or rejects."],
+    "validity": {
+      "value": "Verified validity not available in seed data",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "ews_certificate",
+    "title": "EWS Certificate",
+    "description": "A certificate used for Economically Weaker Section workflows where official income and asset criteria apply.",
+    "eligibility": ["Eligibility depends on current official EWS income and asset criteria, which are not verified in this seed data."],
+    "required_documents": ["Aadhaar Card", "Income proof", "Asset declaration if requested", "Address proof"],
+    "process_steps": ["Provide identity, income, and residence details.", "Attach supporting documents.", "Submit through the official channel."],
+    "validity": {
+      "value": "Verified validity not available in seed data",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "post_matric_scholarship",
+    "title": "Post-Matric Scholarship",
+    "description": "A scholarship workflow for students pursuing education after Class 10, subject to scheme-specific official rules.",
+    "eligibility": [
+      "Student should be pursuing post-Class-10 education.",
+      "Student must meet income, category, institution, and course rules for the specific scholarship scheme."
+    ],
+    "required_documents": [
+      "Valid Income Certificate",
+      "Caste Certificate if applicable",
+      "Previous year mark sheet",
+      "Bonafide certificate",
+      "Bank passbook copy"
+    ],
+    "process_steps": [
+      "Register on the scholarship portal.",
+      "Fill student, institution, income, and bank details.",
+      "Upload required documents.",
+      "Institution and department verify before benefit release."
+    ],
+    "validity": {
+      "value": "Depends on linked documents and scheme rules",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "old_age_pension",
+    "title": "Old-Age Pension",
+    "description": "A welfare pension workflow for senior citizens, subject to official age, income, residence, and exclusion rules.",
+    "eligibility": ["Applicant generally must be a senior citizen and meet official income and scheme criteria."],
+    "required_documents": ["Aadhaar Card", "Age proof", "Income Certificate", "Bank passbook copy"],
+    "process_steps": ["Submit application through local office or official portal.", "Officer verifies age and income.", "Approved pension is paid through the official benefit channel."],
+    "validity": {
+      "value": "Verified validity not available in seed data",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "widow_pension",
+    "title": "Widow Pension",
+    "description": "A welfare pension workflow for eligible widowed applicants, subject to official scheme rules.",
+    "eligibility": ["Eligibility depends on official widow pension criteria, including residence, income, and marital status requirements."],
+    "required_documents": ["Aadhaar Card", "Death Certificate of spouse", "Income Certificate", "Bank passbook copy"],
+    "process_steps": ["Provide identity and spouse details.", "Attach death and income proof.", "Submit through the official channel."],
+    "validity": {
+      "value": "Verified validity not available in seed data",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "disability_pension",
+    "title": "Disability Pension",
+    "description": "A welfare pension workflow for eligible persons with disabilities, subject to official disability and income rules.",
+    "eligibility": ["Eligibility depends on official disability percentage, certification, residence, and income criteria."],
+    "required_documents": ["Aadhaar Card", "Disability certificate", "Income Certificate", "Bank passbook copy"],
+    "process_steps": ["Provide identity, disability, and income details.", "Attach proof documents.", "Submit through the official channel."],
+    "validity": {
+      "value": "Verified validity not available in seed data",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "birth_certificate",
+    "title": "Birth Certificate",
+    "description": "A civil registration certificate for a registered birth event.",
+    "eligibility": ["A birth event must be registered through the competent local body."],
+    "required_documents": ["Hospital birth record if available", "Parent identity proof", "Address proof"],
+    "process_steps": ["Provide child and parent details.", "Attach hospital or local proof.", "Submit to the local body or official portal."],
+    "validity": {
+      "value": "Usually permanent once issued, subject to official correction rules",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "death_certificate",
+    "title": "Death Certificate",
+    "description": "A civil registration certificate for a registered death event.",
+    "eligibility": ["A death event must be registered through the competent local body."],
+    "required_documents": ["Medical death record if available", "Identity proof of deceased", "Applicant identity proof"],
+    "process_steps": ["Provide deceased and applicant details.", "Attach medical or local proof.", "Submit to the local body or official portal."],
+    "validity": {
+      "value": "Usually permanent once issued, subject to official correction rules",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "family_member_certificate",
+    "title": "Family Member Certificate",
+    "description": "A certificate used to show family relationship details for official workflows.",
+    "eligibility": ["Applicant must provide family relationship details and supporting proof requested by the department."],
+    "required_documents": ["Aadhaar Card", "Ration card if available", "Death Certificate if applicable", "Address proof"],
+    "process_steps": ["Enter family relationship details.", "Attach supporting documents.", "Officer verifies and issues certificate if approved."],
+    "validity": {
+      "value": "Verified validity not available in seed data",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  },
+  {
+    "service_id": "ration_card",
+    "title": "Ration Card / Food Security Card",
+    "description": "A household food security document or card used for public distribution and related welfare workflows.",
+    "eligibility": ["Eligibility depends on official household income, residence, family, and food security criteria."],
+    "required_documents": ["Aadhaar Cards of family members", "Address proof", "Income proof if requested"],
+    "process_steps": ["Provide household details.", "Attach identity and address documents.", "Submit through the official food security channel."],
+    "validity": {
+      "value": "Verified validity not available in seed data",
+      "source": "seed_demo",
+      "verified": false
+    },
+    "language_support": ["en", "te", "hi"],
+    "source": {
+      "type": "seed_demo",
+      "label": "NiyamGuard demo knowledge base",
+      "verified": false
+    }
+  }
+]

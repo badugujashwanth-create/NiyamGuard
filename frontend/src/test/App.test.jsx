@@ -551,6 +551,9 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByText("Government Admin Portal")).toBeInTheDocument();
     expect(screen.getByText("Run Compliance Demo")).toBeInTheDocument();
     expect(screen.getByText(/GO-138 changed Income Certificate validity/)).toBeInTheDocument();
+    expect(screen.getByText("Where AI is used")).toBeInTheDocument();
+    expect(screen.getByText("AI Provider Status")).toBeInTheDocument();
+    expect(screen.getByText("RAG Knowledge Index")).toBeInTheDocument();
     expect(screen.queryByText(/"success"/)).not.toBeInTheDocument();
   });
 
@@ -625,6 +628,9 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByText("Verified Source")).toBeInTheDocument();
     expect(screen.getByText("Citizen Services Knowledge")).toBeInTheDocument();
     expect(screen.getByText("78%")).toBeInTheDocument();
+    expect(screen.getByText("RAG Source")).toBeInTheDocument();
+    expect(screen.getByText("Seed Demo Data")).toBeInTheDocument();
+    expect(screen.getByText("Fallback")).toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/chat"))).toBe(true);
   });
 
@@ -647,6 +653,7 @@ describe("NiyamGuard frontend", () => {
   it("admin compliance page renders", async () => {
     installApiMock();
     seedAdminSession();
+    const user = userEvent.setup();
     window.history.pushState({}, "", "/admin/compliance");
     render(<App />);
 
@@ -659,6 +666,10 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByText("Public FAQ")).toBeInTheDocument();
     expect(screen.getByText("Simplified Citizen Form")).toBeInTheDocument();
     expect(screen.getByText("Update portal validation rule from 12 months to 6 months.")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Generate AI Summary" }).length).toBeGreaterThan(0);
+    await user.click(screen.getAllByRole("button", { name: "Generate AI Summary" })[0]);
+    expect(await screen.findByText("AI Impact Summary")).toBeInTheDocument();
+    expect(screen.getAllByText("Fallback").length).toBeGreaterThan(0);
     expect(screen.queryByText(/"findings"/)).not.toBeInTheDocument();
   });
 
@@ -683,6 +694,24 @@ describe("NiyamGuard frontend", () => {
 
     expect(await screen.findByRole("heading", { name: "Knowledge Base" })).toBeInTheDocument();
     expect(screen.getAllByText("Income Certificate Validity").length).toBeGreaterThan(0);
+  });
+
+  it("admin regulatory AI dataset page renders and answers QA", async () => {
+    installApiMock();
+    seedAdminSession();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/admin/regulatory-ai");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Regulatory AI" })).toBeInTheDocument();
+    expect(screen.getByText("Regulatory AI Dataset Explorer")).toBeInTheDocument();
+    expect(screen.getByText("Regulatory circulars").closest("article")).toHaveTextContent("220");
+    expect(screen.getByText("Internal policies").closest("article")).toHaveTextContent("314");
+    expect(screen.getByText("Obligations").closest("article")).toHaveTextContent("758");
+    expect(screen.getByText("IRDAI circular on data privacy requirements for mutual funds entities")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Ask Dataset" }));
+    expect(await screen.findByText(/Intent: explain_risk_score/)).toBeInTheDocument();
+    expect(screen.getByText("policy_qa_pair")).toBeInTheDocument();
   });
 
   it("admin reports page renders", async () => {

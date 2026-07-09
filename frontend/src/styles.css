@@ -997,6 +997,27 @@ button:disabled {
   font-size: 0.92rem;
 }
 
+.source-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.7rem;
+}
+
+.source-badges span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.45rem;
+  padding: 0.16rem 0.45rem;
+  color: #174a3a;
+  background: #e9f5ef;
+  border: 1px solid #b6d7c8;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
 .verified-source-card dl,
 .demo-source-panel dl,
 .admin-finding-card dl {
@@ -1747,6 +1768,25 @@ footer {
   margin-top: 1rem;
 }
 
+.admin-ai-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.admin-ai-summary {
+  padding: 0.85rem;
+  background: #f8faf8;
+  border: 1px solid #dfe7e2;
+  border-radius: 0.45rem;
+}
+
+.admin-ai-summary h4 {
+  margin: 0 0 0.55rem;
+  color: #17372c;
+}
+
 .admin-action-status {
   margin: 0 0 1rem;
   padding: 0.75rem 0.9rem;
@@ -1770,6 +1810,35 @@ footer {
 .admin-user-form label {
   display: grid;
   gap: 0.35rem;
+}
+
+.dataset-qa-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.dataset-qa-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: #33463d;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.dataset-qa-form input {
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0 0.75rem;
+  color: #172235;
+  background: #fbfcfb;
+  border: 1px solid #cdd8d1;
+  border-radius: 0.45rem;
+}
+
+.dataset-answer {
+  margin-top: 0.85rem;
 }
 
 @media (max-width: 1080px) {
@@ -1833,6 +1902,7 @@ footer {
 
   .catalog-tools,
   .catalog-assistant form,
+  .dataset-qa-form,
   .service-grid,
   .demo-health,
   .demo-module-grid,

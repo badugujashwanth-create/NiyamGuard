@@ -1,0 +1,1 @@
+{"instruction":"Answer using only NiyamGuard dataset context","input":"Why is ORG-0029 high risk?","output":"Use linked risk labels, obligations, evidence, and findings for ORG-0029. If those records are missing, say not found in available dataset.","source":"niyamguard_dataset_pack_v1","verified":false}

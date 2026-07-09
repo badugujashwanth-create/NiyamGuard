@@ -27,3 +27,4 @@ class ChatResponse(BaseModel):
     confidence: float
     verified: bool
     fallback: bool
+    provider: str | None = None

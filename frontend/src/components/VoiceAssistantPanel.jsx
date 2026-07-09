@@ -17,6 +17,18 @@ const STATE_LABELS = {
   error: "Could not hear clearly, please repeat",
 };
 
+function sourceBadges(source) {
+  const badges = [];
+  if (source?.sourceType === "verified_rule" || source?.verified) badges.push("Verified Rule");
+  if (source?.sourceType === "rag") badges.push("RAG Source");
+  if (source?.sourceSourceType === "seed_demo" || /seed/i.test(source?.circular || "")) {
+    badges.push("Seed Demo Data");
+  }
+  if (source?.provider === "ollama") badges.push("Ollama AI");
+  if (source?.fallback || source?.provider === "fallback") badges.push("Fallback");
+  return [...new Set(badges)];
+}
+
 export default function VoiceAssistantPanel({
   messages,
   assistantReply,
@@ -432,6 +444,11 @@ function VerifiedSourceCard({ source }) {
   return (
     <div className="verified-source-card" aria-label="Verified Source">
       <h3>Verified Source</h3>
+      <div className="source-badges" aria-label="Sources used">
+        {sourceBadges(source).map((badge) => (
+          <span key={badge}>{badge}</span>
+        ))}
+      </div>
       <dl>
         <div>
           <dt>Circular</dt>

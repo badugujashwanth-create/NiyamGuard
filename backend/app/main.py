@@ -18,6 +18,7 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.version_alias import ApiVersionAliasMiddleware
 from app.routes.assistant_routes import router as assistant_router
 from app.routes.admin_routes import router as admin_router
+from app.routes.ai_routes import router as ai_router
 from app.routes.audit_routes import router as audit_router
 from app.routes.auth_routes import router as auth_router
 from app.routes.cascade_routes import router as cascade_router
@@ -26,6 +27,7 @@ from app.routes.compliance_routes import router as compliance_router
 from app.routes.conflict_routes import router as conflict_router
 from app.routes.connected_system_routes import router as connected_system_router
 from app.routes.dashboard_routes import router as dashboard_router
+from app.routes.dataset_routes import router as dataset_router
 from app.routes.demo_routes import router as demo_router
 from app.routes.form_routes import router as form_router
 from app.routes.health_routes import router as health_router
@@ -82,6 +84,7 @@ app.include_router(auth_router)
 app.include_router(form_router)
 app.include_router(session_router)
 app.include_router(assistant_router)
+app.include_router(ai_router)
 app.include_router(chat_router)
 app.include_router(tts_router)
 app.include_router(stt_router)
@@ -91,6 +94,7 @@ app.include_router(connected_system_router)
 app.include_router(compliance_router)
 app.include_router(cascade_router)
 app.include_router(dashboard_router)
+app.include_router(dataset_router)
 app.include_router(conflict_router)
 app.include_router(admin_router)
 app.include_router(report_router)
