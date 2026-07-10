@@ -16,7 +16,7 @@ from app.services.hybrid_intelligence import (
 )
 from app.services.hybrid_intelligence.confidence_scorer import score
 from app.services.hybrid_intelligence.source_card_builder import source_card
-from app.services.service_portal_service import track_application, verify_certificate
+from app.forms.service_portal_service import track_application, verify_certificate
 
 
 def _application_answer(question: str, language: dict[str, Any]) -> dict[str, Any] | None:

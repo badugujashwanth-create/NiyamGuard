@@ -1,7 +1,7 @@
 from app.database import SessionLocal
 from app.models.database_models import PolicyRecord
 from app.seed_demo import main as seed_demo_main
-from app.services.platform_store import read_store
+from app.knowledge_base.platform_store import read_store
 
 
 def test_seed_demo_inserts_go_138_into_database(capsys) -> None:

@@ -1,5 +1,5 @@
 from app.models.connected_system_models import ConnectedSystem, ConnectedSystemRuleSnapshot
-from app.services.platform_store import read_store
+from app.knowledge_base.platform_store import read_store
 
 
 class ConnectedSystemRepository:

@@ -1,442 +1,231 @@
 # NiyamGuard AI
 
-NiyamGuard AI is a government-policy compliance and citizen assistance platform. The main product repo is the Jashwanth repo at `badugujashwanth-create/NiyamGuard`; the other repos reviewed during this work were used only as references and were not merged into this codebase.
+> NiyamGuard AI is a government policy compliance and citizen assistance platform: officials upload a circular once, the system extracts exactly what changed, checks every connected system (portals, SOPs, forms, FAQs) against that change, flags and prioritizes anything out of sync, and gives citizens verified, up-to-date answers and guided help through the same knowledge base - all with a full audit trail.
 
-This project does not submit real government applications and does not replace official verification.
+NiyamGuard AI is a sandbox/pilot prototype. It does not submit real government applications, does not connect to real MeeSeva or department systems, and does not replace official government verification.
 
-## What It Provides
+## Problem
 
-- Citizen voice/form assistant with Telugu, Hindi, and English guidance.
-- Service catalog, dynamic forms, document guidance, and verified source cards.
-- Admin portal at `/admin` with RBAC-protected government-core pages.
-- Public demo dashboard at `/demo`.
-- Citizen scheme finder at `/scheme-finder`.
-- Hybrid verified answer engine at `/api/hybrid/answer`, `/api/answer`, and `/api/search`.
-- Full synthetic public service portal at `/services` with application submission, document upload, sandbox payment, officer review, certificate generation, public tracking, and certificate verification.
-- Government pilot readiness at `/admin/readiness` and virtual sandbox at `/virtual-gov`.
-- Self-updating policy workflow with circular source sync, extraction, approval, publication, propagation, rollback, scheduler controls, and demo patching.
-- Mock connected system pages at `/mock/meeseva` and `/mock/public-faq`.
-- Verified policy rule knowledge base with public safe lookup APIs.
-- Compliance drift detection, cascade tracing, priority scoring, conflict detection, reports, and audit logging.
-- Database-backed persistence with SQLite for local development and PostgreSQL for production.
-- Docker Compose and GitHub Actions CI.
+Government departments issue circulars and GOs that change rules, such as `Income Certificate validity: 12 months -> 6 months`. The dependent systems that citizens and officers use often lag behind: public portals, SOPs, forms, FAQs, and chatbots may keep showing the old rule. NiyamGuard AI demonstrates how one verified knowledge base can detect that drift before citizens are affected.
 
 ## Architecture
 
 ```text
-React/Vite frontend
-  -> central API client with auth token injection
-  -> citizen portal, demo dashboard, login, admin portal
-
-FastAPI backend
-  -> routes -> services -> repositories
-  -> SQLAlchemy database layer with JSON/demo fallback
-  -> auth, RBAC, audit, security middleware, health/readiness
-
-SQLite local / PostgreSQL production
+                    Central Verified Knowledge Base
+                    circulars, extracted rules, versions,
+                    confidence scores, audit trail
+                              |
+              +---------------+---------------+
+              |                               |
+      Government Portal                Citizen Portal
+ upload, review, compliance      ask, apply, guided help
 ```
 
-## Demo Credentials
+The implementation uses one FastAPI backend and one React/Vite frontend:
+
+- Backend: `backend/app/main.py`
+- Frontend: `frontend/src/app/App.jsx`
+- Detailed architecture: `docs/architecture.md`
+- Demo script: `DEMO.md`
+
+## Product Modules
+
+### Government Portal
+
+- Circular/document management for GO-138-style uploads and seeded circulars.
+- Rule extraction with confidence scores and pending review state.
+- Mandatory officer/reviewer approval before a rule becomes verified.
+- Verified rule publication and version history.
+- Compliance drift detection across mock portal config, SOP, FAQ, and form schema.
+- Impact/cascade tracing from circular change to citizen impact.
+- Priority dashboard for citizen-impact ranking.
+- Connected-system propagation and demo patching.
+- Audit trail for uploads, extraction, approval, publication, compliance, citizen answers, and certificates.
+- Ollama/local AI explanation of verified context only.
+
+### Citizen Portal
+
+- Government Knowledge Assistant that answers from verified rules and cites source circulars.
+- Scheme/Service Finder questionnaire.
+- Guided application assistance using the existing voice/form assistant.
+- Voice access with safe browser/backend fallback.
+- Synthetic service portal with mock application, payment, officer review, certificate generation, tracking, and verification.
+
+## Demo Accounts
 
 ```text
 admin@niyamguard.local / Admin@12345 / admin
 reviewer@niyamguard.local / Reviewer@12345 / reviewer
-officer@niyamguard.local / Officer@12345 / reviewer
+officer@niyamguard.local / Officer@12345 / officer
 viewer@niyamguard.local / Viewer@12345 / viewer
 citizen@niyamguard.local / Citizen@12345 / citizen
 ```
 
-## Local Run
+## Local Setup
 
-Backend:
+### Backend: Windows PowerShell
 
 ```powershell
-cd D:\niyam\niyamguard-call-assistant\backend
+cd backend
 py -3.12 -m venv .venv
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python -m app.seed_demo
-python -m app.data_pipeline.dataset_pack_loader --import-db --build-rag
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8010
 ```
 
-Frontend:
+### Backend: macOS/Linux
 
-```powershell
-cd D:\niyam\niyamguard-call-assistant\frontend
+```bash
+cd backend
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m app.seed_demo
+uvicorn app.main:app --reload --port 8010
+```
+
+### Frontend: Windows/macOS/Linux
+
+```bash
+cd frontend
 npm install
-npm run dev
+npm run dev -- --host 127.0.0.1 --port 5180
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:5173/demo
-http://127.0.0.1:5173/services
-http://127.0.0.1:5173/track
-http://127.0.0.1:5173/verify-certificate
-http://127.0.0.1:5173/officer
-http://127.0.0.1:5173/scheme-finder
-http://127.0.0.1:5173/virtual-gov
-http://127.0.0.1:5173/mock/meeseva
-http://127.0.0.1:5173/mock/public-faq
-http://127.0.0.1:5173/login
-http://127.0.0.1:5173/admin
-http://127.0.0.1:5173/admin/readiness
-http://127.0.0.1:5173
+http://127.0.0.1:5180
 ```
 
-## Self-Updating Policy Demo
-
-Use this flow for the GO-138 income-certificate scenario:
+## Main Routes
 
 ```text
-/demo -> Reset Mock Systems -> Run Update Workflow -> Run and Patch
-```
-
-Admin pages:
-
-```text
-/admin/sources
-/admin/circulars
-/admin/rule-candidates
+/                       two-portal landing
+/citizen                citizen portal
+/government             government portal
+/demo                   legacy demo dashboard
+/services               citizen services
+/apply/income_certificate
+/applications
+/track
+/verify-certificate
+/officer
+/admin
 /admin/policy-updates
+/admin/compliance
 /admin/propagation
-/admin/scheduler
-/admin/scale-view
-/admin/impact
+/admin/audit
+/admin/reports
+/admin/readiness
+/virtual-gov
+/mock/meeseva
+/mock/public-faq
 ```
 
-Important self-update APIs:
+## Key APIs
 
 ```text
-GET  /api/sources
-POST /api/sources/{source_id}/sync
+POST /api/auth/login
+GET  /api/integration/health
+GET  /api/dashboard/summary
+POST /api/demo/run-full-end-to-end
 GET  /api/circulars
 POST /api/circulars/{circular_id}/extract-rules
 GET  /api/rule-candidates
 POST /api/rule-candidates/{candidate_id}/approve
 POST /api/policy-updates/{candidate_id}/publish
-GET  /api/propagation/tasks
-POST /api/propagation/tasks/{task_id}/apply-demo-patch
-POST /api/demo/run-self-update-scenario
-GET  /api/mock-systems
-```
-
-The mock pages are synthetic connected systems only. They do not connect to real MeeSeva, OTP, CAPTCHA, payments, or official government submission.
-
-## Full Service Portal Demo
-
-The `/services` portal is a synthetic NiyamGuard public-service platform, not an official MeeSeva site. It supports the seeded services in `PolicyDataStore`: Income Certificate, Residence Certificate, Caste Certificate, EWS Certificate, Birth Certificate, Death Certificate, Family Member Certificate, Ration Card, Old-Age Pension, and Post-Matric Scholarship.
-
-Core demo flow:
-
-```text
-/services -> /apply/income_certificate -> upload documents -> submit
--> /payment/{application_id} -> /officer/pending -> approve
--> /applications/{application_id} -> /verify-certificate -> /track
-```
-
-Useful APIs:
-
-```text
+POST /api/compliance/run
+GET  /api/compliance/findings
+GET  /api/cascade/finding/{finding_id}
+GET  /api/dashboard/priority-findings
+GET  /api/audit/events
+POST /api/hybrid/answer
+GET  /api/public/rules/latest?service_id=income_certificate&rule_key=validity
 GET  /api/portal/services
-GET  /api/portal/services/{service_id}
 POST /api/applications
-POST /api/applications/{application_id}/documents
-POST /api/applications/{application_id}/submit
-POST /api/payments/{application_id}/create
-POST /api/payments/{payment_id}/simulate-success
 GET  /api/officer/pending
 POST /api/officer/applications/{application_id}/approve
 GET  /api/certificates/verify/{verification_hash}
-GET  /api/track/{application_number}
+GET  /api/ai/status
+POST /api/ai/verified-explanation
 ```
 
-Generated local files are ignored under:
+## Ollama
 
-```text
-backend/app/storage/documents/
-backend/app/storage/certificates/
+Ollama is optional. It is used only to explain verified context; it does not make official policy or compliance decisions.
+
+```bash
+ollama pull qwen2.5:7b-instruct
 ```
 
-Docs:
-
-```text
-docs/full-service-portal.md
-docs/citizen-application-workflow.md
-docs/officer-review-workflow.md
-docs/certificate-generation.md
-docs/payment-sandbox.md
-docs/access-control.md
-```
-
-## Dataset Pack
-
-The synthetic dataset pack is extracted at:
-
-```text
-data/niyamguard_dataset_pack_v1/
-```
-
-It contains regulatory circulars, internal policies, obligations, policy mappings,
-controls, compliance evidence, gap findings, drift cases, risk labels, audit logs,
-organizations, users, RAG documents, QA pairs, intent data, instruction JSONL, and
-API test cases. The data is synthetic demo data, not official regulatory advice.
-
-Import and index it:
-
-```powershell
-cd D:\niyam\niyamguard-call-assistant\backend
-python -m app.data_pipeline.dataset_pack_loader --import-db --build-rag
-```
-
-Useful dataset APIs:
-
-```text
-GET  /api/dataset/status
-POST /api/dataset/qa
-GET  /api/dataset/obligations/search?q=privacy
-GET  /api/dataset/gaps?org_id=ORG-0029
-GET  /api/dataset/evidence?org_id=ORG-0029
-GET  /api/dataset/drift?org_id=ORG-0029
-GET  /api/dataset/risk/ORG-0029
-GET  /api/dataset/audit?org_id=ORG-0029
-GET  /api/dataset/demo-flow?org_id=ORG-0029
-```
-
-Admin UI: open `/admin/regulatory-ai` to explore circulars, policies,
-obligations, gaps, drift, risk, evidence, audit events, and dataset-grounded Q&A.
-
-## Hybrid Search And Answer Engine
-
-The verified answer engine uses exact rules, service decision tables, local RAG
-retrieval, optional Ollama, and deterministic fallback. It never invents official
-answers when a source is missing.
-
-```text
-POST /api/hybrid/answer
-POST /api/answer
-GET  /api/hybrid/status
-POST /api/hybrid/reindex
-GET  /api/search?q=income%20certificate%20validity
-GET  /api/search/status
-POST /api/search/reindex
-```
-
-## Local LLM and RAG
-
-AI is optional and safe by default:
+Recommended environment:
 
 ```env
+AI_ENABLED=true
 AI_PROVIDER=ollama
-AI_ENABLED=false
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=qwen2.5:7b-instruct
 OLLAMA_FALLBACK_MODEL=llama3.2:3b
 RAG_ENABLED=true
-RAG_INDEX_PATH=./data/rag_index
-DATASET_PACK_DIR=./data/niyamguard_dataset_pack_v1
 ```
 
-Run Ollama only when available:
+If Ollama is unavailable, deterministic fallback remains active.
 
-```powershell
-ollama pull qwen2.5:7b-instruct
-ollama run qwen2.5:7b-instruct
-```
+## Tests
 
-Without Ollama, deterministic fallbacks still answer from retrieved dataset
-sources or return `Not found in available dataset.`.
+Backend:
 
-Optional provider settings:
-
-```env
-ANSWER_ENGINE=hybrid_intelligence
-SEARCH_ENGINE_ENABLED=true
-BM25_ENABLED=true
-SEMANTIC_SEARCH_ENABLED=true
-ANSWER_TEMPLATES_ENABLED=true
-LLM_OPTIONAL=true
-LLM_REQUIRED=false
-HF_API_TOKEN=
-GROQ_API_KEY=
-GEMINI_API_KEY=
-```
-
-## Government Pilot Readiness And Sandbox
-
-Readiness and operations:
-
-```text
-GET  /api/ops/status
-GET  /api/admin/readiness
-POST /api/security/otp/request
-POST /api/security/otp/verify
-```
-
-Virtual government sandbox:
-
-```text
-GET  /api/virtual-gov/status
-GET  /api/virtual-gov/scenarios
-POST /api/virtual-gov/run
-```
-
-Docs:
-
-```text
-docs/government-pilot-readiness.md
-docs/virtual-government-sandbox.md
-docs/security-checklist.md
-docs/threat-model.md
-docs/privacy-checklist.md
-docs/owasp-mapping.md
-docs/backup-restore.md
-docs/uat-checklist.md
-```
-
-## Evaluation and Fine-Tune Prep
-
-These scripts use the dataset for testing and preparation only. They do not run
-expensive model training.
-
-```powershell
-python scripts/evaluate_qa_dataset.py
-python scripts/test_intent_classifier.py
-python scripts/prepare_finetune_jsonl.py
-```
-
-## Hackathon Demo Flow
-
-1. Open `/demo`.
-2. Reset mock systems and show `/mock/meeseva` still says `12 months`.
-3. Run the self-update scenario.
-4. Show `/admin/rule-candidates`, `/admin/policy-updates`, and `/admin/propagation`.
-5. Patch mock systems and show `/mock/meeseva` plus `/mock/public-faq` now say `6 months`.
-6. Open `/admin/impact` to explain citizen impact and priority.
-7. Open `/admin/regulatory-ai`, ask `Why is ORG-0029 high risk?`, and show dataset-grounded citations.
-8. Open `/admin/readiness` and show the pilot controls.
-9. Open `/virtual-gov`, run the sandbox, and show application/certificate artifacts.
-10. Open `/scheme-finder`, select student/scholarship, and show cautious service recommendations.
-11. Open `/services`, apply for Income Certificate, simulate payment, approve from `/officer/pending`, then verify the generated certificate.
-12. Open `/`, ask `income certificate validity entha`, then open the Income Certificate form and ask `purpose lo scholarship ani rayacha`.
-13. Point out that Ollama is optional and fallback is deterministic.
-
-## Platform Contracts
-
-Shared demo contracts are in:
-
-```text
-shared-contracts/api-contracts.json
-docs/platform-orchestrator.md
-scripts/check-health.ps1
-scripts/check-health.sh
-```
-
-The three-module presentation keeps modules separate and connects through HTTP contracts. This repo does not import internal code from the other repositories.
-
-## Docker Run
-
-```powershell
-cd D:\niyam\niyamguard-call-assistant
-docker compose up --build
-docker compose exec backend python -m app.seed_demo
-```
-
-Docker starts PostgreSQL, FastAPI on `8000`, and the Vite preview server on `5173`.
-
-## Environment
-
-Copy examples when needed:
-
-```text
-.env.example
-backend/.env.example
-frontend/.env.example
-```
-
-Important backend variables:
-
-```text
-DATABASE_URL=sqlite:///./niyamguard.db
-DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/niyamguard
-SECRET_KEY=change-this-secret-key
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-TRUSTED_HOSTS=localhost,127.0.0.1
+```bash
+python -m pytest backend/app/tests -q
 ```
 
 Frontend:
 
-```text
-VITE_API_BASE_URL=http://127.0.0.1:8000
-```
-
-## Key APIs
-
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `GET /api/health`
-- `GET /api/ready`
-- `GET /api/integration/health`
-- `GET /api/dashboard/summary`
-- `POST /api/compliance/run`
-- `GET /api/conflicts`
-- `GET /api/reports/export?type=compliance&format=csv`
-- `GET /api/public/rules/latest?service_id=income_certificate&rule_key=validity`
-- `POST /api/scheme-finder/recommend`
-- `GET /api/portal/services`
-- `POST /api/applications`
-- `POST /api/applications/{application_id}/submit`
-- `POST /api/payments/{application_id}/create`
-- `GET /api/officer/pending`
-- `POST /api/officer/applications/{application_id}/approve`
-- `GET /api/certificates/verify/{verification_hash}`
-- `POST /api/demo/run-self-update-scenario`
-- `GET /api/mock-systems`
-- `POST /api/chat`
-- `GET /api/audit/events`
-- `GET /api/ai/status`
-- `POST /api/ai/finding/{finding_id}/impact-summary`
-- `GET /api/dataset/status`
-- `POST /api/dataset/qa`
-- `GET /api/dataset/demo-flow`
-- `POST /api/hybrid/answer`
-- `GET /api/search/status`
-- `GET /api/ops/status`
-- `GET /api/admin/readiness`
-- `POST /api/virtual-gov/run`
-
-Version aliases are also available under `/api/v1/...`.
-
-## Tests
-
-```powershell
-cd D:\niyam\niyamguard-call-assistant\backend
-pytest
-
-cd D:\niyam\niyamguard-call-assistant\frontend
-npm test
+```bash
+cd frontend
+npm test -- --run
 npm run build
-
-cd D:\niyam\niyamguard-call-assistant
-python scripts/final_api_smoke_test.py --base-url http://127.0.0.1:8000
-python scripts/record_demo_assets.py --frontend-url http://127.0.0.1:5173 --backend-url http://127.0.0.1:8000
 ```
 
-## Security Notes
+Smoke test with a running backend:
 
-- Admin/government APIs require JWT authentication and RBAC.
-- Public citizen and verified-rule APIs remain open.
-- Passwords use bcrypt when available, with PBKDF2 verification retained for older local demo hashes.
-- Audit events include a hash chain for important actions.
-- Middleware adds request IDs, security headers, trusted host checks, CORS restrictions, rate limiting, structured errors, and request logging.
+```bash
+python scripts/final_api_smoke_test.py --base-url http://127.0.0.1:8010
+```
 
-## Known Limitations
+Browser E2E with running backend and frontend:
 
-- Live MeeSeva integration, official government APIs, production cloud deployment, secrets manager, and full security audit are future steps.
-- Circular extraction is still demo-oriented unless a verified extraction pipeline is added.
-- Dataset pack records are synthetic and useful for demos, RAG, tests, and model-prep only.
-- Fine-tuning is future scope; current AI uses RAG plus local Ollama/fallback templates.
-- The app guides citizens but never submits official applications, handles OTP, CAPTCHA, payments, or official portal login.
-- Demo/local knowledge is useful for presentation and testing, but official deployments need verified government data feeds and legal approval.
+```bash
+cd frontend
+npx playwright test tests/e2e/final-full-feature-portal.spec.ts --headed
+```
+
+## Docker
+
+```bash
+docker compose up --build
+docker compose exec backend python -m app.seed_demo
+```
+
+Docker runs PostgreSQL, FastAPI, and frontend services using the compose file.
+
+## Seed Data
+
+The default seed includes:
+
+- GO-138: Income Certificate validity `12 months -> 6 months`.
+- Mock connected systems that can drift from the verified rule.
+- Demo service definitions and forms.
+- Demo users and officer/reviewer roles.
+- Synthetic dataset pack under `data/niyamguard_dataset_pack_v1`.
+
+The dataset is synthetic. It is useful for demos, RAG/search, tests, and model-prep only.
+
+## Limitations
+
+- This is a sandbox/pilot prototype with mock connected systems and demo data.
+- It is not a production integration with real government portals.
+- Production would need real APIs, security audit, accessibility audit, legal review, department sign-off, secrets management, real digital signatures, and real operational monitoring.
+- The app guides citizens but never submits an official application, handles real OTP/CAPTCHA/payment, or replaces official verification.

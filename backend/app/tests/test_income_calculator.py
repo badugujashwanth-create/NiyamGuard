@@ -1,7 +1,7 @@
 import pytest
 
-from app.services.income_calculator import calculate_annual_income, calculate_monthly_income
-from app.services.language_helper import parse_spoken_number
+from app.citizen_assistant.income_calculator import calculate_annual_income, calculate_monthly_income
+from app.citizen_assistant.language_helper import parse_spoken_number
 
 
 @pytest.mark.parametrize(

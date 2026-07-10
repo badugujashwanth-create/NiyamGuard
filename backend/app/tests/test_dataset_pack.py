@@ -4,7 +4,7 @@ from app.data_pipeline.dataset_pack_loader import (
     import_dataset_pack,
 )
 from app.repositories.dataset_repository import dataset_repository
-from app.services.dataset_service import rag_search
+from app.demo.dataset_service import rag_search
 
 
 def test_dataset_import_is_idempotent() -> None:

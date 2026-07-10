@@ -16,48 +16,48 @@ from app.middleware.logging_middleware import LoggingMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.version_alias import ApiVersionAliasMiddleware
-from app.routes.assistant_routes import router as assistant_router
-from app.routes.admin_routes import router as admin_router
-from app.routes.ai_routes import router as ai_router
-from app.routes.audit_routes import router as audit_router
-from app.routes.auth_routes import router as auth_router
-from app.routes.cascade_routes import router as cascade_router
-from app.routes.chat_routes import router as chat_router
-from app.routes.circular_routes import router as circular_router
-from app.routes.compliance_update_routes import router as compliance_update_router
-from app.routes.compliance_routes import router as compliance_router
-from app.routes.conflict_routes import router as conflict_router
-from app.routes.connected_system_routes import router as connected_system_router
-from app.routes.dashboard_routes import router as dashboard_router
-from app.routes.dataset_routes import router as dataset_router
-from app.routes.demo_routes import router as demo_router
-from app.routes.demo_self_update_routes import router as demo_self_update_router
-from app.routes.form_routes import router as form_router
-from app.routes.health_routes import router as health_router
-from app.routes.hybrid_intelligence_routes import router as hybrid_intelligence_router
-from app.routes.knowledge_update_routes import router as knowledge_update_router
-from app.routes.knowledge_routes import router as knowledge_router
-from app.routes.location_routes import router as location_router
-from app.routes.mock_system_routes import router as mock_system_router
-from app.routes.policy_update_routes import router as policy_update_router
-from app.routes.public_routes import router as public_router
-from app.routes.propagation_routes import router as propagation_router
-from app.routes.readiness_routes import router as readiness_router
-from app.routes.report_routes import router as report_router
-from app.routes.rule_candidate_routes import router as rule_candidate_router
-from app.routes.scheduler_routes import router as scheduler_router
-from app.routes.scheme_finder_routes import router as scheme_finder_router
-from app.routes.service_portal_routes import router as service_portal_router
-from app.routes.session_routes import router as session_router
-from app.routes.source_routes import router as source_router
-from app.routes.stt_routes import router as stt_router
-from app.routes.tts_routes import router as tts_router
-from app.routes.virtual_government_routes import router as virtual_government_router
-from app.routes.sandbox_routes import router as sandbox_router
-from app.routes.government_routes import router as government_router
-from app.routes.chatbot_routes import router as chatbot_router
+from app.api.assistant_routes import router as assistant_router
+from app.api.admin_routes import router as admin_router
+from app.api.ai_routes import router as ai_router
+from app.api.audit_routes import router as audit_router
+from app.api.auth_routes import router as auth_router
+from app.api.cascade_routes import router as cascade_router
+from app.api.chat_routes import router as chat_router
+from app.api.circular_routes import router as circular_router
+from app.api.compliance_update_routes import router as compliance_update_router
+from app.api.compliance_routes import router as compliance_router
+from app.api.conflict_routes import router as conflict_router
+from app.api.connected_system_routes import router as connected_system_router
+from app.api.dashboard_routes import router as dashboard_router
+from app.api.dataset_routes import router as dataset_router
+from app.api.demo_routes import router as demo_router
+from app.api.demo_self_update_routes import router as demo_self_update_router
+from app.api.form_routes import router as form_router
+from app.api.health_routes import router as health_router
+from app.api.hybrid_intelligence_routes import router as hybrid_intelligence_router
+from app.api.knowledge_update_routes import router as knowledge_update_router
+from app.api.knowledge_routes import router as knowledge_router
+from app.api.location_routes import router as location_router
+from app.api.mock_system_routes import router as mock_system_router
+from app.api.policy_update_routes import router as policy_update_router
+from app.api.public_routes import router as public_router
+from app.api.propagation_routes import router as propagation_router
+from app.api.readiness_routes import router as readiness_router
+from app.api.report_routes import router as report_router
+from app.api.rule_candidate_routes import router as rule_candidate_router
+from app.api.scheduler_routes import router as scheduler_router
+from app.api.scheme_finder_routes import router as scheme_finder_router
+from app.api.service_portal_routes import router as service_portal_router
+from app.api.session_routes import router as session_router
+from app.api.source_routes import router as source_router
+from app.api.stt_routes import router as stt_router
+from app.api.tts_routes import router as tts_router
+from app.api.virtual_government_routes import router as virtual_government_router
+from app.api.sandbox_routes import router as sandbox_router
+from app.api.government_routes import router as government_router
+from app.api.chatbot_routes import router as chatbot_router
 from app.services.auth_service import seed_default_users
-from app.services.platform_store import ensure_demo_store_seeded
+from app.knowledge_base.platform_store import ensure_demo_store_seeded
 
 logging.basicConfig(level=getattr(logging, settings.log_level, logging.INFO))
 

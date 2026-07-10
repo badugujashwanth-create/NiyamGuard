@@ -1,5 +1,5 @@
 from app.models.knowledge_models import VerifiedPolicyRule
-from app.services.platform_store import now_iso, read_store, write_store
+from app.knowledge_base.platform_store import now_iso, read_store, write_store
 
 
 class KnowledgeRepository:

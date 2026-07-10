@@ -7,7 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from app.config import settings
-from app.services.platform_store import read_store
+from app.knowledge_base.platform_store import read_store
 
 
 def _chunk(chunk_id: str, title: str, text: str, source: dict[str, Any], service_id: str | None = None) -> dict[str, Any]:

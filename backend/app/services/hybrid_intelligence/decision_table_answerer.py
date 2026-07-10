@@ -4,7 +4,7 @@ from typing import Any
 
 from app.services.hybrid_intelligence.confidence_scorer import score
 from app.services.hybrid_intelligence.source_card_builder import source_card
-from app.services.platform_store import read_store
+from app.knowledge_base.platform_store import read_store
 
 
 PROCESS_STEPS = [

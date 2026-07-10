@@ -16,6 +16,8 @@ backend/*.db
 backend/.codex-*.log
 niyamguard.db
 backend/app/storage/*.tmp
+backend/app/storage/sandbox_circulars.json
+backend/app/storage/sandbox_circulars/
 backend/app/storage/documents/
 backend/app/storage/certificates/
 backend/storage/
