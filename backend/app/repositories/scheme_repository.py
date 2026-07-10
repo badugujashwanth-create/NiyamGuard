@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.services.knowledge_chat_service import LOCAL_KNOWLEDGE
+from app.citizen_assistant.knowledge_chat_service import LOCAL_KNOWLEDGE
 
 
 class SchemeRepository:

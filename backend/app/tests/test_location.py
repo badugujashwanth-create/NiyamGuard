@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.services.location_helper import build_location_guidance
+from app.citizen_assistant.location_helper import build_location_guidance
 
 
 def create_session(client: TestClient) -> str:

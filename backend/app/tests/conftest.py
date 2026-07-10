@@ -7,7 +7,7 @@ from app.config import SESSION_STORAGE_PATH
 from app.main import app
 from app.security.rate_limit import _attempts
 from app.services.auth_service import seed_default_users
-from app.services.platform_store import reset_demo_store
+from app.knowledge_base.platform_store import reset_demo_store
 
 
 @pytest.fixture(autouse=True)

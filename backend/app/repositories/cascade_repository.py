@@ -1,5 +1,5 @@
 from app.models.cascade_models import CascadeTrace
-from app.services.platform_store import read_store, write_store
+from app.knowledge_base.platform_store import read_store, write_store
 
 
 class CascadeRepository:

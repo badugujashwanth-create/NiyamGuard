@@ -1,6 +1,6 @@
 import pytest
 
-from app.services.language_helper import detect_language
+from app.citizen_assistant.language_helper import detect_language
 
 
 @pytest.mark.parametrize(

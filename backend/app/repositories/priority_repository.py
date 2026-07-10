@@ -1,5 +1,5 @@
 from app.models.priority_models import PriorityScore
-from app.services.platform_store import read_store, write_store
+from app.knowledge_base.platform_store import read_store, write_store
 
 
 class PriorityRepository:

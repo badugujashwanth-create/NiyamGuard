@@ -1,6 +1,6 @@
 import pytest
 
-from app.services.field_detector import detect_field
+from app.citizen_assistant.field_detector import detect_field
 
 
 @pytest.mark.parametrize(

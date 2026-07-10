@@ -1,4 +1,4 @@
-from app.services.form_service import load_all_forms
+from app.forms.form_service import load_all_forms
 
 
 def test_form_catalog_returns_seeded_forms(client) -> None:

@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.services.validator import validate_field
+from app.citizen_assistant.validator import validate_field
 
 
 @pytest.mark.parametrize(

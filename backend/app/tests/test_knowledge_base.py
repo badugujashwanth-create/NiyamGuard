@@ -1,4 +1,4 @@
-from app.services.knowledge_base_service import latest_rule, supersede_older_rules
+from app.knowledge_base.knowledge_base_service import latest_rule, supersede_older_rules
 
 
 def test_seed_verified_rule_exists() -> None:
