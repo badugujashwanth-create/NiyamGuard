@@ -1,0 +1,25 @@
+file_path,format,row_count,columns,purpose
+README.md,md,,,
+app_seed/audit_events.csv,csv,2500,audit_id | org_id | user_id | event_time | event_type | entity_type | entity_id | before_hash | after_hash | ip_address | success,Audit log seed with hash chain style fields.
+app_seed/organizations.csv,csv,30,org_id | org_name | sector | region | asset_size_cr | risk_tier | compliance_officer | onboarded_at | status,Demo financial institutions and org-level risk profiles.
+app_seed/users.csv,csv,150,user_id | org_id | name | email | role | mfa_enabled | status | created_at,"Demo users, roles, status, and MFA settings."
+ml/api_test_cases.csv,csv,240,test_id | module | endpoint | scenario | input_payload | expected_status_code | expected_result | priority,Backend/API and demo test cases.
+ml/instruction_test.jsonl,jsonl,211,json objects,Test split for instruction tuning.
+ml/instruction_train.jsonl,jsonl,1827,json objects,Training split for instruction tuning.
+ml/instruction_tuning_dataset.jsonl,jsonl,2250,json objects,Combined instruction examples for LLM tuning and evaluation.
+ml/instruction_validation.jsonl,jsonl,212,json objects,Validation split for instruction tuning.
+ml/intent_classification.csv,csv,900,example_id | utterance | intent_label | entities_json | split,Utterance intent labels and entities for classifier training.
+ml/policy_qa_pairs.csv,csv,900,qa_id | user_question | expected_answer | intent | linked_circular_id | linked_obligation_id | linked_org_id | difficulty | split,Natural language Q&A examples for product chat evaluation.
+ml/rag_documents.jsonl,jsonl,1128,json objects,Chunk-level documents ready for vector indexing.
+processed/compliance_evidence.csv,csv,2857,evidence_id | org_id | obligation_id | control_id | evidence_type | evidence_title | evidence_date | submitted_by | status | reviewer_comments | storage_uri | evidence_score | hash,Evidence records for compliance proof review.
+processed/controls.csv,csv,1452,control_id | org_id | control_name | control_description | control_owner_team | control_owner_role | control_frequency | automation_level | linked_policy_id | linked_obligation_id | control_effectiveness_score | last_tested_at | test_result,Control library mapped to policies and obligations.
+processed/gap_findings.csv,csv,594,finding_id | org_id | obligation_id | policy_id | severity | finding_type | finding_summary | recommended_fix | owner_team | status | target_date | created_at | ground_truth_compliance_label,Policy/control/evidence gaps with remediation labels.
+processed/obligations.csv,csv,758,obligation_id | circular_id | regulator_code | sector | category | obligation_type | obligation_text | accountable_actor | action_required | frequency | evidence_required | due_days_from_effective_date | penalty_risk | risk_weight | expected_control | created_by_extractor | extractor_confidence,LLM/rule extracted obligations from circulars.
+processed/policy_obligation_mapping.csv,csv,1452,mapping_id | org_id | policy_id | obligation_id | coverage_status | coverage_score | matched_policy_clause | gap_summary | ai_confidence | review_status | reviewed_by | reviewed_at,Ground truth mapping between obligations and internal policies.
+processed/regulatory_drift_cases.csv,csv,500,drift_id | org_id | previous_policy_id | new_circular_id | drift_type | old_requirement | new_requirement | drift_score | impacted_departments | recommended_action | ground_truth_label | created_at,Old-vs-new requirement drift examples for training/demo.
+processed/risk_scoring_labels.csv,csv,30,risk_id | org_id | risk_score | risk_band | avg_policy_coverage_score | open_findings_count | bad_evidence_count | top_risk_factors | generated_at | label_source,"Org-level risk score labels generated from coverage, findings, and evidence."
+raw/internal_policies.csv,csv,314,policy_id | org_id | policy_title | department | owner_role | version | effective_from | last_updated_at | next_review_date | status | policy_text | tags,Synthetic internal policy documents for policy mapping and drift checks.
+raw/regulators.csv,csv,6,regulator_code | regulator_name | scope | country | notes,Reference table for synthetic financial regulators.
+raw/regulatory_circulars.csv,csv,220,circular_id | regulator_code | sector | title | issue_date | effective_date | due_date | category | severity | jurisdiction | summary | full_text | source_url | status | keywords | version,Synthetic regulatory circular text used for ingestion and RAG.
+scripts/schema_starter.sql,sql,,,Starter SQL schema for key tables.
+scripts/simple_loader.py,py,,,Helper script to verify file row counts.

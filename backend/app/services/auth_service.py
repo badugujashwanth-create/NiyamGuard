@@ -19,9 +19,12 @@ from app.services.time import now_iso
 
 
 DEFAULT_USERS = [
-    ("admin@niyamguard.local", "Admin@12345", "admin"),
-    ("reviewer@niyamguard.local", "Reviewer@12345", "reviewer"),
-    ("viewer@niyamguard.local", "Viewer@12345", "viewer"),
+    ("user_admin", "admin@niyamguard.local", "Admin@12345", "admin"),
+    ("user_reviewer", "reviewer@niyamguard.local", "Reviewer@12345", "reviewer"),
+    ("user_viewer", "viewer@niyamguard.local", "Viewer@12345", "viewer"),
+    ("user_officer", "officer@niyamguard.local", "Officer@12345", "officer"),
+    ("user_citizen", "citizen@niyamguard.local", "Citizen@12345", "citizen"),
+    ("user_sandbox_admin", "sandbox@niyamguard.local", "Sandbox@12345", "sandbox_admin"),
 ]
 
 
@@ -45,13 +48,19 @@ def _user_response(user: UserRecord) -> dict:
 
 
 def seed_default_users() -> None:
-    for email, password, role in DEFAULT_USERS:
-        if auth_repository.get_user_by_email(email):
+    for user_id, email, password, role in DEFAULT_USERS:
+        existing = auth_repository.get_user_by_email(email)
+        if existing:
+            if existing.role != role or not existing.is_active:
+                existing.role = role
+                existing.is_active = True
+                existing.updated_at = now_iso()
+                auth_repository.upsert_user(existing)
             continue
         timestamp = now_iso()
         auth_repository.upsert_user(
             UserRecord(
-                id=f"user_{uuid4().hex}",
+                id=user_id,
                 email=email.casefold(),
                 password_hash=hash_password(password),
                 role=role,

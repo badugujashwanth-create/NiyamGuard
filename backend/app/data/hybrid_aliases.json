@@ -1,0 +1,110 @@
+{
+  "services": {
+    "income_certificate": [
+      "income certificate",
+      "income cert",
+      "income proof",
+      "income",
+      "aadayam certificate",
+      "aadayam",
+      "ఆదాయ ధృవీకరణ పత్రం",
+      "आय प्रमाण पत्र"
+    ],
+    "residence_certificate": [
+      "residence certificate",
+      "resident certificate",
+      "residence",
+      "address certificate",
+      "nivasam certificate",
+      "నివాస ధృవీకరణ పత్రం",
+      "निवास प्रमाण पत्र"
+    ],
+    "caste_certificate": [
+      "caste certificate",
+      "community certificate",
+      "caste",
+      "community",
+      "kulam certificate",
+      "కుల ధృవీకరణ పత్రం",
+      "जाति प्रमाण पत्र"
+    ],
+    "ews_certificate": [
+      "ews certificate",
+      "ews",
+      "economically weaker section",
+      "ईडब्ल्यूएस"
+    ],
+    "post_matric_scholarship": [
+      "scholarship",
+      "post matric scholarship",
+      "post-matric scholarship",
+      "fee reimbursement",
+      "student scholarship",
+      "scholarship documents",
+      "స్కాలర్షిప్",
+      "छात्रवृत्ति"
+    ],
+    "old_age_pension": [
+      "old age pension",
+      "old-age pension",
+      "senior citizen pension",
+      "pension",
+      "vruddha pension",
+      "వృద్ధాప్య పింఛను",
+      "वृद्धावस्था पेंशन"
+    ],
+    "widow_pension": [
+      "widow pension",
+      "వితంతు పింఛను",
+      "विधवा पेंशन"
+    ],
+    "disability_pension": [
+      "disability pension",
+      "disabled pension",
+      "వికలాంగ పింఛను",
+      "दिव्यांग पेंशन"
+    ],
+    "birth_certificate": [
+      "birth certificate",
+      "birth",
+      "జనన ధృవీకరణ పత్రం",
+      "जन्म प्रमाण पत्र"
+    ],
+    "death_certificate": [
+      "death certificate",
+      "death",
+      "మరణ ధృవీకరణ పత్రం",
+      "मृत्यु प्रमाण पत्र"
+    ],
+    "family_member_certificate": [
+      "family member certificate",
+      "family certificate",
+      "family members",
+      "కుటుంబ సభ్యుల ధృవీకరణ పత్రం",
+      "परिवार सदस्य प्रमाण पत्र"
+    ],
+    "ration_card": [
+      "ration card",
+      "food security card",
+      "food card",
+      "రేషన్ కార్డు",
+      "राशन कार्ड"
+    ]
+  },
+  "intents": {
+    "validity": ["validity", "valid", "expiry", "expire", "months", "entha", "ఎంత", "kitna", "kitne"],
+    "documents": ["documents", "document", "docs", "papers", "proof", "upload", "patralu", "పత్రాలు", "कागज़", "kaagaz"],
+    "eligibility": ["eligible", "eligibility", "qualify", "apply cheyacha", "arhata", "అర్హత", "योग्यता", "yogyata"],
+    "process": ["process", "steps", "how to apply", "apply", "ela", "ఎలా", "kaise"],
+    "fee": ["fee", "fees", "cost", "charge", "amount", "ఫీజు", "शुल्क"],
+    "timeline": ["timeline", "processing time", "days", "how long", "ఎన్ని రోజులు", "kitne din"],
+    "application_status": ["track", "status", "application number", "ngsp"],
+    "certificate_verification": ["verify certificate", "certificate verify", "ngcert", "verification hash"],
+    "policy_update": ["policy update", "rule update", "go-138", "circular update"],
+    "circular_summary": ["explain circular", "explain go-138", "simple words", "summary"],
+    "compliance_impact": ["impact", "risk", "mismatch", "drift", "why risky"],
+    "officer_next_action": ["officer action", "what should officer", "next action"],
+    "service_recommendation": ["which service", "which form", "what service"],
+    "unknown": []
+  }
+}

@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import {
+  getSpeechSupport,
+  SPEECH_FALLBACK_MESSAGE,
+  speechErrorMessage,
+} from "../services/speechService";
+
 export function useSpeechRecognition({
   languageCode = "en-IN",
   onFinalTranscript,
@@ -16,11 +22,9 @@ export function useSpeechRecognition({
 
   finalCallbackRef.current = onFinalTranscript;
 
-  const Recognition =
-    typeof window !== "undefined"
-      ? window.SpeechRecognition || window.webkitSpeechRecognition
-      : undefined;
-  const supported = Boolean(Recognition);
+  const support = getSpeechSupport();
+  const Recognition = support.recognition;
+  const supported = support.secureContext && support.webSpeechSupported;
 
   useEffect(() => {
     if (!supported) return undefined;
@@ -70,16 +74,7 @@ export function useSpeechRecognition({
     };
     recognition.onerror = (event) => {
       if (event.error === "aborted") return;
-      const messages = {
-        "not-allowed": "Microphone permission was denied. Use the text box instead.",
-        "service-not-allowed":
-          "Browser speech recognition is blocked. Check browser permissions or use the text box.",
-        "no-speech": "No speech was heard. Please try again or use the text box.",
-        "audio-capture": "No microphone was found. Use the text box instead.",
-        network:
-          "The browser speech service is unavailable. Check your connection or use the text box.",
-      };
-      setError(messages[event.error] || "Voice recognition stopped unexpectedly.");
+      setError(speechErrorMessage(event.error));
       setIsListening(false);
       if (
         ["not-allowed", "service-not-allowed", "audio-capture", "network"].includes(
@@ -110,6 +105,10 @@ export function useSpeechRecognition({
   }, [Recognition, languageCode, supported]);
 
   const start = useCallback(() => {
+    if (!support.secureContext || !support.webSpeechSupported) {
+      setError(support.reason || SPEECH_FALLBACK_MESSAGE);
+      return;
+    }
     if (!recognitionRef.current || shouldListenRef.current) return;
     setError("");
     setTranscript("");
@@ -175,6 +174,7 @@ export function useSpeechRecognition({
 
   return {
     supported,
+    support,
     isListening,
     isActive,
     transcript,
