@@ -11,6 +11,7 @@ import {
   resetMockSystems,
   runDemo,
   runSelfUpdateScenario,
+  runVirtualGovScenario,
 } from "../services/api";
 
 const demoCards = [
@@ -91,6 +92,77 @@ const storySteps = [
   "Report is exported",
 ];
 
+const platformFlowCards = [
+  {
+    title: "Virtual Gazette",
+    description: "Publishes sandbox circulars like GO-138 for demo policy updates.",
+    href: "/virtual-gov",
+  },
+  {
+    title: "Policy Engine",
+    description: "Ingests circular data and updates verified rule versions.",
+    href: "/admin/policy-updates",
+  },
+  {
+    title: "Service Portal",
+    description: "Shows citizen services that reflect the current verified rules.",
+    href: "/services",
+  },
+  {
+    title: "Citizen Application",
+    description: "Creates a sandbox application draft with documents and status tracking.",
+    href: "/apply/income_certificate",
+  },
+  {
+    title: "Officer Review",
+    description: "Lets an officer review evidence and approve the sandbox application.",
+    href: "/officer",
+  },
+  {
+    title: "Certificate Authority",
+    description: "Generates a signed demo certificate after officer approval.",
+    href: "/officer",
+  },
+  {
+    title: "Public Verification",
+    description: "Verifies a demo certificate number or hash from the public page.",
+    href: "/verify-certificate",
+  },
+  {
+    title: "Compliance Engine",
+    description: "Detects drift between verified rules and connected systems.",
+    href: "/admin/compliance",
+  },
+  {
+    title: "Audit Trail",
+    description: "Records important sandbox events for review and traceability.",
+    href: "/admin/audit",
+  },
+  {
+    title: "Hybrid Answer Engine",
+    description: "Answers citizen questions with deterministic rules and source cards.",
+    href: "/admin/regulatory-ai",
+  },
+];
+
+const manualDemoLinks = [
+  ["Demo Dashboard", "/demo"],
+  ["Virtual Government", "/virtual-gov"],
+  ["Services", "/services"],
+  ["Citizen Applications", "/applications"],
+  ["Officer Portal", "/officer"],
+  ["Certificate Verification", "/verify-certificate"],
+  ["Admin Compliance", "/admin/compliance"],
+  ["Admin Readiness", "/admin/readiness"],
+  ["Admin Audit", "/admin/audit"],
+];
+
+const demoAccounts = [
+  ["Admin", "admin@niyamguard.local", "Admin@12345"],
+  ["Officer", "officer@niyamguard.local", "Officer@12345"],
+  ["Citizen", "citizen@niyamguard.local", "Citizen@12345"],
+];
+
 function statusText(isOnline) {
   return isOnline ? "Online" : "Offline";
 }
@@ -105,6 +177,25 @@ function valueFromPublicRule(rule) {
   return match?.[1]?.replace(/\.$/, "") || "Source not available";
 }
 
+function hasScenarioStep(result, stepId) {
+  return Boolean(result?.steps?.some((step) => step.step_id === stepId));
+}
+
+function scenarioResultRows(result) {
+  const certificateStep = result?.steps?.find((step) => step.step_id === "certificate_issued");
+  return [
+    ["Circular Published", Boolean(result?.success)],
+    ["Rule Updated", Boolean(result?.success && (result?.artifacts?.source_rule || hasScenarioStep(result, "regulation_question")))],
+    ["Citizen Application Created", hasScenarioStep(result, "application_created")],
+    ["Payment Completed", hasScenarioStep(result, "payment_completed")],
+    ["Officer Approved", hasScenarioStep(result, "certificate_issued")],
+    ["Certificate Generated", Boolean(result?.artifacts?.certificate_number)],
+    ["Certificate Verified", Boolean(certificateStep?.payload?.certificate_valid)],
+    ["Compliance Rerun", hasScenarioStep(result, "compliance_demo_flow")],
+    ["Audit Events Created", Boolean(result?.success)],
+  ];
+}
+
 export default function DemoDashboard() {
   const [health, setHealth] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -113,6 +204,9 @@ export default function DemoDashboard() {
   const [mockSystems, setMockSystems] = useState({});
   const [loading, setLoading] = useState(true);
   const [actionStatus, setActionStatus] = useState("");
+  const [fullDemoStatus, setFullDemoStatus] = useState("idle");
+  const [fullDemoResult, setFullDemoResult] = useState(null);
+  const [fullDemoError, setFullDemoError] = useState("");
   const [error, setError] = useState("");
 
   async function refreshDemoData() {
@@ -201,6 +295,27 @@ export default function DemoDashboard() {
     }
   }
 
+  async function runFullVirtualGovernmentDemo() {
+    setFullDemoStatus("running");
+    setFullDemoResult(null);
+    setFullDemoError("");
+    setError("");
+    try {
+      const result = await runVirtualGovScenario({
+        scenarioId: "income_certificate_full_flow",
+        resetBeforeRun: true,
+      });
+      if (!result?.success) {
+        throw new Error(result?.error || "Scenario runner did not return success.");
+      }
+      setFullDemoResult(result);
+      setFullDemoStatus("complete");
+    } catch {
+      setFullDemoStatus("fallback");
+      setFullDemoError("Scenario runner is not available. Please use the manual demo links below.");
+    }
+  }
+
   const healthCards = useMemo(
     () => [
       ["Backend API", Boolean(health), statusText(Boolean(health))],
@@ -274,6 +389,74 @@ export default function DemoDashboard() {
           </article>
         ))}
       </section>
+
+      <section className="demo-story demo-how-it-works" aria-labelledby="how-it-works-title">
+        <div>
+          <p className="eyebrow">How everything works</p>
+          <h2 id="how-it-works-title">Full virtual government flow</h2>
+          <p>
+            Virtual Government Sandbox - for demonstration and pilot testing only.
+            Not an official government portal.
+          </p>
+          <button
+            className="button button-primary"
+            disabled={fullDemoStatus === "running"}
+            onClick={runFullVirtualGovernmentDemo}
+            type="button"
+          >
+            {fullDemoStatus === "running" ? "Running Demo..." : "Run Full Virtual Government Demo"}
+          </button>
+        </div>
+        <div className="demo-flow-grid">
+          {platformFlowCards.map((card) => (
+            <article className="demo-flow-card" key={card.title}>
+              <div>
+                <StatusBadge>Working</StatusBadge>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </div>
+              <a className="button button-secondary" href={card.href}>
+                Open
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {fullDemoStatus === "complete" && fullDemoResult ? (
+        <section className="demo-source-panel demo-result-panel" aria-labelledby="full-demo-result-title">
+          <p className="eyebrow">Run demo result</p>
+          <h2 id="full-demo-result-title">Full virtual government demo completed</h2>
+          <div className="demo-result-grid">
+            {scenarioResultRows(fullDemoResult).map(([label, ok]) => (
+              <article key={label}>
+                <span>{label}</span>
+                <StatusBadge tone={ok ? "ready" : "offline"}>{ok ? "success" : "not shown"}</StatusBadge>
+              </article>
+            ))}
+          </div>
+          <dl>
+            <div>
+              <dt>Application</dt>
+              <dd>{fullDemoResult.artifacts?.application_number || "Not available"}</dd>
+            </div>
+            <div>
+              <dt>Certificate</dt>
+              <dd>{fullDemoResult.artifacts?.certificate_number || "Not available"}</dd>
+            </div>
+            <div>
+              <dt>Verification Hash</dt>
+              <dd>{fullDemoResult.artifacts?.verification_hash || "Not available"}</dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {fullDemoStatus === "fallback" ? (
+        <section className="demo-source-panel demo-result-panel" aria-label="Scenario fallback">
+          <p>{fullDemoError}</p>
+        </section>
+      ) : null}
 
       <section className="demo-story" aria-labelledby="demo-story-title">
         <div>
@@ -414,6 +597,34 @@ export default function DemoDashboard() {
             <a className="button button-secondary" href={demoReportExportUrl("rules", "json")}>
               Export Rules JSON
             </a>
+          </div>
+        </article>
+      </section>
+
+      <section className="demo-final-grid" aria-label="Manual demo links and accounts">
+        <article className="demo-source-panel">
+          <p className="eyebrow">Manual demo links</p>
+          <h2>Open these screens one by one</h2>
+          <div className="demo-link-list">
+            {manualDemoLinks.map(([label, href]) => (
+              <a href={href} key={href}>
+                <span>{label}</span>
+                <code>{href}</code>
+              </a>
+            ))}
+          </div>
+        </article>
+        <article className="demo-source-panel">
+          <p className="eyebrow">Demo accounts</p>
+          <h2>Use these logins</h2>
+          <div className="demo-account-table" role="table" aria-label="Demo accounts">
+            {demoAccounts.map(([role, email, password]) => (
+              <div role="row" key={role}>
+                <strong role="cell">{role}</strong>
+                <code role="cell">{email}</code>
+                <code role="cell">{password}</code>
+              </div>
+            ))}
           </div>
         </article>
       </section>

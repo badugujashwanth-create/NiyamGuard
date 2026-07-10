@@ -89,7 +89,7 @@ export async function request(path, options = {}, { auth = true, parseAs = "json
     });
   } catch (error) {
     throw new ApiError(
-      "Cannot reach the NiyamGuard backend. Check that FastAPI is running on port 8000.",
+      `Cannot reach the NiyamGuard backend. Check that FastAPI is running at ${API_BASE_URL}.`,
       0,
       error,
     );
@@ -105,4 +105,3 @@ export async function request(path, options = {}, { auth = true, parseAs = "json
 
   return parseResponse(response, parseAs);
 }
-

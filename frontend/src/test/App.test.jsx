@@ -543,17 +543,27 @@ describe("NiyamGuard frontend", () => {
   });
 
   it("demo dashboard renders live presentation sections", async () => {
-    installApiMock();
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
     window.history.pushState({}, "", "/demo");
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "NiyamGuard AI Demo" })).toBeInTheDocument();
     expect(screen.getByText("Government Admin Portal")).toBeInTheDocument();
     expect(screen.getByText("Run Compliance Demo")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Full virtual government flow" })).toBeInTheDocument();
+    expect(screen.getByText("Virtual Gazette")).toBeInTheDocument();
+    expect(screen.getByText("Hybrid Answer Engine")).toBeInTheDocument();
+    expect(screen.getByText(/Manual demo links/i)).toBeInTheDocument();
+    expect(screen.getByText("admin@niyamguard.local")).toBeInTheDocument();
     expect(screen.getByText(/GO-138 changed Income Certificate validity/)).toBeInTheDocument();
     expect(screen.getByText("Where AI is used")).toBeInTheDocument();
     expect(screen.getByText("AI Provider Status")).toBeInTheDocument();
     expect(screen.getByText("RAG Knowledge Index")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Run Full Virtual Government Demo" }));
+    expect(await screen.findByText("Certificate Generated")).toBeInTheDocument();
+    expect(screen.getByText("NGCERT-2026-INC-000001")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/virtual-gov/run"))).toBe(true);
     expect(screen.queryByText(/"success"/)).not.toBeInTheDocument();
   });
 
