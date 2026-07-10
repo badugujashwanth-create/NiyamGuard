@@ -33,6 +33,7 @@ def import_database_models() -> None:
     import app.models.audit_models  # noqa: F401
     import app.models.auth_models  # noqa: F401
     import app.models.database_models  # noqa: F401
+    import app.models.dataset_models  # noqa: F401
 
 
 def init_db() -> None:

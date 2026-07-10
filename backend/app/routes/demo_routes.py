@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Response
 
-from app.services import compliance_service, conflict_detector, priority_service, report_service
+from app.services import compliance_service, conflict_detector, full_demo_service, government_inbox_service, priority_service, report_service
 
 router = APIRouter(prefix="/api/demo", tags=["Demo"])
 
@@ -18,6 +18,16 @@ def run_demo() -> dict:
             "conflicts": len(conflicts),
         },
     }
+
+
+@router.post("/run-full-end-to-end")
+def run_full_end_to_end_demo() -> dict:
+    return full_demo_service.run_full_end_to_end_demo()
+
+
+@router.get("/portal-summary")
+def portal_summary() -> dict:
+    return government_inbox_service.portal_summary()
 
 
 @router.get("/reports/export")

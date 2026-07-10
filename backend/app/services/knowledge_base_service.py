@@ -9,13 +9,22 @@ from app.services.platform_store import add_audit_event, now_iso, read_store, wr
 def _source_for_rule(rule: VerifiedPolicyRule) -> RuleSource | None:
     store = read_store()
     circular = next((item for item in store.circulars if item.id == rule.circular_id), None)
-    if circular is None:
+    if circular is not None:
+        return RuleSource(
+            circular_id=circular.id,
+            circular_number=circular.circular_number,
+            department=circular.department,
+            effective_date=circular.effective_date,
+            confidence=rule.confidence,
+        )
+    circular_document = next((item for item in store.circular_documents if item.id == rule.circular_id), None)
+    if circular_document is None:
         return None
     return RuleSource(
-        circular_id=circular.id,
-        circular_number=circular.circular_number,
-        department=circular.department,
-        effective_date=circular.effective_date,
+        circular_id=circular_document.id,
+        circular_number=circular_document.circular_number,
+        department=circular_document.department,
+        effective_date=circular_document.effective_date,
         confidence=rule.confidence,
     )
 
@@ -123,4 +132,7 @@ def source_circular_info(rule_id: str) -> dict | None:
         return None
     store = read_store()
     circular = next((item for item in store.circulars if item.id == rule.circular_id), None)
-    return circular.model_dump() if circular else None
+    if circular:
+        return circular.model_dump()
+    circular_document = next((item for item in store.circular_documents if item.id == rule.circular_id), None)
+    return circular_document.model_dump() if circular_document else None

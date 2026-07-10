@@ -3,7 +3,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import DynamicFormPage from "./components/DynamicFormPage";
 import AdminPortal from "./components/AdminPortal";
 import DemoDashboard from "./components/DemoDashboard";
+import { MockMeeSevaPortal, MockPublicFaq } from "./components/MockConnectedSystems";
+import CitizenPortal from "./components/CitizenPortal";
+import GovernmentPortal from "./components/GovernmentPortal";
+import SchemeFinder from "./components/SchemeFinder";
+import ServicePortal from "./components/ServicePortal";
 import ServiceCatalog from "./components/ServiceCatalog";
+import UnifiedLanding from "./components/UnifiedLanding";
+import VirtualGovernmentSandbox from "./components/VirtualGovernmentSandbox";
 import VoiceAssistantPanel from "./components/VoiceAssistantPanel";
 import {
   askAssistant,
@@ -112,6 +119,9 @@ function sourceCardFromRule(ruleResponse) {
     currentValue: valueFromRuleResponse(ruleResponse),
     confidence: source.confidence,
     effectiveDate: source.effective_date,
+    sourceType: "verified_rule",
+    verified: true,
+    provider: "deterministic",
     whySelected: "Matched income certificate validity against the latest verified public rule.",
   };
 }
@@ -146,6 +156,7 @@ function sourceCardFromChat(chatResponse) {
   return {
     circular:
       firstReference.circular_number ||
+      firstReference.source_label ||
       firstReference.label ||
       chatResponse?.source?.label ||
       "NiyamGuard Knowledge Base",
@@ -157,6 +168,13 @@ function sourceCardFromChat(chatResponse) {
     confidence: chatResponse?.confidence,
     effectiveDate: firstReference.effective_date,
     lastUpdated: firstReference.last_updated,
+    sourceType: chatResponse?.source?.type,
+    sourceSourceType: firstReference.source_type,
+    method: chatResponse?.method,
+    sourceCount: chatResponse?.sources?.length || chatResponse?.source?.references?.length || 0,
+    verified: Boolean(chatResponse?.verified),
+    provider: chatResponse?.provider,
+    fallback: Boolean(chatResponse?.fallback),
     whySelected: `Matched this question to ${titleCase(chatResponse?.intent || "knowledge")} guidance for ${titleCase(chatResponse?.scheme_or_service || "citizen services")}.`,
   };
 }
@@ -213,7 +231,11 @@ function LoginPage({ onLoginSuccess }) {
             {submitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-        <p className="login-hint">Demo admin: admin@niyamguard.local / Admin@12345</p>
+        <p className="login-hint">
+          Demo admin: admin@niyamguard.local / Admin@12345<br />
+          Citizen: citizen@niyamguard.local / Citizen@12345<br />
+          Officer: officer@niyamguard.local / Officer@12345
+        </p>
         <div className="login-links">
           <a href="/demo">Open public demo</a>
           <a href="/">Open citizen portal</a>
@@ -692,10 +714,52 @@ export default function App() {
 
   function handleLoginSuccess(user) {
     setCurrentUser(user);
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next) {
+      navigate(next);
+      return;
+    }
+    if (user?.role === "citizen") {
+      navigate("/services");
+      return;
+    }
+    if (user?.email === "officer@niyamguard.local" || user?.role === "reviewer") {
+      navigate("/officer");
+      return;
+    }
     navigate("/admin");
   }
 
+  if (path === "/" || path.startsWith("/portal")) return <UnifiedLanding />;
+  if (path === "/citizen") return <CitizenPortal />;
+  if (path.startsWith("/citizen/assistant")) return <CitizenApp />;
+  if (path.startsWith("/government")) return <GovernmentPortal />;
   if (path.startsWith("/demo")) return <DemoDashboard />;
+  if (path.startsWith("/mock/meeseva")) return <MockMeeSevaPortal />;
+  if (path.startsWith("/mock/public-faq")) return <MockPublicFaq />;
+  if (path.startsWith("/virtual-gov")) return <VirtualGovernmentSandbox />;
+  if (path.startsWith("/scheme-finder")) {
+    return (
+      <SchemeFinder
+        onStartForm={() => {
+          window.history.pushState({}, "", "/");
+          setPath("/");
+        }}
+      />
+    );
+  }
+  if (
+    path.startsWith("/services") ||
+    path.startsWith("/apply") ||
+    path.startsWith("/applications") ||
+    path.startsWith("/track") ||
+    path.startsWith("/verify-certificate") ||
+    path.startsWith("/citizen") ||
+    path.startsWith("/payment") ||
+    path.startsWith("/officer")
+  ) {
+    return <ServicePortal path={window.location.pathname} />;
+  }
   if (path.startsWith("/login")) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }

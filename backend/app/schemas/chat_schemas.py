@@ -24,6 +24,10 @@ class ChatResponse(BaseModel):
     intent: str
     scheme_or_service: str | None = None
     source: ChatSource
+    method: str | None = None
+    sources: list[dict[str, Any]] = Field(default_factory=list)
     confidence: float
     verified: bool
     fallback: bool
+    provider: str | None = None
+    limitations: str | None = None

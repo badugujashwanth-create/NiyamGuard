@@ -1,0 +1,31 @@
+org_id,org_name,sector,region,asset_size_cr,risk_tier,compliance_officer,onboarded_at,status
+ORG-0001,Aarohan Capital 1,NBFC,US-West Demo,32348,Medium,Ravi Menon,2025-07-12,Active
+ORG-0002,Aarohan Bank 2,Brokerage,India,28907,Medium,Dev Rao,2025-07-28,Active
+ORG-0003,Pragati Payments 3,Brokerage,APAC Demo,36713,High,Asha Kapoor,2024-06-12,Active
+ORG-0004,Veda Finance 4,Mutual Funds,US-East Demo,44368,Low,Neha Rao,2025-01-02,Active
+ORG-0005,Aarohan Capital 5,Insurance,EU Demo,70534,Low,Neha Rao,2025-07-19,Active
+ORG-0006,CapitalNest Finance 6,Mutual Funds,India,6256,High,Priya Rao,2024-08-26,Active
+ORG-0007,Veda Payments 7,Brokerage,US-West Demo,21569,Medium,Kiran Menon,2024-09-30,Active
+ORG-0008,CapitalNest Capital 8,NBFC,US-East Demo,70260,High,Meera Patel,2025-01-23,Active
+ORG-0009,Sangam Holdings 9,Payments,India,30271,High,Arjun Patel,2024-10-01,Active
+ORG-0010,Pragati Capital 10,Mutual Funds,EU Demo,52106,High,Sanjay Sharma,2024-09-28,Active
+ORG-0011,CapitalNest Payments 11,Insurance,APAC Demo,52600,Medium,Meera Iyer,2025-05-20,Active
+ORG-0012,Zetta Finance 12,Banking,US-East Demo,55583,Medium,Neha Patel,2025-09-02,Sandbox
+ORG-0013,BlueRiver Holdings 13,Insurance,India,15264,High,Isha Kapoor,2024-09-30,Active
+ORG-0014,Zetta Securities 14,Mutual Funds,EU Demo,20980,Medium,Priya Iyer,2024-07-01,Active
+ORG-0015,Veda Holdings 15,NBFC,APAC Demo,80068,Medium,Arjun Kapoor,2024-06-14,Active
+ORG-0016,CapitalNest Securities 16,Banking,EU Demo,2802,Low,Arjun Kapoor,2024-11-10,Active
+ORG-0017,CapitalNest Bank 17,Payments,India,63949,High,Isha Kapoor,2024-05-08,Active
+ORG-0018,BlueRiver Finance 18,FinTech,US-West Demo,69413,High,Neha Sharma,2025-07-06,Active
+ORG-0019,Veda Payments 19,Payments,US-West Demo,57672,High,Sanjay Rao,2024-09-10,Active
+ORG-0020,Aarohan Insurance 20,Mutual Funds,APAC Demo,30411,Medium,Asha Rao,2025-10-08,Active
+ORG-0021,Aarohan Holdings 21,NBFC,US-West Demo,9537,Medium,Priya Menon,2025-05-12,Active
+ORG-0022,CapitalNest Insurance 22,Capital Markets,EU Demo,32100,High,Neha Sharma,2024-04-06,Active
+ORG-0023,Sangam Payments 23,Brokerage,EU Demo,61463,High,Asha Menon,2025-10-31,Sandbox
+ORG-0024,Aarohan Payments 24,NBFC,US-West Demo,14572,Medium,Kiran Iyer,2025-04-04,Active
+ORG-0025,Veda Payments 25,Capital Markets,US-East Demo,10130,Medium,Isha Rao,2024-02-21,Active
+ORG-0026,Zetta Holdings 26,Banking,US-East Demo,22048,Medium,Sanjay Sharma,2025-02-14,Sandbox
+ORG-0027,FinEdge Bank 27,Capital Markets,EU Demo,35010,Critical,Sanjay Nair,2025-03-09,Active
+ORG-0028,Nexora Finance 28,FinTech,US-West Demo,28784,Critical,Dev Menon,2025-07-09,Active
+ORG-0029,Aarohan Bank 29,Mutual Funds,APAC Demo,62743,Medium,Isha Sharma,2024-02-28,Sandbox
+ORG-0030,Nexora Bank 30,NBFC,APAC Demo,9157,High,Kiran Patel,2024-05-02,Sandbox
