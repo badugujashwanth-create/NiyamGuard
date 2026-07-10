@@ -109,10 +109,10 @@ Use `docs/recording-assets/manual-recording-checklist.md` if a fresh spoken vide
 
 ## PR Status
 
-PR title/body are prepared in:
+PR created:
 
 ```text
-docs/final-pr-description.md
+https://github.com/badugujashwanth-create/NiyamGuard/pull/2
 ```
 
 PR target:
@@ -126,6 +126,12 @@ Manual PR URL:
 
 ```text
 https://github.com/badugujashwanth-create/NiyamGuard/pull/new/codex/self-updating-policy-engine
+```
+
+PR title/body are also saved in:
+
+```text
+docs/final-pr-description.md
 ```
 
 ## Remaining Production Notes
