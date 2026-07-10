@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { askHybridDemoQuestion } from "../../services/api";
-import VoiceAssistantPanel from "./VoiceAssistantPanel";
+import { useCitizenAssistant, useCitizenAssistantPageContext } from "../context/CitizenAssistantContext";
 
 function message(role, text) {
   return {
@@ -64,16 +64,25 @@ const assistantChips = [
 ];
 
 export default function CitizenPortal() {
+  const assistant = useCitizenAssistant();
   const [question, setQuestion] = useState("income certificate validity entha");
   const [answer, setAnswer] = useState(null);
-  const [assistantReply, setAssistantReply] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [speechCommand, setSpeechCommand] = useState(null);
   const [asking, setAsking] = useState(false);
-  const [lastDetectedLanguage, setLastDetectedLanguage] = useState("english");
-  const [lastLanguageCode, setLastLanguageCode] = useState("en-IN");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+
+  const pageContext = useMemo(
+    () => ({
+      mode: "landing",
+      routePath: "/citizen",
+      formId: "income_certificate",
+      serviceName: "Citizen Portal",
+      lastVisibleSection: "landing",
+    }),
+    [],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   function sourceCardFromHybrid(response) {
     const source = response.sources?.[0] || response.source || {};
@@ -104,20 +113,7 @@ export default function CitizenPortal() {
       verified_source: sourceCardFromHybrid(response),
     };
     setAnswer(response);
-    setAssistantReply(reply);
-    setLastDetectedLanguage(reply.detected_language);
-    setLastLanguageCode(reply.language_code);
-    setMessages((current) => [
-      ...current,
-      ...(userText ? [message("user", userText)] : []),
-      message("assistant", reply.reply),
-    ]);
-    setSpeechCommand({
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      text: reply.reply,
-      detectedLanguage: reply.detected_language,
-      languageCode: reply.language_code,
-    });
+    assistant.publishAssistantReply(reply);
     return reply;
   }
 
@@ -141,8 +137,7 @@ export default function CitizenPortal() {
         detected_language: "english",
         language_code: "en-IN",
       };
-      setAssistantReply(reply);
-      setMessages((current) => [...current, message("assistant", reply.reply)]);
+      assistant.publishAssistantReply(reply);
       return null;
     } finally {
       setAsking(false);
@@ -153,25 +148,6 @@ export default function CitizenPortal() {
     event.preventDefault();
     setAnswer(null);
     await askCitizenAssistant(question);
-  }
-
-  async function handleUseLocation() {
-    const reply = {
-      success: true,
-      answer: "Location lookup is optional in this demo. You can type your pincode or continue with text guidance.",
-      language: lastDetectedLanguage,
-      language_code: lastLanguageCode,
-      method: "safe_fallback",
-      provider: "deterministic",
-      verified: false,
-      fallback: true,
-      source: {
-        type: "safe_fallback",
-        label: "Citizen demo guidance",
-        verified: false,
-      },
-    };
-    return applyAssistantResponse(reply);
   }
 
   return (
@@ -209,7 +185,7 @@ export default function CitizenPortal() {
 
       {error ? <div className="global-error" role="alert">{error}</div> : null}
 
-      <section className="citizen-voice-layout" id="citizen-voice-assistant" aria-label="Main Voice Assistant">
+      <section className="citizen-voice-layout citizen-voice-layout-summary" id="citizen-voice-assistant" aria-label="Main Voice Assistant">
         <div className="unified-section-heading citizen-section-heading">
           <div>
             <p className="eyebrow">Main Voice Assistant</p>
@@ -217,21 +193,6 @@ export default function CitizenPortal() {
           </div>
           <span className="unified-status unified-status-ready">Text fallback ready</span>
         </div>
-        <VoiceAssistantPanel
-          activeDocument=""
-          activeField=""
-          asking={asking}
-          assistantReply={assistantReply}
-          formId="income_certificate"
-          lastDetectedLanguage={lastDetectedLanguage}
-          lastLanguageCode={lastLanguageCode}
-          messages={messages}
-          onAsk={askCitizenAssistant}
-          onUseLocation={handleUseLocation}
-          sessionId="citizen-portal"
-          sessionStatus="ready"
-          speechCommand={speechCommand}
-        />
         <article className="unified-result-panel citizen-voice-notes">
           <p className="eyebrow">Text Assistant Fallback</p>
           <h2>Voice is optional. Text always works.</h2>

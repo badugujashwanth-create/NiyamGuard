@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { recommendSchemes } from "../../services/api";
+import { useCitizenAssistantPageContext } from "../context/CitizenAssistantContext";
 
 const initialProfile = {
   age: "",
@@ -27,6 +28,18 @@ export default function SchemeFinder({ onStartForm }) {
   const [result, setResult] = useState(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "scheme_finder",
+      routePath: "/scheme-finder",
+      formId: "catalog",
+      serviceName: "Scheme Finder",
+      lastVisibleSection: "scheme_finder",
+    }),
+    [],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   function update(field, value) {
     setProfile((current) => ({ ...current, [field]: value }));

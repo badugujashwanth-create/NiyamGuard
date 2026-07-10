@@ -49,6 +49,8 @@ export default function VoiceAssistantPanel({
   formId = "income_certificate",
   activeField = "",
   activeDocument = "",
+  introText = INTRO_TEXT,
+  textPlaceholder = "Example: What should I enter for monthly income?",
 }) {
   const [assistantState, setAssistantState] = useState("idle");
   const [textMessage, setTextMessage] = useState("");
@@ -265,7 +267,7 @@ export default function VoiceAssistantPanel({
     processingTranscriptRef.current = "";
     if (!introSpokenRef.current) {
       introSpokenRef.current = true;
-      await speakAndMaybeResume(INTRO_TEXT, "en-IN", "english");
+      await speakAndMaybeResume(introText, "en-IN", "english");
     } else {
       startListening();
     }
@@ -333,6 +335,10 @@ export default function VoiceAssistantPanel({
       speechCommand.detectedLanguage,
     );
   }, [speechCommand, speakAndMaybeResume]);
+
+  useEffect(() => {
+    introSpokenRef.current = false;
+  }, [introText]);
 
   useEffect(
     () => () => {
@@ -424,7 +430,7 @@ export default function VoiceAssistantPanel({
             <input
               id="assistant-question"
               onChange={(event) => setTextMessage(event.target.value)}
-              placeholder="Example: What should I enter for monthly income?"
+              placeholder={textPlaceholder}
               value={textMessage}
             />
             <button

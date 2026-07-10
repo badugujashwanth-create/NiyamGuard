@@ -34,8 +34,18 @@ test("restored full feature access through two portals", async ({ page }) => {
   await expect(page.locator("body")).not.toContainText(/Check your connection or use the text box/i);
   await screenshot(page, "restored-02-citizen-voice-assistant.png");
 
+  await page.getByRole("link", { name: "Verify Certificate" }).first().click();
+  await expect(page.getByRole("heading", { name: "Verify Certificate" })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "NiyamGuard Voice Assistant" })).toBeVisible();
+  await expect(page.getByText(/Income Certificate validity 6 months/i).first()).toBeVisible();
+  await page.getByLabel("Type your question").fill("certificate validity entha");
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
+  await expect(page.getByText(/Income Certificate validity 6 months/i).first()).toBeVisible();
+  await screenshot(page, "restored-02b-citizen-certificate-voice-assistant.png");
+
   await page.goto("/government");
   await expect(page.getByRole("heading", { name: "NiyamGuard Government Portal" })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "NiyamGuard Voice Assistant" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Circulars & Policy Updates", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Self-Updating Policy Engine", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Compliance Drift", exact: true })).toBeVisible();
@@ -54,6 +64,7 @@ test("restored full feature access through two portals", async ({ page }) => {
   await page.getByLabel("Password").fill("Admin@12345");
   await page.getByRole("button", { name: "Sign In" }).click();
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "NiyamGuard Voice Assistant" })).toHaveCount(0);
 
   await page.goto("/admin/policy-updates");
   await expect(page.getByRole("heading", { name: "Policy Updates" })).toBeVisible();

@@ -24,6 +24,7 @@ import {
   uploadPortalDocument,
   verifyPortalCertificate,
 } from "../../services/api";
+import { useCitizenAssistantPageContext } from "../context/CitizenAssistantContext";
 
 function titleCase(value = "") {
   return value
@@ -57,11 +58,12 @@ function RequiresLogin({ path }) {
   );
 }
 
-function FieldInput({ field, value, onChange }) {
+function FieldInput({ field, value, onChange, onFocus }) {
   const type = field.type === "textarea" ? "textarea" : "input";
   const common = {
     id: field.key,
     onChange: (event) => onChange(field.key, event.target.value),
+    onFocus: () => onFocus?.(field),
     required: Boolean(field.required),
     value: value || "",
   };
@@ -110,6 +112,18 @@ function ServicesPage() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "service_catalog",
+      routePath: "/services",
+      formId: "catalog",
+      serviceName: "Service Catalog",
+      lastVisibleSection: "services",
+    }),
+    [],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   useEffect(() => {
     let active = true;
@@ -150,6 +164,20 @@ function ServicesPage() {
 function ServiceDetailPage({ serviceId }) {
   const [service, setService] = useState(null);
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "service_detail",
+      routePath: `/services/${serviceId}`,
+      formId: serviceId || "catalog",
+      serviceName: service?.name || titleCase(serviceId),
+      formFields: service?.form?.fields_json || [],
+      requiredDocuments: service?.required_documents_json || [],
+      lastVisibleSection: "services",
+    }),
+    [service, serviceId],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   useEffect(() => {
     let active = true;
@@ -210,8 +238,26 @@ function ApplyPage({ serviceId, path }) {
   const [values, setValues] = useState({});
   const [application, setApplication] = useState(null);
   const [files, setFiles] = useState({});
+  const [activeField, setActiveField] = useState("");
+  const [activeDocument, setActiveDocument] = useState("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "form",
+      routePath: path,
+      formId: serviceId || "income_certificate",
+      serviceName: service?.name || titleCase(serviceId),
+      formFields: service?.form?.fields_json || [],
+      requiredDocuments: service?.required_documents_json || [],
+      activeField,
+      activeDocument,
+      lastVisibleSection: activeDocument ? "documents" : "details",
+    }),
+    [activeDocument, activeField, path, service, serviceId],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   useEffect(() => {
     let active = true;
@@ -305,7 +351,16 @@ function ApplyPage({ serviceId, path }) {
       <form className="portal-form" onSubmit={handleCreateDraft}>
         <div className="portal-form-grid">
           {service.form.fields_json.map((field) => (
-            <FieldInput key={field.key} field={field} onChange={updateValue} value={values[field.key]} />
+            <FieldInput
+              key={field.key}
+              field={field}
+              onChange={updateValue}
+              onFocus={(focusedField) => {
+                setActiveField(focusedField.key);
+                setActiveDocument("");
+              }}
+              value={values[field.key]}
+            />
           ))}
         </div>
         <button className="button button-primary" type="submit">
@@ -325,6 +380,10 @@ function ApplyPage({ serviceId, path }) {
                 <input
                   aria-label={`Upload ${document.label}`}
                   onChange={(event) => setFiles((current) => ({ ...current, [document.key]: event.target.files?.[0] }))}
+                  onFocus={() => {
+                    setActiveDocument(document.key);
+                    setActiveField("");
+                  }}
                   type="file"
                 />
                 <button className="button button-secondary" onClick={() => void handleUpload(document.key)} type="button">
@@ -346,6 +405,18 @@ function ApplicationsPage({ path }) {
   const [applications, setApplications] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "applications",
+      routePath: path,
+      formId: "income_certificate",
+      serviceName: "My Applications",
+      lastVisibleSection: "applications",
+    }),
+    [path],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   useEffect(() => {
     if (!getAccessToken()) return;
@@ -435,6 +506,18 @@ function ApplicationDetailPage({ applicationId, path }) {
   const [application, setApplication] = useState(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "applications",
+      routePath: path,
+      formId: application?.service_id || "income_certificate",
+      serviceName: application?.service?.name || "Application Details",
+      lastVisibleSection: "applications",
+    }),
+    [application, path],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   async function refresh() {
     const response = await getPortalApplication(applicationId);
@@ -531,6 +614,18 @@ function PaymentPage({ applicationId, path }) {
   const [payment, setPayment] = useState(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "payment",
+      routePath: path,
+      formId: application?.service_id || "income_certificate",
+      serviceName: application?.service?.name || "Payment Sandbox",
+      lastVisibleSection: "payment",
+    }),
+    [application, path],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   useEffect(() => {
     if (!getAccessToken()) return;
@@ -602,6 +697,18 @@ function TrackPage() {
   const [query, setQuery] = useState("");
   const [tracking, setTracking] = useState(null);
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "tracking",
+      routePath: "/track",
+      formId: tracking?.service_id || "income_certificate",
+      serviceName: tracking?.service_name || "Application Tracking",
+      lastVisibleSection: "tracking",
+    }),
+    [tracking],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -666,6 +773,18 @@ function VerifyCertificatePage() {
   const [query, setQuery] = useState(initial);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "verification",
+      routePath: "/verify-certificate",
+      formId: "income_certificate",
+      serviceName: result?.service_name || "Certificate Verification",
+      lastVisibleSection: "verification",
+    }),
+    [result],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -719,6 +838,18 @@ function ProfilePage({ path }) {
   const [profile, setProfile] = useState(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "profile",
+      routePath: path,
+      formId: "income_certificate",
+      serviceName: "Citizen Profile",
+      lastVisibleSection: "profile",
+    }),
+    [path],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   useEffect(() => {
     if (!getAccessToken()) return;
@@ -770,6 +901,18 @@ function ProfilePage({ path }) {
 function DocumentsPage({ path }) {
   const [documents, setDocuments] = useState([]);
   const [error, setError] = useState("");
+  const pageContext = useMemo(
+    () => ({
+      mode: "documents",
+      routePath: path,
+      formId: "income_certificate",
+      serviceName: "Document Vault",
+      lastVisibleSection: "documents",
+    }),
+    [path],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   useEffect(() => {
     if (!getAccessToken()) return;

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import CitizenAssistantLayout, { isCitizenAssistantRoute } from "../citizen-portal/components/CitizenAssistantLayout";
 import DynamicFormPage from "../citizen-portal/components/DynamicFormPage";
 import AdminPortal from "../government-portal/components/AdminPortal";
 import DemoDashboard from "../government-portal/components/DemoDashboard";
@@ -11,30 +12,18 @@ import ServicePortal from "../citizen-portal/components/ServicePortal";
 import ServiceCatalog from "../citizen-portal/components/ServiceCatalog";
 import UnifiedLanding from "../shared/components/UnifiedLanding";
 import VirtualGovernmentSandbox from "../government-portal/components/VirtualGovernmentSandbox";
-import VoiceAssistantPanel from "../citizen-portal/components/VoiceAssistantPanel";
+import { useCitizenAssistant, useCitizenAssistantPageContext } from "../citizen-portal/context/CitizenAssistantContext";
 import {
   askAssistant,
-  askChat,
-  createSession,
   generateSummary,
   getAccessToken,
   getForm,
   getForms,
-  getLatestPublicRule,
   getStoredUser,
   login as loginAdmin,
   logout as logoutAdmin,
-  reverseLocation,
   searchServices,
 } from "../services/api";
-
-function message(role, text) {
-  return {
-    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    role,
-    text,
-  };
-}
 
 function emptyValuesFor(form) {
   return Object.fromEntries(
@@ -56,28 +45,6 @@ function publicDocumentState(uploadedDocuments) {
         : null,
     ]),
   );
-}
-
-function detectQuestionLanguage(text) {
-  const normalized = text.toLowerCase();
-  if (/[\u0c00-\u0c7f]/.test(text) || /\b(entha|enti|aa|kavali|cheppandi|lo|kosam)\b/.test(normalized)) {
-    return { detected_language: "telugu", language_code: "te-IN" };
-  }
-  if (/[\u0900-\u097f]/.test(text) || /\b(kya|kitne|hai|abhi|bataiye|anusaar|ke liye)\b/.test(normalized)) {
-    return { detected_language: "hindi", language_code: "hi-IN" };
-  }
-  return { detected_language: "english", language_code: "en-IN" };
-}
-
-function isIncomeValidityQuestion(text, formId) {
-  const normalized = text.toLowerCase();
-  const mentionsValidity =
-    /\b(validity|valid|months?|rule|entha)\b/.test(normalized) ||
-    /validity|valid/.test(normalized);
-  const mentionsIncomeCertificate =
-    /\b(income certificate|certificate|income)\b/.test(normalized) ||
-    formId === "income_certificate";
-  return mentionsValidity && mentionsIncomeCertificate;
 }
 
 function formatVerifiedRuleReply(ruleResponse, language) {
@@ -123,59 +90,6 @@ function sourceCardFromRule(ruleResponse) {
     verified: true,
     provider: "deterministic",
     whySelected: "Matched income certificate validity against the latest verified public rule.",
-  };
-}
-
-function titleCase(value = "") {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function isCitizenKnowledgeQuestion(text, formId) {
-  const normalized = text.toLowerCase();
-  const asksFormFieldHelp =
-    /\b(purpose|monthly income|field|box|mandal|pincode|what should i enter|rayacha|likhna)\b/.test(
-      normalized,
-    ) && !/\b(document|documents|docs|eligib|process|apply|validity|fee|timeline|old rule|new rule)\b/.test(normalized);
-  if (asksFormFieldHelp) return false;
-
-  const hasIntent = /\b(document|documents|docs|proof|eligib|qualify|process|apply|steps|validity|valid|fee|cost|timeline|days|old rule|new rule|compare|which service|which form)\b/.test(
-    normalized,
-  ) || /\b(enti|entha|kavali|kaise|kya)\b/.test(normalized);
-  const hasKnownService =
-    /\b(income certificate|residence certificate|caste certificate|community certificate|ews|scholarship|post matric|pension|old age|widow|disability|birth certificate|death certificate|family member|ration card|food security)\b/.test(
-      normalized,
-    ) || formId !== "catalog";
-
-  return hasIntent && hasKnownService;
-}
-
-function sourceCardFromChat(chatResponse) {
-  const firstReference = chatResponse?.source?.references?.[0] || {};
-  return {
-    circular:
-      firstReference.circular_number ||
-      firstReference.source_label ||
-      firstReference.label ||
-      chatResponse?.source?.label ||
-      "NiyamGuard Knowledge Base",
-    department: firstReference.department || "Citizen Services Knowledge",
-    rule: titleCase(chatResponse?.intent || "Citizen Knowledge"),
-    currentValue:
-      firstReference.current_value ||
-      titleCase(chatResponse?.scheme_or_service || chatResponse?.source?.type || "Guidance"),
-    confidence: chatResponse?.confidence,
-    effectiveDate: firstReference.effective_date,
-    lastUpdated: firstReference.last_updated,
-    sourceType: chatResponse?.source?.type,
-    sourceSourceType: firstReference.source_type,
-    method: chatResponse?.method,
-    sourceCount: chatResponse?.sources?.length || chatResponse?.source?.references?.length || 0,
-    verified: Boolean(chatResponse?.verified),
-    provider: chatResponse?.provider,
-    fallback: Boolean(chatResponse?.fallback),
-    whySelected: `Matched this question to ${titleCase(chatResponse?.intent || "knowledge")} guidance for ${titleCase(chatResponse?.scheme_or_service || "citizen services")}.`,
   };
 }
 
@@ -246,9 +160,9 @@ function LoginPage({ onLoginSuccess }) {
 }
 
 function CitizenApp() {
+  const assistant = useCitizenAssistant();
   const [services, setServices] = useState([]);
   const [catalogStatus, setCatalogStatus] = useState("loading");
-  const [catalogSessionId, setCatalogSessionId] = useState("");
   const [catalogReply, setCatalogReply] = useState(null);
   const [catalogAsking, setCatalogAsking] = useState(false);
 
@@ -258,15 +172,7 @@ function CitizenApp() {
   const [currentField, setCurrentField] = useState("");
   const [currentDocument, setCurrentDocument] = useState("");
   const [lastVisibleSection, setLastVisibleSection] = useState("");
-  const [lastDetectedLanguage, setLastDetectedLanguage] = useState("english");
-  const [lastLanguageCode, setLastLanguageCode] = useState("en-IN");
-  const [sessionId, setSessionId] = useState("");
-  const [sessionStatus, setSessionStatus] = useState("idle");
   const [globalError, setGlobalError] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [assistantReply, setAssistantReply] = useState(null);
-  const [speechCommand, setSpeechCommand] = useState(null);
-  const [asking, setAsking] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
 
   useEffect(() => {
@@ -274,13 +180,9 @@ function CitizenApp() {
     async function initializeCatalog() {
       setCatalogStatus("loading");
       try {
-        const [formsResponse, sessionResponse] = await Promise.all([
-          getForms(),
-          createSession("auto", "catalog"),
-        ]);
+        const formsResponse = await getForms();
         if (!active) return;
         setServices(formsResponse.forms || []);
-        setCatalogSessionId(sessionResponse.session_id);
         setCatalogStatus("ready");
       } catch (error) {
         if (!active) return;
@@ -305,29 +207,22 @@ function CitizenApp() {
 
   const activeFormId = selectedForm?.form_id || "catalog";
 
-  function applyAssistantResponse(response) {
-    const safeResponse = {
-      ...response,
-      suggested_value:
-        response.auto_fill === false ? response.suggested_value : null,
-      detected_language: response.detected_language || "english",
-      language_code: response.language_code || "en-IN",
-    };
-    setAssistantReply(safeResponse);
-    setLastDetectedLanguage(safeResponse.detected_language);
-    setLastLanguageCode(safeResponse.language_code);
-    setMessages((current) => [
-      ...current,
-      message("assistant", safeResponse.reply),
-    ]);
-    setSpeechCommand({
-      id: `${Date.now()}-${Math.random()}`,
-      text: safeResponse.reply,
-      languageCode: safeResponse.language_code,
-      detectedLanguage: safeResponse.detected_language,
-    });
-    return safeResponse;
-  }
+  const pageContext = useMemo(
+    () => ({
+      mode: selectedForm ? "form" : "catalog",
+      routePath: "/citizen/assistant",
+      formId: activeFormId,
+      serviceName: selectedForm?.service_name || "Guided Service Catalog",
+      formFields: selectedForm?.fields || [],
+      requiredDocuments: selectedForm?.required_documents || [],
+      activeField: currentField,
+      activeDocument: currentDocument,
+      lastVisibleSection: lastVisibleSection || (selectedForm ? "details" : "catalog"),
+    }),
+    [activeFormId, currentDocument, currentField, lastVisibleSection, selectedForm],
+  );
+
+  useCitizenAssistantPageContext(pageContext);
 
   async function startApplication(formId) {
     setGlobalError("");
@@ -336,12 +231,8 @@ function CitizenApp() {
       setGlobalError("Detailed guided form coming soon for this service.");
       return;
     }
-    setSessionStatus("loading");
     try {
-      const [formResponse, sessionResponse] = await Promise.all([
-        getForm(formId),
-        createSession("auto", formId),
-      ]);
+      const formResponse = await getForm(formId);
       const form = formResponse.form;
       setSelectedForm(form);
       setFormValues(emptyValuesFor(form));
@@ -349,17 +240,9 @@ function CitizenApp() {
       setCurrentField("");
       setCurrentDocument("");
       setLastVisibleSection("details");
-      setLastDetectedLanguage("english");
-      setLastLanguageCode("en-IN");
-      setMessages([]);
-      setAssistantReply(null);
-      setSpeechCommand(null);
-      setSessionId(sessionResponse.session_id);
-      setSessionStatus("ready");
       window.scrollTo?.({ top: 0, behavior: "smooth" });
     } catch (error) {
       setGlobalError(error.message);
-      setSessionStatus("error");
     }
   }
 
@@ -373,12 +256,15 @@ function CitizenApp() {
   }
 
   async function handleCatalogAsk(text) {
-    if (!catalogSessionId) return;
     setCatalogAsking(true);
     setGlobalError("");
     try {
+      if (!assistant.sessionId) {
+        setGlobalError("The assistant session is not ready.");
+        return;
+      }
       const response = await askAssistant({
-        sessionId: catalogSessionId,
+        sessionId: assistant.sessionId,
         formId: "catalog",
         message: text,
         language: "auto",
@@ -391,119 +277,13 @@ function CitizenApp() {
     }
   }
 
-  async function handleAsk(text) {
-    if (!sessionId) {
-      setGlobalError("The assistant session is not ready.");
-      return null;
-    }
-    setAsking(true);
-    setGlobalError("");
-    setMessages((current) => [...current, message("user", text)]);
-    try {
-      if (isIncomeValidityQuestion(text, activeFormId)) {
-        const language = detectQuestionLanguage(text);
-        try {
-          const ruleResponse = await getLatestPublicRule(
-            "income_certificate",
-            "validity",
-          );
-          return applyAssistantResponse({
-            success: Boolean(ruleResponse.success),
-            field: null,
-            reply: formatVerifiedRuleReply(ruleResponse, language),
-            suggested_value: null,
-            related_values: {},
-            location_matches: [],
-            warning: ruleResponse.source
-              ? null
-              : "Source not available. Please verify from official government source.",
-            detected_language: language.detected_language,
-            language_code: language.language_code,
-            auto_fill: false,
-            should_submit: false,
-            verified_rule: true,
-            verified_source: sourceCardFromRule(ruleResponse),
-          });
-        } catch (ruleError) {
-          return applyAssistantResponse({
-            success: false,
-            field: null,
-            reply: formatVerifiedRuleReply({ verified: false }, language),
-            suggested_value: null,
-            related_values: {},
-            location_matches: [],
-            warning: ruleError.message,
-            detected_language: language.detected_language,
-            language_code: language.language_code,
-            auto_fill: false,
-            should_submit: false,
-            verified_rule: true,
-            verified_source: null,
-          });
-        }
-      }
-      if (isCitizenKnowledgeQuestion(text, activeFormId)) {
-        const chatResponse = await askChat({
-          message: text,
-          language: "auto",
-          context: {
-            service_id: activeFormId === "catalog" ? undefined : activeFormId,
-            form_id: activeFormId,
-          },
-          profile: {},
-        });
-        return applyAssistantResponse({
-          success: Boolean(chatResponse.success),
-          field: null,
-          reply: chatResponse.answer,
-          suggested_value: null,
-          related_values: {},
-          location_matches: [],
-          warning: chatResponse.fallback
-            ? "No verified source was available for this question."
-            : null,
-          detected_language: chatResponse.language || "english",
-          language_code: chatResponse.language_code || "en-IN",
-          auto_fill: false,
-          should_submit: false,
-          verified_rule: true,
-          verified_source: sourceCardFromChat(chatResponse),
-        });
-      }
-      const response = await askAssistant({
-        sessionId,
-        formId: activeFormId,
-        message: text,
-        currentField,
-        currentDocument,
-        lastVisibleSection,
-        language: "auto",
-      });
-      return applyAssistantResponse(response);
-    } catch (error) {
-      setGlobalError(error.message);
-      const errorReply =
-        "I could not contact the guidance service. Please try again.";
-      setAssistantReply({
-        reply: errorReply,
-        warning: error.message,
-        detected_language: "english",
-        language_code: "en-IN",
-      });
-      setMessages((current) => [...current, message("assistant", errorReply)]);
-      return null;
-    } finally {
-      setAsking(false);
-    }
-  }
-
   async function handleReview() {
-    if (!sessionId || !selectedForm) return;
+    if (!assistant.sessionId || !selectedForm) return;
     setLoadingSummary(true);
     setGlobalError("");
     try {
       const response = await generateSummary({
-        sessionId,
+        sessionId: assistant.sessionId,
         formId: selectedForm.form_id,
         formValues,
         uploadedDocuments: publicDocumentState(uploadedDocuments),
@@ -516,7 +296,7 @@ function CitizenApp() {
         ? ` ${response.warnings.join(" ")}`
         : "";
       const reply = `${response.summary}${missingDocs}${warningText}`.trim();
-      applyAssistantResponse({
+      assistant.publishAssistantReply({
         reply,
         warning: response.warnings?.length ? response.warnings.join(" ") : null,
         detected_language: response.detected_language,
@@ -531,47 +311,8 @@ function CitizenApp() {
     }
   }
 
-  async function handleClear() {
-    setMessages([]);
-    setAssistantReply(null);
-    setSpeechCommand(null);
-    setLastDetectedLanguage("english");
-    setLastLanguageCode("en-IN");
-    if (selectedForm) {
-      try {
-        const session = await createSession("auto", selectedForm.form_id);
-        setSessionId(session.session_id);
-        setSessionStatus("ready");
-      } catch (error) {
-        setGlobalError(error.message);
-        setSessionStatus("error");
-      }
-    }
-  }
-
-  async function handleUseLocation({ latitude, longitude }) {
-    setGlobalError("");
-    try {
-      const response = await reverseLocation({
-        latitude,
-        longitude,
-        language: lastDetectedLanguage || "auto",
-      });
-      applyAssistantResponse(response);
-      return response;
-    } catch (error) {
-      setGlobalError(error.message);
-      return null;
-    }
-  }
-
   function backToCatalog() {
     setSelectedForm(null);
-    setSessionId("");
-    setSessionStatus("idle");
-    setMessages([]);
-    setAssistantReply(null);
-    setSpeechCommand(null);
     setCurrentField("");
     setCurrentDocument("");
   }
@@ -607,11 +348,11 @@ function CitizenApp() {
       ) : null}
 
       {selectedForm ? (
-        <main className="workspace">
+        <main className="workspace workspace-single">
           <DynamicFormPage
-            backendReady={sessionStatus === "ready"}
+            backendReady={assistant.sessionStatus === "ready"}
             form={selectedForm}
-            language={lastDetectedLanguage}
+            language={assistant.lastDetectedLanguage}
             loadingSummary={loadingSummary}
             onBack={backToCatalog}
             onDocumentChange={(key, value) =>
@@ -636,23 +377,6 @@ function CitizenApp() {
             }
             uploadedDocuments={uploadedDocuments}
             values={formValues}
-          />
-          <VoiceAssistantPanel
-            asking={asking}
-            assistantReply={assistantReply}
-            lastDetectedLanguage={lastDetectedLanguage}
-            lastLanguageCode={lastLanguageCode}
-            messages={messages}
-            onAsk={handleAsk}
-            onClear={handleClear}
-            onReview={() => void handleReview()}
-            onUseLocation={handleUseLocation}
-            sessionId={sessionId}
-            formId={activeFormId}
-            activeField={currentField}
-            activeDocument={currentDocument}
-            sessionStatus={sessionStatus}
-            speechCommand={speechCommand}
           />
         </main>
       ) : (
@@ -730,34 +454,35 @@ export default function App() {
     navigate("/admin");
   }
 
+  function renderCitizenContent() {
+    if (path === "/citizen") return <CitizenPortal />;
+    if (path.startsWith("/citizen/assistant")) return <CitizenApp />;
+    if (path.startsWith("/scheme-finder")) {
+      return (
+        <SchemeFinder
+          onStartForm={(formId) => {
+            navigate(`/apply/${formId}`);
+          }}
+        />
+      );
+    }
+    return <ServicePortal path={window.location.pathname} />;
+  }
+
   if (path === "/" || path.startsWith("/portal")) return <UnifiedLanding />;
-  if (path === "/citizen") return <CitizenPortal />;
-  if (path.startsWith("/citizen/assistant")) return <CitizenApp />;
+  if (isCitizenAssistantRoute(path)) {
+    return (
+      <CitizenAssistantLayout onNavigate={setPath} path={path}>
+        {renderCitizenContent()}
+      </CitizenAssistantLayout>
+    );
+  }
   if (path.startsWith("/government")) return <GovernmentPortal />;
   if (path.startsWith("/demo")) return <DemoDashboard />;
   if (path.startsWith("/mock/meeseva")) return <MockMeeSevaPortal />;
   if (path.startsWith("/mock/public-faq")) return <MockPublicFaq />;
   if (path.startsWith("/virtual-gov")) return <VirtualGovernmentSandbox />;
-  if (path.startsWith("/scheme-finder")) {
-    return (
-      <SchemeFinder
-        onStartForm={() => {
-          window.history.pushState({}, "", "/");
-          setPath("/");
-        }}
-      />
-    );
-  }
-  if (
-    path.startsWith("/services") ||
-    path.startsWith("/apply") ||
-    path.startsWith("/applications") ||
-    path.startsWith("/track") ||
-    path.startsWith("/verify-certificate") ||
-    path.startsWith("/citizen") ||
-    path.startsWith("/payment") ||
-    path.startsWith("/officer")
-  ) {
+  if (path.startsWith("/officer")) {
     return <ServicePortal path={window.location.pathname} />;
   }
   if (path.startsWith("/login")) {

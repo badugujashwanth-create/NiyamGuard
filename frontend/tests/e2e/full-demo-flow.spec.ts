@@ -16,7 +16,7 @@ test("full visible NiyamGuard demo flow", async ({ page }) => {
   await screenshot(page, "e2e-step-01-portal.png");
 
   await page.getByRole("button", { name: "Run Full End-to-End Demo" }).click();
-  await expect(page.getByText("Generated certificate")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/Certificate Generated/i)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("demo-application-number")).toContainText("NGSP-");
   await expect(page.getByTestId("demo-certificate-number")).toContainText("NGCERT-");
   const verificationHash = (await page.getByTestId("demo-verification-hash").textContent())?.trim() || "";

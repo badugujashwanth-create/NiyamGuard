@@ -497,6 +497,31 @@ button:disabled {
   font-size: clamp(2rem, 4vw, 3rem);
 }
 
+.citizen-assistant-layout {
+  min-height: 100vh;
+  background: #f4f6f3;
+}
+
+.citizen-assistant-page {
+  min-width: 0;
+}
+
+.global-citizen-assistant {
+  padding: 1rem clamp(1rem, 3vw, 3rem) 0;
+}
+
+.global-citizen-assistant .assistant-card {
+  position: static;
+  max-width: 94rem;
+  max-height: none;
+  margin: 0 auto;
+}
+
+.global-citizen-assistant > .support-message {
+  max-width: 94rem;
+  margin: 0.7rem auto 0;
+}
+
 .citizen-quick-actions {
   display: flex;
   flex-wrap: wrap;
@@ -524,6 +549,10 @@ button:disabled {
 
 .citizen-voice-layout .assistant-card {
   min-height: 100%;
+}
+
+.citizen-voice-layout-summary {
+  grid-template-columns: 1fr;
 }
 
 .citizen-voice-notes {
@@ -731,6 +760,10 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(22rem, 0.65fr);
   gap: 1.25rem;
+}
+
+.workspace-single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .catalog-header,
