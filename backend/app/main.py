@@ -53,6 +53,9 @@ from app.routes.source_routes import router as source_router
 from app.routes.stt_routes import router as stt_router
 from app.routes.tts_routes import router as tts_router
 from app.routes.virtual_government_routes import router as virtual_government_router
+from app.routes.sandbox_routes import router as sandbox_router
+from app.routes.government_routes import router as government_router
+from app.routes.chatbot_routes import router as chatbot_router
 from app.services.auth_service import seed_default_users
 from app.services.platform_store import ensure_demo_store_seeded
 
@@ -131,6 +134,9 @@ app.include_router(audit_router)
 app.include_router(demo_router)
 app.include_router(demo_self_update_router)
 app.include_router(virtual_government_router)
+app.include_router(sandbox_router)
+app.include_router(government_router)
+app.include_router(chatbot_router)
 
 
 @app.get("/", tags=["health"])

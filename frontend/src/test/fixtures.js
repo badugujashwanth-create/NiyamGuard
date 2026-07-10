@@ -345,7 +345,7 @@ export const citizenUser = {
 export const officerUser = {
   id: "user_officer",
   email: "officer@niyamguard.local",
-  role: "reviewer",
+  role: "officer",
   is_active: true,
   created_at: "2026-07-09T00:00:00+00:00",
   updated_at: "2026-07-09T00:00:00+00:00",
@@ -892,6 +892,92 @@ export const virtualGovResult = {
   },
 };
 
+export const fullDemoResult = {
+  success: true,
+  steps: [
+    ["reset_sandbox", "Reset sandbox", "Demo store reset to known GO-138 baseline."],
+    ["publish_circular", "Published GO-138 circular", "Virtual Gazette made GO-138 available."],
+    ["ingest_circular", "Ingested circular and extracted rule candidate", "Extracted 12 month to 6 month change."],
+    ["update_verified_rule", "Updated verified rule engine", "Verified rule now points to GO-138."],
+    ["update_service_portal", "Updated service portal rule context", "Income Certificate service is available."],
+    ["create_citizen_identity", "Created sandbox citizen identity", "Citizen profile and OTP were created."],
+    ["submit_application", "Submitted citizen application", "Application submitted with synthetic documents."],
+    ["verify_otp", "Verified sandbox OTP", "Demo OTP verification succeeded."],
+    ["complete_payment", "Completed sandbox payment", "Virtual payment gateway marked the fee paid."],
+    ["officer_approval", "Officer approved application", "Officer review completed."],
+    ["generate_certificate", "Generated certificate", "Certificate number and hash created."],
+    ["sign_certificate", "Signed certificate in sandbox", "Verification hash used as sandbox signature."],
+    ["verify_certificate", "Verified certificate publicly", "Certificate is valid."],
+    ["patch_connected_systems", "Patched connected systems", "Mock systems were patched to 6 months."],
+    ["rerun_compliance", "Reran compliance drift check", "Compliance findings refreshed."],
+    ["write_audit_trail", "Wrote audit trail", "Audit event added."],
+    ["ask_hybrid_answer", "Asked hybrid answer engine", "Answered from GO-138 context."],
+    ["generate_ollama_explanation", "Generated Ollama explanation if available", "Fallback active.", { provider: "fallback", model: "deterministic-template", fallback: true, text: "GO-138 means the demo Income Certificate validity is 6 months instead of 12 months." }],
+  ].map(([key, label, details, payload = {}]) => ({
+    key,
+    label,
+    status: "success",
+    details,
+    payload,
+  })),
+  entities: {
+    application_id: "app_portal_001",
+    application_number: "NGSP-2026-INC-000001",
+    certificate_id: "cert_001",
+    certificate_number: "NGCERT-2026-INC-000001",
+    verification_hash: "hash_demo",
+    rule_id: "rule_001",
+    rule_version_id: "version_rule_001_2",
+    ollama_provider: "fallback",
+    ollama_model: "deterministic-template",
+    ollama_fallback: true,
+  },
+  circular_number: "GO-138",
+  application_number: "NGSP-2026-INC-000001",
+  certificate_number: "NGCERT-2026-INC-000001",
+  verification_hash: "hash_demo",
+  verified_rule: {
+    rule_id: "rule_001",
+    rule_version_id: "version_rule_001_2",
+    service_id: "income_certificate",
+    rule_key: "validity",
+    value: "6 months",
+    source_circular_number: "GO-138",
+  },
+  audit_event_count: 7,
+};
+
+export const verifiedAIExplanation = {
+  success: true,
+  question: "Explain GO-138 in simple words",
+  provider: "fallback",
+  model: "deterministic-template",
+  fallback: true,
+  answer: "GO-138 means the demo Income Certificate validity is 6 months instead of 12 months.",
+  source: {
+    type: "verified_rule",
+    circular_number: "GO-138",
+    department: "Revenue",
+    service_id: "income_certificate",
+    rule_key: "validity",
+    verified: true,
+  },
+};
+
+export const hybridDemoAnswer = {
+  success: true,
+  question: "income certificate validity entha",
+  answer: "Income Certificate validity is 6 months as per verified GO-138.",
+  method: "exact_rule_engine",
+  provider: "verified-rule",
+  verified: true,
+  source: {
+    type: "verified_rule",
+    circular_number: "GO-138",
+    department: "Revenue",
+  },
+};
+
 export function jsonResponse(payload, status = 200) {
   return Promise.resolve({
     ok: status >= 200 && status < 300,
@@ -1109,6 +1195,9 @@ export function installApiMock(overrides = {}) {
         },
       });
     }
+    if (url.endsWith("/api/demo/run-full-end-to-end")) {
+      return jsonResponse(overrides.fullDemoResult || fullDemoResult);
+    }
     if (url.endsWith("/api/scheme-finder/recommend")) {
       return jsonResponse(overrides.schemeFinderResponse || schemeFinderResponse);
     }
@@ -1247,8 +1336,14 @@ export function installApiMock(overrides = {}) {
     if (url.endsWith("/api/chat")) {
       return jsonResponse(overrides.chat || chatAnswer);
     }
+    if (url.endsWith("/api/hybrid/answer")) {
+      return jsonResponse(overrides.hybridDemoAnswer || hybridDemoAnswer);
+    }
     if (url.endsWith("/api/ai/status")) {
       return jsonResponse(overrides.aiStatus || aiStatus);
+    }
+    if (url.endsWith("/api/ai/verified-explanation")) {
+      return jsonResponse(overrides.verifiedAIExplanation || verifiedAIExplanation);
     }
     if (url.includes("/api/ai/finding/") && url.endsWith("/impact-summary")) {
       return jsonResponse(overrides.aiImpactSummary || aiImpactSummary);

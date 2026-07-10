@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis";
 import { transcribeAudio } from "../services/api";
+import { SPEECH_FALLBACK_MESSAGE } from "../services/speechService";
 
 const INTRO_TEXT =
   "Namaste. I am NiyamGuard Voice Assistant. I will help you fill this form step by step. You can speak in Telugu, Hindi, or English. Tell me where you need help.";
@@ -53,6 +54,7 @@ export default function VoiceAssistantPanel({
   const [textMessage, setTextMessage] = useState("");
   const [lastHeard, setLastHeard] = useState("");
   const [statusMessage, setStatusMessage] = useState("Stopped");
+  const [textFallbackOpen, setTextFallbackOpen] = useState(false);
   const [locationStatus, setLocationStatus] = useState("");
   const [pincode, setPincode] = useState("");
   const activeRef = useRef(false);
@@ -106,6 +108,7 @@ export default function VoiceAssistantPanel({
     pause: pauseBrowserRecognition,
     resume: resumeBrowserRecognition,
     clearTranscript,
+    support: speechSupport,
   } = useSpeechRecognition({
     languageCode: lastLanguageCode,
     onFinalTranscript: (transcript) => {
@@ -156,6 +159,13 @@ export default function VoiceAssistantPanel({
 
   async function startBackendRecording() {
     if (!activeRef.current) return;
+    if (!speechSupport.secureContext) {
+      activeRef.current = false;
+      setAssistantState("stopped");
+      setStatusMessage("Voice input needs localhost or HTTPS. You can continue using text.");
+      setTextFallbackOpen(true);
+      return;
+    }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       useBrowserFallbackRef.current = true;
       startBrowserFallback();
@@ -204,8 +214,15 @@ export default function VoiceAssistantPanel({
       recordTimerRef.current = window.setTimeout(() => {
         if (recorder.state !== "inactive") recorder.stop();
       }, 4500);
-    } catch {
+    } catch (recordingError) {
       useBrowserFallbackRef.current = true;
+      if (recordingError?.name === "NotAllowedError") {
+        activeRef.current = false;
+        setAssistantState("stopped");
+        setStatusMessage("Microphone permission was denied. Use Text Instead.");
+        setTextFallbackOpen(true);
+        return;
+      }
       startBrowserFallback();
     }
   }
@@ -213,8 +230,10 @@ export default function VoiceAssistantPanel({
   function startBrowserFallback() {
     if (!activeRef.current) return;
     if (!browserRecognitionSupported) {
-      setAssistantState("error");
-      setStatusMessage("Microphone listening is unavailable. Use the typing fallback below.");
+      activeRef.current = false;
+      setAssistantState("stopped");
+      setStatusMessage(SPEECH_FALLBACK_MESSAGE);
+      setTextFallbackOpen(true);
       return;
     }
     useBrowserFallbackRef.current = true;
@@ -234,6 +253,11 @@ export default function VoiceAssistantPanel({
 
   async function startVoiceHelp() {
     if (sessionStatus !== "ready") return;
+    if (!speechSupport.supported) {
+      setStatusMessage(speechSupport.reason || SPEECH_FALLBACK_MESSAGE);
+      setTextFallbackOpen(true);
+      return;
+    }
     activeRef.current = true;
     setStatusMessage("Speaking...");
     setAssistantState("intro_speaking");
@@ -322,6 +346,7 @@ export default function VoiceAssistantPanel({
 
   const latestUserMessage = lastHeard || browserTranscript;
   const latestAssistantText = assistantReply?.reply || "";
+  const voiceUnavailable = !speechSupport.supported;
 
   return (
     <aside className="assistant-card simple-assistant" aria-labelledby="assistant-title">
@@ -342,8 +367,9 @@ export default function VoiceAssistantPanel({
       <div className="voice-controls">
         <button
           className="button button-voice"
-          disabled={activeRef.current || sessionStatus !== "ready"}
+          disabled={voiceUnavailable || activeRef.current || sessionStatus !== "ready"}
           onClick={() => void startVoiceHelp()}
+          title={voiceUnavailable ? speechSupport.reason || SPEECH_FALLBACK_MESSAGE : undefined}
           type="button"
         >
           Start
@@ -355,6 +381,13 @@ export default function VoiceAssistantPanel({
           type="button"
         >
           Stop
+        </button>
+        <button
+          className="button button-secondary"
+          onClick={() => setTextFallbackOpen(true)}
+          type="button"
+        >
+          Use Text Instead
         </button>
       </div>
 
@@ -377,13 +410,13 @@ export default function VoiceAssistantPanel({
         <VerifiedSourceCard source={assistantReply.verified_source} />
       ) : null}
 
-      {synthesisError || lastVoiceWarning || browserSpeechError ? (
+      {synthesisError || lastVoiceWarning || browserSpeechError || (voiceUnavailable && speechSupport.reason) ? (
         <p className="support-message support-error">
-          {synthesisError || lastVoiceWarning || browserSpeechError}
+          {synthesisError || lastVoiceWarning || browserSpeechError || speechSupport.reason}
         </p>
       ) : null}
 
-      <details className="trouble-panel">
+      <details className="trouble-panel" open={textFallbackOpen} onToggle={(event) => setTextFallbackOpen(event.currentTarget.open)}>
         <summary>Having trouble? Type instead</summary>
         <form className="text-question" onSubmit={sendTypedMessage}>
           <label htmlFor="assistant-question">Type your question</label>

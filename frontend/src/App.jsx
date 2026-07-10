@@ -4,9 +4,12 @@ import DynamicFormPage from "./components/DynamicFormPage";
 import AdminPortal from "./components/AdminPortal";
 import DemoDashboard from "./components/DemoDashboard";
 import { MockMeeSevaPortal, MockPublicFaq } from "./components/MockConnectedSystems";
+import CitizenPortal from "./components/CitizenPortal";
+import GovernmentPortal from "./components/GovernmentPortal";
 import SchemeFinder from "./components/SchemeFinder";
 import ServicePortal from "./components/ServicePortal";
 import ServiceCatalog from "./components/ServiceCatalog";
+import UnifiedLanding from "./components/UnifiedLanding";
 import VirtualGovernmentSandbox from "./components/VirtualGovernmentSandbox";
 import VoiceAssistantPanel from "./components/VoiceAssistantPanel";
 import {
@@ -727,6 +730,11 @@ export default function App() {
     navigate("/admin");
   }
 
+  if (path === "/" || path.startsWith("/portal")) return <UnifiedLanding />;
+  if (path === "/citizen") return <CitizenPortal />;
+  if (path.startsWith("/citizen/assistant")) return <CitizenApp />;
+  if (path.startsWith("/government")) return <GovernmentPortal />;
+  if (path.startsWith("/demo")) return <DemoDashboard />;
   if (path.startsWith("/mock/meeseva")) return <MockMeeSevaPortal />;
   if (path.startsWith("/mock/public-faq")) return <MockPublicFaq />;
   if (path.startsWith("/virtual-gov")) return <VirtualGovernmentSandbox />;
@@ -752,7 +760,6 @@ export default function App() {
   ) {
     return <ServicePortal path={window.location.pathname} />;
   }
-  if (path.startsWith("/demo")) return <DemoDashboard />;
   if (path.startsWith("/login")) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }

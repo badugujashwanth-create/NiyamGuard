@@ -85,7 +85,7 @@ def run_scenario(scenario_id: str = "income_certificate_full_flow", *, reset_bef
         )
     )
 
-    _attach_synthetic_documents(citizen, application["id"])
+    attach_synthetic_documents(citizen, application["id"])
     submitted = portal.submit_application(citizen, application["id"])
     steps.append(
         VirtualScenarioStep(
@@ -146,7 +146,7 @@ def run_scenario(scenario_id: str = "income_certificate_full_flow", *, reset_bef
     return result.model_dump()
 
 
-def _attach_synthetic_documents(actor: CurrentUser, application_id: str) -> None:
+def attach_synthetic_documents(actor: CurrentUser, application_id: str) -> None:
     store = read_store()
     application = next(item for item in store.applications if item.id == application_id)
     timestamp = now_iso()

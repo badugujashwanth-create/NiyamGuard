@@ -43,6 +43,7 @@ class AIProviderFactory:
         status = client.health_check()
         return {
             **status,
+            "enabled": settings.ai_enabled,
             "active_provider": getattr(client, "provider", "fallback"),
             "requested_provider": settings.ai_provider,
             "configured_providers": AIProviderFactory.configured_providers(),

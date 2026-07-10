@@ -10,3 +10,7 @@ export * from "./chatApi";
 export * from "./aiApi";
 export * from "./datasetApi";
 export * from "./servicePortalApi";
+export * from "./demoApi";
+export * from "./sandboxApi";
+export * from "./governmentApi";
+export * from "./chatbotApi";

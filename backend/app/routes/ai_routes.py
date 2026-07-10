@@ -20,6 +20,45 @@ def ai_status() -> dict[str, Any]:
     return AIProviderFactory.status()
 
 
+@router.post("/verified-explanation")
+def verified_explanation(payload: dict[str, Any]) -> dict[str, Any]:
+    question = str(payload.get("question") or "Explain GO-138 in simple words").strip()
+    fallback_text = (
+        "GO-138 means the demo Income Certificate validity is 6 months instead of 12 months. "
+        "NiyamGuard uses the verified Revenue Department GO-138 context for this explanation."
+    )
+    prompt = (
+        "Use only this verified NiyamGuard context. Do not invent government rules, dates, "
+        "departments, eligibility, or official commitments.\n\n"
+        "Verified context:\n"
+        "- Circular: GO-138\n"
+        "- Department: Revenue\n"
+        "- Service: Income Certificate\n"
+        "- Rule: validity\n"
+        "- Previous value: 12 months\n"
+        "- Current value: 6 months\n"
+        "- Effective date: 2026-07-01\n\n"
+        f"Question: {question}"
+    )
+    result = AIProviderFactory.get_client().generate_text(prompt, {"fallback_text": fallback_text})
+    return {
+        "success": True,
+        "question": question,
+        "provider": result.get("provider"),
+        "model": result.get("model"),
+        "fallback": bool(result.get("fallback")),
+        "answer": result.get("text") or fallback_text,
+        "source": {
+            "type": "verified_rule",
+            "circular_number": "GO-138",
+            "department": "Revenue",
+            "service_id": "income_certificate",
+            "rule_key": "validity",
+            "verified": True,
+        },
+    }
+
+
 def _finding_payload(finding_id: str) -> dict[str, Any]:
     finding = compliance_service.get_finding(finding_id)
     if finding is None:

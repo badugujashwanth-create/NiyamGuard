@@ -3,16 +3,28 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+*.env
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.sqlite
+*.sqlite3
 
 backend/niyamguard.db
 backend/*.db
+backend/.codex-*.log
 niyamguard.db
 backend/app/storage/*.tmp
 backend/app/storage/documents/
 backend/app/storage/certificates/
+backend/storage/
+backend/uploads/
 
 frontend/dist/
 frontend/node_modules/
+frontend/playwright-report/
+frontend/test-results/
 
 data/datasets/*
 data/processed/*
@@ -30,3 +42,9 @@ data/training/*
 data/source_registry.json
 
 apps/
+demo-recordings/
+docs/recording-assets/final-full-e2e-demo.webm
+docs/recording-assets/e2e-step-*.png
+docs/recording-assets/final-two-portal-*.png
+docs/recording-assets/final-two-portal-demo.webm
+docs/recording-assets/restored-*.png

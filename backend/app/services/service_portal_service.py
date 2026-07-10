@@ -59,7 +59,7 @@ def _date_string(days_from_now: int = 0) -> str:
 
 
 def _actor_can_review(actor: CurrentUser) -> bool:
-    return actor.role in {"admin", "reviewer"}
+    return actor.role in {"admin", "reviewer", "officer"}
 
 
 def _service(store: PolicyDataStore, service_id: str) -> ServiceDefinition:
