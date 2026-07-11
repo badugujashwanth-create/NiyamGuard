@@ -1,13 +1,18 @@
 from typing import Any
 
 from app.models.assistant_models import AskResponse, SummaryResponse
+from app.models.form_models import FormField, FormSchema, RequiredDocument
 from app.models.session_models import LanguagePreference
-from app.citizen_assistant.field_detector import VALID_FIELDS, detect_field
+from app.citizen_assistant.field_detector import (
+    VALID_FIELDS,
+    field_for_normalized_intent,
+    normalize_field_intent,
+)
 from app.forms.form_service import (
-    field_labels,
     find_service_suggestion,
     load_form_schema,
 )
+from app.forms import service_portal_service
 from app.citizen_assistant.guidance_engine import generate_guidance
 from app.citizen_assistant.income_calculator import calculate_annual_income
 from app.citizen_assistant.language_helper import detect_language
@@ -19,6 +24,7 @@ from app.citizen_assistant.location_helper import (
 )
 from app.citizen_assistant.session_service import SessionService, session_service
 from app.citizen_assistant.validator import validate_field
+from app.knowledge_base import knowledge_base_service
 
 
 def _is_empty(value: Any) -> bool:
@@ -31,6 +37,58 @@ def _is_empty(value: Any) -> bool:
 
 def _localized(value: dict[str, str], language: str) -> str:
     return value.get(language) or value.get("english") or ""
+
+
+def _assistant_help(label: str) -> dict[str, str]:
+    return {
+        "english": f"Enter the {label} exactly as it appears in your supporting records.",
+        "telugu": f"{label} details mee records prakaram enter cheyyandi.",
+        "hindi": f"{label} details apne records ke anusaar bhariye.",
+    }
+
+
+def _load_assistant_schema(form_id: str) -> FormSchema:
+    try:
+        return load_form_schema(form_id)
+    except FileNotFoundError:
+        service = service_portal_service.get_service(form_id)
+        form = service["form"]
+        return FormSchema(
+            form_id=service["service_id"],
+            service_name=service["name"],
+            form_name=f"{service['name']} Application",
+            department=service.get("department") or service["category"],
+            category=service["category"],
+            description=service["description"],
+            common_use_cases=[],
+            fields=[
+                FormField(
+                    key=str(field["key"]),
+                    label=str(field["label"]),
+                    type=field.get("type", "text"),
+                    required=bool(field.get("required")),
+                    help=_assistant_help(str(field["label"])),
+                    options=[str(item) for item in field.get("options", [])],
+                )
+                for field in form.get("fields_json", [])
+            ],
+            required_documents=[
+                RequiredDocument(
+                    key=str(document["key"]),
+                    label=str(document["label"]),
+                    required=bool(document.get("required", True)),
+                    accepted_file_types=[str(item) for item in document.get("accepted_file_types", ["pdf", "jpg", "jpeg", "png"])],
+                    max_size_mb=int(document.get("max_size_mb", 5)),
+                    help=_assistant_help(str(document["label"])),
+                    examples=[str(document["label"])],
+                )
+                for document in service.get("required_documents_json", [])
+            ],
+        )
+
+
+def _field_labels_for_schema(schema: FormSchema) -> dict[str, str]:
+    return {field.key: field.label for field in schema.fields}
 
 
 def _required_warning(label: str, language: str) -> str:
@@ -154,6 +212,29 @@ def _has_document_intent(message: str, detected_field: str | None) -> bool:
     )
 
 
+def _verified_validity_guidance(service_id: str, language: str) -> str | None:
+    rule = knowledge_base_service.latest_rule(service_id, "validity")
+    if not rule.success or not rule.verified or rule.source is None:
+        return None
+    value = f"{rule.current_value or ''} {rule.unit or ''}".strip()
+    circular = rule.source.circular_number
+    department = rule.source.department
+    if language == "telugu":
+        return (
+            f"ప్రస్తుత ధృవీకరించిన నియమం ప్రకారం చెల్లుబాటు కాలం {value}. "
+            f"మూలం: {circular}, {department}."
+        )
+    if language == "hindi":
+        return (
+            f"वर्तमान सत्यापित नियम के अनुसार वैधता {value} है। "
+            f"स्रोत: {circular}, {department}."
+        )
+    return (
+        f"Validity is {value} under the current verified rule. "
+        f"Source: {circular}, {department}."
+    )
+
+
 def _document_guidance(
     message: str,
     current_field: str | None,
@@ -161,7 +242,7 @@ def _document_guidance(
     form_id: str,
     language: str,
 ) -> tuple[str, str | None] | None:
-    schema = load_form_schema(form_id)
+    schema = _load_assistant_schema(form_id)
     if not schema.required_documents:
         return None
 
@@ -356,10 +437,8 @@ class AssistantService:
             )
             warning = None
         else:
-            detected_field = detect_field(
-                message,
-                current_field,
-                session.last_field,
+            detected_field = field_for_normalized_intent(
+                normalize_field_intent(message, current_field, session.last_field)
             )
             document_guidance = (
                 _document_guidance(message, current_field, current_document, active_form_id, language)
@@ -373,16 +452,27 @@ class AssistantService:
                 related_values = {"document": document_key} if document_key else {}
                 warning = None
             else:
-                guidance = generate_guidance(
-                    message,
-                    detected_field,
-                    language,
+                verified_validity = (
+                    _verified_validity_guidance(active_form_id, language)
+                    if detected_field == "validity"
+                    else None
                 )
-                reply = guidance.reply
-                suggested_value = guidance.suggested_value
-                related_values = guidance.related_values
-                warning = guidance.warning
-        if not session.conversation and active_form_id != "catalog":
+                if verified_validity:
+                    reply = verified_validity
+                    suggested_value = None
+                    related_values = {}
+                    warning = None
+                else:
+                    guidance = generate_guidance(
+                        message,
+                        detected_field,
+                        language,
+                    )
+                    reply = guidance.reply
+                    suggested_value = guidance.suggested_value
+                    related_values = guidance.related_values
+                    warning = guidance.warning
+        if not session.conversation and active_form_id != "catalog" and detected_field is None:
             reply = f"{_first_language_intro(language)} {reply}"
         response = AskResponse(
             field=detected_field,
@@ -425,8 +515,8 @@ class AssistantService:
             language_preference,
         )
         language = str(language_info["detected_language"])
-        schema = load_form_schema(active_form_id)
-        labels = field_labels(schema.form_id)
+        schema = _load_assistant_schema(active_form_id)
+        labels = _field_labels_for_schema(schema)
         uploaded_documents = uploaded_documents or {}
         missing_fields = [
             item.key

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.config import settings
+from app.security.rbac import CurrentUser, require_roles
 from app.services import (
     circular_ingestion_service,
     circular_sync_service,
@@ -23,7 +24,10 @@ class SelfUpdateScenarioPayload(BaseModel):
 
 
 @router.post("/run-self-update-scenario")
-def run_self_update_scenario(payload: SelfUpdateScenarioPayload | None = None) -> dict:
+def run_self_update_scenario(
+    payload: SelfUpdateScenarioPayload | None = None,
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
+) -> dict:
     payload = payload or SelfUpdateScenarioPayload()
     if payload.reset_mock_systems:
         mock_system_service.reset_demo_systems()

@@ -25,7 +25,7 @@ def _create_income_application(client, headers) -> dict:
 
 
 def _upload_required_docs(client, headers, application_id: str) -> None:
-    for document_type in ("aadhaar", "income_proof", "address_proof"):
+    for document_type in ("aadhaar", "ration_card", "income_affidavit", "passport_photo"):
         response = client.post(
             f"/api/applications/{application_id}/documents",
             headers=headers,
@@ -48,6 +48,7 @@ def test_service_portal_seeded_catalog(client):
     detail = client.get("/api/portal/services/income_certificate").json()["service"]
     assert detail["form"]["service_id"] == "income_certificate"
     assert "aadhaar" in detail["form"]["validation_rules_json"]["required_documents"]
+    assert "passport_photo" in detail["form"]["validation_rules_json"]["required_documents"]
 
 
 def test_application_upload_payment_review_certificate_flow(client, citizen_headers, officer_headers):
@@ -124,3 +125,19 @@ def test_service_portal_access_control(client, citizen_headers, viewer_headers):
 
     officer_only = client.get("/api/officer/applications", headers=citizen_headers)
     assert officer_only.status_code == 403
+
+
+def test_officer_role_can_reject_application(client, citizen_headers, officer_headers):
+    application = _create_income_application(client, citizen_headers)
+    _upload_required_docs(client, citizen_headers, application["id"])
+    assert client.post(f"/api/applications/{application['id']}/submit", headers=citizen_headers).status_code == 200
+    payment = client.post(f"/api/payments/{application['id']}/create", headers=citizen_headers).json()["payment"]
+    assert client.post(f"/api/payments/{payment['id']}/simulate-success", headers=citizen_headers).status_code == 200
+
+    response = client.post(
+        f"/api/officer/applications/{application['id']}/reject",
+        headers=officer_headers,
+        json={"reason": "Supporting evidence does not match the application."},
+    )
+    assert response.status_code == 200
+    assert response.json()["application"]["status"] == "rejected"

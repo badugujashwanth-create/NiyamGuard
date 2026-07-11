@@ -3,16 +3,15 @@ import { useEffect, useMemo, useState } from "react";
 import CitizenAssistantLayout, { isCitizenAssistantRoute } from "../citizen-portal/components/CitizenAssistantLayout";
 import DynamicFormPage from "../citizen-portal/components/DynamicFormPage";
 import AdminPortal from "../government-portal/components/AdminPortal";
-import DemoDashboard from "../government-portal/components/DemoDashboard";
-import { MockMeeSevaPortal, MockPublicFaq } from "../government-portal/components/MockConnectedSystems";
 import CitizenPortal from "../citizen-portal/components/CitizenPortal";
 import GovernmentPortal from "../government-portal/components/GovernmentPortal";
 import SchemeFinder from "../citizen-portal/components/SchemeFinder";
 import ServicePortal from "../citizen-portal/components/ServicePortal";
 import ServiceCatalog from "../citizen-portal/components/ServiceCatalog";
+import AppShell from "../shared/components/AppShell";
 import UnifiedLanding from "../shared/components/UnifiedLanding";
-import VirtualGovernmentSandbox from "../government-portal/components/VirtualGovernmentSandbox";
 import { useCitizenAssistant, useCitizenAssistantPageContext } from "../citizen-portal/context/CitizenAssistantContext";
+import { canAccessRoute, isPublicRoute, roleHomePath } from "../utils/authUtils";
 import {
   askAssistant,
   generateSummary,
@@ -94,8 +93,13 @@ function sourceCardFromRule(ruleResponse) {
 }
 
 function LoginPage({ onLoginSuccess }) {
-  const [email, setEmail] = useState("admin@niyamguard.local");
-  const [password, setPassword] = useState("Admin@12345");
+  const demoAccounts = [
+    { label: "Citizen", email: "citizen@niyamguard.local", password: "Citizen@12345" },
+    { label: "Officer", email: "officer@niyamguard.local", password: "Officer@12345" },
+    { label: "Admin", email: "admin@niyamguard.local", password: "Admin@12345" },
+  ];
+  const [email, setEmail] = useState(demoAccounts[0].email);
+  const [password, setPassword] = useState(demoAccounts[0].password);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -119,9 +123,24 @@ function LoginPage({ onLoginSuccess }) {
         <div className="login-brand">
           <span className="brand-emblem" aria-hidden="true">NG</span>
           <div>
-            <p>Secure government access</p>
-            <h1 id="login-title">NiyamGuard Admin Login</h1>
+            <p>Role-based access</p>
+            <h1 id="login-title">NiyamGuard Login</h1>
           </div>
+        </div>
+        <div className="login-role-grid" aria-label="Demo accounts">
+          {demoAccounts.map((account) => (
+            <button
+              className={email === account.email ? "button button-primary" : "button button-secondary"}
+              key={account.email}
+              onClick={() => {
+                setEmail(account.email);
+                setPassword(account.password);
+              }}
+              type="button"
+            >
+              {account.label}
+            </button>
+          ))}
         </div>
         <form className="login-form" onSubmit={handleSubmit}>
           <label htmlFor="admin-email">Email</label>
@@ -146,14 +165,38 @@ function LoginPage({ onLoginSuccess }) {
           </button>
         </form>
         <p className="login-hint">
-          Demo admin: admin@niyamguard.local / Admin@12345<br />
-          Citizen: citizen@niyamguard.local / Citizen@12345<br />
-          Officer: officer@niyamguard.local / Officer@12345
+          Citizen, Officer, and Admin are separate demo accounts. Use the role buttons above to fill credentials.
         </p>
         <div className="login-links">
-          <a href="/demo">Open public demo</a>
           <a href="/">Open citizen portal</a>
         </div>
+      </section>
+    </main>
+  );
+}
+
+function legacyRouteTarget(path) {
+  if (path === "/sandbox" || path.startsWith("/sandbox/") || path === "/virtual-gov" || path.startsWith("/virtual-gov/")) {
+    return "/admin/sandbox";
+  }
+  if (path === "/officer") return "/government/applications";
+  if (path === "/officer/pending") return "/government/applications/pending";
+  if (path === "/officer/approved") return "/government/applications/approved";
+  if (path === "/officer/rejected") return "/government/applications/rejected";
+  if (path.startsWith("/officer/applications/")) {
+    return path.replace("/officer/applications/", "/government/applications/");
+  }
+  return null;
+}
+
+function NotFoundPage() {
+  return (
+    <main className="unified-shell">
+      <section className="two-portal-header">
+        <p className="eyebrow">NiyamGuard</p>
+        <h1>Page not found</h1>
+        <p>This route is not part of the current portal.</p>
+        <a className="button button-primary" href="/">Return to portal selection</a>
       </section>
     </main>
   );
@@ -419,15 +462,35 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (path.startsWith("/admin") && !getAccessToken()) {
-      window.history.replaceState({}, "", "/login");
+    const legacyTarget = legacyRouteTarget(path);
+    if (legacyTarget) {
+      window.history.replaceState({}, "", legacyTarget);
+      setPath(legacyTarget);
+      return;
+    }
+    const token = getAccessToken();
+    if (!isPublicRoute(path) && (!token || !currentUser)) {
+      const next = `/login?next=${encodeURIComponent(path)}`;
+      window.history.replaceState({}, "", next);
       setPath("/login");
+      return;
+    }
+    if (!isPublicRoute(path) && currentUser && !canAccessRoute(path, currentUser)) {
+      const next = roleHomePath(currentUser);
+      window.history.replaceState({}, "", next);
+      setPath(next);
     }
   }, [path, currentUser]);
 
   function navigate(nextPath) {
-    window.history.pushState({}, "", nextPath);
-    setPath(nextPath);
+    const url = new URL(nextPath, window.location.href);
+    window.history.pushState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    setPath(url.pathname);
+    if (url.hash) {
+      window.requestAnimationFrame(() => {
+        document.querySelector(url.hash)?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      });
+    }
   }
 
   async function handleLogout() {
@@ -439,19 +502,11 @@ export default function App() {
   function handleLoginSuccess(user) {
     setCurrentUser(user);
     const next = new URLSearchParams(window.location.search).get("next");
-    if (next) {
+    if (next && canAccessRoute(next, user)) {
       navigate(next);
       return;
     }
-    if (user?.role === "citizen") {
-      navigate("/services");
-      return;
-    }
-    if (user?.email === "officer@niyamguard.local" || user?.role === "reviewer") {
-      navigate("/officer");
-      return;
-    }
-    navigate("/admin");
+    navigate(roleHomePath(user));
   }
 
   function renderCitizenContent() {
@@ -466,36 +521,37 @@ export default function App() {
         />
       );
     }
-    return <ServicePortal path={window.location.pathname} />;
+    return <ServicePortal path={window.location.pathname} showHeader={false} />;
   }
 
-  if (path === "/" || path.startsWith("/portal")) return <UnifiedLanding />;
-  if (isCitizenAssistantRoute(path)) {
-    return (
-      <CitizenAssistantLayout onNavigate={setPath} path={path}>
-        {renderCitizenContent()}
-      </CitizenAssistantLayout>
-    );
+  function renderRoute() {
+    if (path === "/" || path.startsWith("/portal")) return <UnifiedLanding />;
+    if (path.startsWith("/verify")) return <ServicePortal path="/verify-certificate" portal="verifier" />;
+    if (isCitizenAssistantRoute(path)) {
+      return (
+        <CitizenAssistantLayout onNavigate={setPath} path={path}>
+          {renderCitizenContent()}
+        </CitizenAssistantLayout>
+      );
+    }
+    if (path.startsWith("/government")) return <GovernmentPortal />;
+    if (legacyRouteTarget(path)) return null;
+    if (path.startsWith("/login")) return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    if (path.startsWith("/admin")) {
+      return (
+        <AdminPortal
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          onUnauthorized={() => navigate("/login")}
+        />
+      );
+    }
+    return <NotFoundPage />;
   }
-  if (path.startsWith("/government")) return <GovernmentPortal />;
-  if (path.startsWith("/demo")) return <DemoDashboard />;
-  if (path.startsWith("/mock/meeseva")) return <MockMeeSevaPortal />;
-  if (path.startsWith("/mock/public-faq")) return <MockPublicFaq />;
-  if (path.startsWith("/virtual-gov")) return <VirtualGovernmentSandbox />;
-  if (path.startsWith("/officer")) {
-    return <ServicePortal path={window.location.pathname} />;
-  }
-  if (path.startsWith("/login")) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
-  }
-  if (path.startsWith("/admin")) {
-    return (
-      <AdminPortal
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        onUnauthorized={() => navigate("/login")}
-      />
-    );
-  }
-  return <CitizenApp />;
+
+  return (
+    <AppShell currentUser={currentUser} onLogout={handleLogout} onNavigate={navigate} path={path}>
+      {renderRoute()}
+    </AppShell>
+  );
 }

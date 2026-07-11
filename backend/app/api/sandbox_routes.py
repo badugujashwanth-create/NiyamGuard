@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/sandbox", tags=["Virtual Government Sandbox"])
 
 
 @router.get("/status")
-def status() -> dict:
+def status(actor: CurrentUser = Depends(require_roles("sandbox_admin", "admin"))) -> dict:
     return sandbox_circular_service.status()
 
 
@@ -59,7 +59,10 @@ def generate_pdf(
 
 
 @router.get("/circulars/{circular_id}/pdf")
-def download_pdf(circular_id: str) -> Response:
+def download_pdf(
+    circular_id: str,
+    actor: CurrentUser = Depends(require_roles("sandbox_admin", "admin")),
+) -> Response:
     payload = sandbox_circular_service.get_pdf_bytes(circular_id)
     if payload is None:
         raise HTTPException(status_code=404, detail="PDF not found.")
@@ -69,6 +72,17 @@ def download_pdf(circular_id: str) -> Response:
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{filename}"'},
     )
+
+
+@router.post("/circulars/{circular_id}/export")
+def export_circular(
+    circular_id: str,
+    actor: CurrentUser = Depends(require_roles("sandbox_admin", "admin")),
+) -> dict:
+    result = sandbox_circular_service.export_for_manual_upload(circular_id, actor_id=actor.id)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "Export failed."))
+    return result
 
 
 @router.post("/circulars/{circular_id}/publish")

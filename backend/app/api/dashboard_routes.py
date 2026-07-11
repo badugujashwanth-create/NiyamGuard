@@ -7,7 +7,7 @@ from app.knowledge_base.platform_store import read_store
 router = APIRouter(prefix="/api/dashboard", tags=["Priority Dashboard"])
 
 
-@router.get("/summary")
+@router.get("/summary", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def summary() -> dict:
     store = read_store()
     priorities = priority_service.list_priorities()
@@ -26,21 +26,21 @@ def summary() -> dict:
     }
 
 
-@router.get("/priority-findings", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/priority-findings", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def priority_findings() -> dict:
     return {"success": True, "priority_findings": [item.model_dump() for item in priority_service.list_priorities()]}
 
 
-@router.get("/high-impact", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/high-impact", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def high_impact() -> dict:
     return {"success": True, "priority_findings": [item.model_dump() for item in priority_service.high_impact()]}
 
 
-@router.get("/service/{service_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/service/{service_id}", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def service_dashboard(service_id: str) -> dict:
     return {"success": True, "priority_findings": [item.model_dump() for item in priority_service.service_priorities(service_id)]}
 
 
-@router.post("/recalculate-priority", dependencies=[Depends(require_roles("admin", "reviewer"))])
+@router.post("/recalculate-priority", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def recalculate_priority() -> dict:
     return {"success": True, "priority_findings": [item.model_dump() for item in priority_service.recalculate_priorities()]}

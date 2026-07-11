@@ -9,15 +9,12 @@ export default function AssistantTranscript({ messages, liveTranscript }) {
       <div className="transcript-list" aria-live="polite">
         {messages.length === 0 && !liveTranscript ? (
           <p className="empty-state">
-            Your questions and the assistant’s guidance will appear here.
+            Your questions and the assistant's guidance will appear here.
           </p>
         ) : null}
 
         {messages.map((message) => (
-          <article
-            className={`message message-${message.role}`}
-            key={message.id}
-          >
+          <article className={`message message-${message.role}`} key={message.id}>
             <span>{message.role === "user" ? "You" : "Assistant"}</span>
             <p>{message.text}</p>
           </article>

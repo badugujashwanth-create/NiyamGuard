@@ -191,6 +191,37 @@ def test_telugu_monthly_income_explains_everyday_meaning(
     assert "ఒక నెలలో వచ్చే మొత్తం డబ్బు" in body["reply"]
 
 
+def test_selected_telugu_language_localizes_occupation_guidance(
+    client: TestClient, session_id: str
+) -> None:
+    body = ask(
+        client,
+        session_id,
+        "what should I enter for occupation",
+        language="telugu",
+        current_field="occupation",
+    )
+    assert body["detected_language"] == "telugu"
+    assert body["language_code"] == "te-IN"
+    assert "మీ పేరు కాదు" in body["reply"]
+
+
+def test_generic_validity_guidance_does_not_claim_income_rule_for_every_service(
+    client: TestClient, session_id: str
+) -> None:
+    body = ask(
+        client,
+        session_id,
+        "what is the validity",
+        form_id="residence_certificate",
+        current_field="validity",
+        language="english",
+    )
+    assert body["field"] == "validity"
+    assert "differs by service" in body["reply"]
+    assert "Income Certificate validity is 6 months" not in body["reply"]
+
+
 def test_telugu_unicode_input_returns_telugu_guidance(
     client: TestClient, session_id: str
 ) -> None:

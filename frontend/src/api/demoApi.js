@@ -1,7 +1,7 @@
 import { request } from "./client";
 
 export function runFullEndToEndDemo() {
-  return request("/api/demo/run-full-end-to-end", { method: "POST" }, { auth: false });
+  return request("/api/demo/run-full-end-to-end", { method: "POST" });
 }
 
 export function getVerifiedAIExplanation(question = "Explain GO-138 in simple words") {
@@ -15,7 +15,7 @@ export function getVerifiedAIExplanation(question = "Explain GO-138 in simple wo
   );
 }
 
-export function askHybridDemoQuestion(question) {
+export function askHybridDemoQuestion(question, context = {}) {
   return request(
     "/api/hybrid/answer",
     {
@@ -23,7 +23,7 @@ export function askHybridDemoQuestion(question) {
       body: JSON.stringify({
         question,
         language: "auto",
-        context: { service_id: "income_certificate" },
+        context,
         profile: {},
       }),
     },

@@ -19,8 +19,8 @@ class HybridAnswerRequest(BaseModel):
     profile: dict[str, Any] = Field(default_factory=dict)
 
 
-@router.post("/api/hybrid/answer")
-@router.post("/api/answer")
+@router.post("/api/hybrid/answer", dependencies=[Depends(require_roles("citizen"))])
+@router.post("/api/answer", dependencies=[Depends(require_roles("citizen"))])
 def answer(payload: HybridAnswerRequest) -> dict[str, Any]:
     return hybrid_answer_service.answer_question(
         payload.question,
@@ -36,8 +36,8 @@ def status() -> dict[str, Any]:
     return hybrid_answer_service.status()
 
 
-@router.post("/api/hybrid/reindex", dependencies=[Depends(require_roles("admin", "reviewer"))])
-@router.post("/api/search/reindex", dependencies=[Depends(require_roles("admin", "reviewer"))])
+@router.post("/api/hybrid/reindex", dependencies=[Depends(require_roles("officer", "reviewer"))])
+@router.post("/api/search/reindex", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def reindex() -> dict[str, Any]:
     return hybrid_answer_service.reindex()
 

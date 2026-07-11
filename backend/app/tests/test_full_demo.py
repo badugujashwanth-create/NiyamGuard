@@ -1,5 +1,5 @@
-def test_full_end_to_end_demo_endpoint_creates_real_entities(client) -> None:
-    response = client.post("/api/demo/run-full-end-to-end")
+def test_full_end_to_end_demo_endpoint_creates_real_entities(client, admin_headers) -> None:
+    response = client.post("/api/demo/run-full-end-to-end", headers=admin_headers)
     body = response.json()
 
     assert response.status_code == 200

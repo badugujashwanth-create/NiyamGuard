@@ -105,3 +105,15 @@ class PublicRuleResponse(BaseModel):
     verified: bool
     answer: str
     source: RuleSource | None = None
+
+
+class CertificateReferenceDraft(BaseModel):
+    id: str
+    service_id: str
+    title: str
+    source_circular_id: str
+    source_circular_number: str | None = None
+    department: str | None = None
+    reason: str
+    status: Literal["needs_human_review", "reviewed"] = "needs_human_review"
+    created_at: str

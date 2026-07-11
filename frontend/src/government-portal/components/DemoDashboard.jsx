@@ -94,13 +94,13 @@ const storySteps = [
 
 const platformFlowCards = [
   {
-    title: "Virtual Gazette",
-    description: "Publishes sandbox circulars like GO-138 for demo policy updates.",
+    title: "Sandbox Circular Generator",
+    description: "Generates sandbox circular PDFs for manual government intake.",
     href: "/virtual-gov",
   },
   {
     title: "Policy Engine",
-    description: "Ingests circular data and updates verified rule versions.",
+    description: "Extracts uploaded circular data and updates verified rule versions after approval.",
     href: "/admin/policy-updates",
   },
   {
@@ -184,7 +184,7 @@ function hasScenarioStep(result, stepId) {
 function scenarioResultRows(result) {
   const certificateStep = result?.steps?.find((step) => step.step_id === "certificate_issued");
   return [
-    ["Circular Published", Boolean(result?.success)],
+    ["Circular Prepared", Boolean(result?.success)],
     ["Rule Updated", Boolean(result?.success && (result?.artifacts?.source_rule || hasScenarioStep(result, "regulation_question")))],
     ["Citizen Application Created", hasScenarioStep(result, "application_created")],
     ["Payment Completed", hasScenarioStep(result, "payment_completed")],

@@ -5,9 +5,9 @@ from pathlib import Path
 from uuid import uuid4
 
 from app.models.sandbox_models import SandboxCircular, SandboxCircularCreateRequest
-from app.services import circular_ingestion_service
 from app.demo.pdf_generator import build_simple_pdf
 from app.knowledge_base.platform_store import add_audit_event, read_store, write_store
+from app.knowledge_base.circular_ingestion_service import ingest_circular
 from app.services.time import now_iso
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -108,6 +108,7 @@ def generate_pdf(circular_id: str) -> dict:
         f"Circular Number: {circular.circular_number}",
         f"Title: {circular.title}",
         f"Effective Date: {circular.effective_date}",
+        f"Field Changed: {circular.rule_key.replace('_', ' ').title()}",
         f"Old Rule: {circular.old_value}",
         f"New Rule: {circular.new_value}",
         f"Affected Service: {circular.service_affected}",
@@ -160,33 +161,15 @@ def get_pdf_bytes(circular_id: str) -> tuple[bytes, str] | None:
     return path.read_bytes(), f"{circular.circular_number}.pdf"
 
 
-def publish_to_government(circular_id: str, actor_id: str | None = None) -> dict:
+def export_for_manual_upload(circular_id: str, actor_id: str | None = None) -> dict:
     circular = _find(circular_id)
     if circular is None:
         return {"success": False, "message": "Sandbox circular not found."}
-    if circular.status not in {"pdf_generated", "published"}:
-        return {"success": False, "message": "Generate PDF before publishing."}
+    if circular.status not in {"pdf_generated", "ready_for_manual_upload"}:
+        return {"success": False, "message": "Generate PDF before exporting."}
 
-    raw_text = _build_raw_text(circular)
-    document_id = f"cirdoc_{circular.circular_number.lower().replace('-', '_')}_{circular.id[-6:]}"
-    document, _ = circular_ingestion_service.ingest_circular(
-        {
-            "id": document_id,
-            "source_id": "virtual_government_sandbox",
-            "circular_number": circular.circular_number,
-            "title": circular.title,
-            "department": circular.department,
-            "effective_date": circular.effective_date,
-            "document_url": circular.pdf_url,
-            "storage_path": circular.pdf_path,
-            "raw_text": raw_text,
-        }
-    )
-
-    circular.status = "published"
-    circular.delivery_status = "Received by NiyamGuard"
-    circular.government_document_id = document.id
-    circular.published_at = now_iso()
+    circular.status = "ready_for_manual_upload"
+    circular.delivery_status = "Ready for manual upload"
     circular.updated_at = now_iso()
 
     records = _load_records()
@@ -196,12 +179,68 @@ def publish_to_government(circular_id: str, actor_id: str | None = None) -> dict
     store = read_store()
     add_audit_event(
         store,
+        "sandbox_circular_exported_for_manual_upload",
+        {
+            "entity_type": "sandbox_circular",
+            "entity_id": circular.id,
+            "circular_number": circular.circular_number,
+            "exported_by": actor_id,
+            "manual_upload_required": True,
+        },
+    )
+    write_store(store)
+    return {
+        "success": True,
+        "circular": circular.model_dump(),
+        "manual_upload": {
+            "required": True,
+            "upload_endpoint": "/api/circulars/upload",
+            "pdf_url": circular.pdf_url,
+            "raw_text": _build_raw_text(circular),
+        },
+        "integration_event": {
+            "type": "sandbox_circular_ready_for_manual_upload",
+            "circular_id": circular.id,
+        },
+    }
+
+
+def publish_to_government(circular_id: str, actor_id: str | None = None) -> dict:
+    circular = _find(circular_id)
+    if circular is None:
+        return {"success": False, "message": "Sandbox circular not found."}
+    if not circular.pdf_path:
+        return {"success": False, "message": "Generate PDF before publishing."}
+
+    document, created = ingest_circular(
+        {
+            "source_id": "virtual_government_sandbox",
+            "circular_number": circular.circular_number,
+            "title": circular.title,
+            "department": circular.department,
+            "published_date": circular.created_at[:10],
+            "effective_date": circular.effective_date,
+            "document_url": None,
+            "storage_path": circular.pdf_path,
+            "raw_text": _build_raw_text(circular),
+        }
+    )
+
+    # Government users receive the same generated artifact through their own
+    # role-scoped endpoint; the sandbox PDF endpoint remains sandbox-only.
+    document.document_url = f"/api/government/circulars/{document.id}/pdf"
+    store = read_store()
+    stored_document = next((item for item in store.circular_documents if item.id == document.id), None)
+    if stored_document:
+        stored_document.document_url = document.document_url
+    timestamp = now_iso()
+    add_audit_event(
+        store,
         "sandbox_circular_published",
         {
             "entity_type": "sandbox_circular",
             "entity_id": circular.id,
             "government_document_id": document.id,
-            "circular_number": circular.circular_number,
             "published_by": actor_id,
         },
     )
@@ -211,17 +250,26 @@ def publish_to_government(circular_id: str, actor_id: str | None = None) -> dict
         {
             "entity_type": "circular_document",
             "entity_id": document.id,
-            "source": "virtual_government_sandbox",
-            "circular_number": document.circular_number,
+            "sandbox_circular_id": circular.id,
         },
     )
     write_store(store)
+
+    circular.status = "published"
+    circular.delivery_status = "Received by NiyamGuard"
+    circular.government_document_id = document.id
+    circular.published_at = circular.published_at or timestamp
+    circular.updated_at = timestamp
+    records = [circular if item.id == circular_id else item for item in _load_records()]
+    _save_records(records)
     return {
         "success": True,
+        "message": "Circular published to the NiyamGuard Government Circular Inbox.",
         "circular": circular.model_dump(),
         "government_document": document.model_dump(),
+        "created": created,
         "integration_event": {
-            "type": "sandbox_circular_delivered",
+            "type": "sandbox_circular_published",
             "circular_id": circular.id,
             "government_document_id": document.id,
         },

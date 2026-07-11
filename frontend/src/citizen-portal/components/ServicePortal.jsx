@@ -7,6 +7,7 @@ import {
   getAccessToken,
   getCitizenDocuments,
   getCitizenProfile,
+  getOfficerApplication,
   getOfficerApplications,
   getOfficerPendingApplications,
   getPortalApplication,
@@ -41,6 +42,28 @@ function statusTone(status = "") {
 
 function Pill({ children, tone = "neutral" }) {
   return <span className={`portal-pill portal-pill-${tone}`}>{children}</span>;
+}
+
+const portalNavItems = {
+  verifier: [
+    { href: "/verify-certificate", label: "Verify Certificate" },
+    { href: "/", label: "Portal Home" },
+  ],
+};
+
+function portalHeaderCopy(portal) {
+  if (portal === "verifier") {
+    return {
+      eyebrow: "Public Verification",
+      title: "Certificate Verification",
+      navLabel: "Certificate verification",
+    };
+  }
+  return {
+    eyebrow: "Citizen Portal",
+    title: "Public Services",
+    navLabel: "Citizen service portal",
+  };
 }
 
 function navigateTo(path) {
@@ -84,12 +107,13 @@ function ServiceCard({ service }) {
     <article className="portal-card">
       <div>
         <div className="portal-card-heading">
-          <span>{service.category}</span>
+          <span>{service.department || service.category}</span>
           <Pill tone={service.fee_amount ? "blue" : "green"}>
             {service.fee_amount ? `Rs ${service.fee_amount}` : "No fee"}
           </Pill>
         </div>
         <h3>{service.name}</h3>
+        <p className="portal-card-category">{service.category}</p>
         <p>{service.description}</p>
       </div>
       <dl>
@@ -110,8 +134,27 @@ function ServiceCard({ service }) {
 
 function ServicesPage() {
   const [services, setServices] = useState([]);
+  const [department, setDepartment] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const departments = useMemo(
+    () => [...new Set(services.map((service) => service.department || service.category).filter(Boolean))].sort(),
+    [services],
+  );
+  const filteredServices = useMemo(
+    () => services.filter((service) => department === "all" || (service.department || service.category) === department),
+    [department, services],
+  );
+  const groupedServices = useMemo(
+    () =>
+      filteredServices.reduce((groups, service) => {
+        const key = service.department || service.category || "Other";
+        groups[key] = groups[key] || [];
+        groups[key].push(service);
+        return groups;
+      }, {}),
+    [filteredServices],
+  );
   const pageContext = useMemo(
     () => ({
       mode: "service_catalog",
@@ -150,13 +193,29 @@ function ServicesPage() {
           <h2>Services</h2>
           <p>Apply through the synthetic NiyamGuard Service Portal and track each stage from draft to certificate.</p>
         </div>
-        <Pill tone="green">{services.length} services</Pill>
+        <Pill tone="green">{filteredServices.length} services</Pill>
+      </div>
+      <div className="portal-filter-row">
+        <label htmlFor="service-department-filter">
+          Department
+          <select id="service-department-filter" onChange={(event) => setDepartment(event.target.value)} value={department}>
+            <option value="all">All departments</option>
+            {departments.map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </select>
+        </label>
       </div>
       {loading ? <p className="portal-loading">Loading services...</p> : null}
       {error ? <div className="global-error" role="alert">{error}</div> : null}
-      <div className="portal-grid">
-        {services.map((service) => <ServiceCard key={service.service_id} service={service} />)}
-      </div>
+      {Object.entries(groupedServices).map(([group, groupServices]) => (
+        <section className="portal-service-group" key={group}>
+          <h3>{group}</h3>
+          <div className="portal-grid">
+            {groupServices.map((service) => <ServiceCard key={service.service_id} service={service} />)}
+          </div>
+        </section>
+      ))}
     </section>
   );
 }
@@ -948,7 +1007,7 @@ function DocumentsPage({ path }) {
   );
 }
 
-function OfficerPage({ path, applicationId }) {
+export function OfficerApplicationReview({ path, applicationId }) {
   const [applications, setApplications] = useState([]);
   const [selected, setSelected] = useState(null);
   const [status, setStatus] = useState("");
@@ -965,7 +1024,7 @@ function OfficerPage({ path, applicationId }) {
       : await getOfficerApplications(statusFilter);
     setApplications(response.applications || []);
     if (applicationId) {
-      const applicationResponse = await getPortalApplication(applicationId);
+      const applicationResponse = await getOfficerApplication(applicationId);
       setSelected(applicationResponse.application);
     } else {
       setSelected(null);
@@ -995,17 +1054,29 @@ function OfficerPage({ path, applicationId }) {
         </div>
         <Pill tone="blue">{applications.length} applications</Pill>
       </div>
+      <nav className="portal-actions" aria-label="Application review filters">
+        {[
+          ["/government/applications", "All"],
+          ["/government/applications/pending", "Pending"],
+          ["/government/applications/approved", "Approved"],
+          ["/government/applications/rejected", "Rejected"],
+        ].map(([href, label]) => (
+          <button
+            className={path === href ? "button button-primary" : "button button-secondary"}
+            key={href}
+            onClick={() => navigateTo(href)}
+            type="button"
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
       {error ? <div className="global-error" role="alert">{error}</div> : null}
       {status ? <p className="portal-status">{status}</p> : null}
-      <div className="portal-actions">
-        <button className="button button-secondary" onClick={() => navigateTo("/officer/pending")} type="button">Pending</button>
-        <button className="button button-secondary" onClick={() => navigateTo("/officer/approved")} type="button">Approved</button>
-        <button className="button button-secondary" onClick={() => navigateTo("/officer/rejected")} type="button">Rejected</button>
-      </div>
       <div className="portal-two-column">
         <section className="portal-panel">
           <h3>Queue</h3>
-          <ApplicationList applications={applications} openPathPrefix="/officer/applications" />
+          <ApplicationList applications={applications} openPathPrefix="/government/applications" />
         </section>
         {selected ? (
           <section className="portal-panel">
@@ -1073,11 +1144,13 @@ function PortalDefinitionList({ rows }) {
   );
 }
 
-export default function ServicePortal({ path }) {
+export default function ServicePortal({ path, portal = "citizen", showHeader = true }) {
   const segments = path.split("/").filter(Boolean);
   const first = segments[0] || "services";
   const second = segments[1];
   const third = segments[2];
+  const headerCopy = portalHeaderCopy(portal);
+  const navItems = portalNavItems[portal] || [];
 
   function renderPage() {
     if (first === "services" && second) return <ServiceDetailPage serviceId={second} />;
@@ -1086,33 +1159,40 @@ export default function ServicePortal({ path }) {
     if (first === "applications" && second) return <ApplicationDetailPage applicationId={second} path={path} />;
     if (first === "applications") return <ApplicationsPage path={path} />;
     if (first === "track") return <TrackPage />;
-    if (first === "verify-certificate") return <VerifyCertificatePage />;
+    if (first === "verify-certificate" || first === "verify") return <VerifyCertificatePage />;
     if (first === "payment" && second) return <PaymentPage applicationId={second} path={path} />;
     if (first === "citizen" && second === "profile") return <ProfilePage path={path} />;
     if (first === "citizen" && second === "documents") return <DocumentsPage path={path} />;
-    if (first === "officer" && second === "applications" && third) return <OfficerPage applicationId={third} path={path} />;
-    if (first === "officer") return <OfficerPage path={path} />;
     return <ServicesPage />;
   }
 
   return (
     <div className="portal-shell">
-      <header className="portal-header">
-        <div className="brand">
-          <span className="brand-emblem" aria-hidden="true">NG</span>
-          <div>
-            <p>NiyamGuard Service Portal</p>
-            <h1>Public Services</h1>
+      {showHeader ? (
+        <header className="portal-header">
+          <div className="brand">
+            <span className="brand-emblem" aria-hidden="true">NG</span>
+            <div>
+              <p>{headerCopy.eyebrow}</p>
+              <h1>{headerCopy.title}</h1>
+            </div>
           </div>
-        </div>
-        <nav className="portal-nav" aria-label="Service portal">
-          <button onClick={() => navigateTo("/services")} type="button">Services</button>
-          <button onClick={() => navigateTo("/applications")} type="button">Applications</button>
-          <button onClick={() => navigateTo("/track")} type="button">Track</button>
-          <button onClick={() => navigateTo("/verify-certificate")} type="button">Verify</button>
-          <button onClick={() => navigateTo("/officer")} type="button">Officer</button>
-        </nav>
-      </header>
+          {navItems.length ? (
+            <nav className="portal-nav" aria-label={headerCopy.navLabel}>
+              {navItems.map((item) => (
+                <button
+                  className={path === item.href || path.startsWith(`${item.href}/`) ? "active" : ""}
+                  key={item.href}
+                  onClick={() => navigateTo(item.href)}
+                  type="button"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          ) : null}
+        </header>
+      ) : null}
       <main className="portal-main">
         {renderPage()}
       </main>

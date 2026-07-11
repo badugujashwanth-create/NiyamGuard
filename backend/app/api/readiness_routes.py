@@ -19,12 +19,12 @@ class OtpVerifyRequest(BaseModel):
     code: str = Field(min_length=4, max_length=8)
 
 
-@router.get("/api/ops/status")
+@router.get("/api/ops/status", dependencies=[Depends(require_roles("admin"))])
 def ops_status() -> dict:
     return readiness_service.ops_status()
 
 
-@router.get("/api/admin/readiness", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/api/admin/readiness", dependencies=[Depends(require_roles("admin"))])
 def admin_readiness() -> dict:
     return readiness_service.readiness_report()
 

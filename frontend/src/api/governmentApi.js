@@ -19,5 +19,5 @@ export function approveGovernmentPolicyUpdate(updateId, notes = "") {
 }
 
 export function getPortalSummary() {
-  return request("/api/demo/portal-summary", {}, { auth: false });
+  return request("/api/demo/portal-summary");
 }

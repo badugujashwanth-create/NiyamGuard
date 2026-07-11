@@ -26,5 +26,6 @@ def test_ai_chat_alias_uses_chat_contract(client) -> None:
     response = client.post("/api/ai/chat", json={"message": "scholarship documents enti"})
     body = response.json()
     assert response.status_code == 200
-    assert body["source"]["type"] == "rag"
-    assert body["provider"] == "fallback"
+    assert body["source"]["type"] == "deterministic_rule_engine"
+    assert body["provider"] == "deterministic"
+    assert body["verified"] is True

@@ -33,6 +33,7 @@ def sync_source(source_id: str, created_by: str | None = None) -> dict:
                     "department": "Revenue",
                     "published_date": "2026-06-20",
                     "effective_date": "2026-07-01",
+                    "created_by": created_by,
                 }
             )
             new_count = 1 if created else 0
@@ -48,7 +49,11 @@ def sync_source(source_id: str, created_by: str | None = None) -> dict:
         source.last_checked_at = job.completed_at
         source.last_success_at = job.completed_at
         source.updated_at = job.completed_at
-        add_audit_event(store, "source_synced", {"entity_type": "source", "entity_id": source_id})
+        add_audit_event(
+            store,
+            "source_synced",
+            {"entity_type": "source", "entity_id": source_id, "created_by": created_by},
+        )
         write_store(store)
         return {"success": True, "job": job.model_dump(), "document": document.model_dump() if document else None}
     except Exception as exc:
@@ -57,7 +62,11 @@ def sync_source(source_id: str, created_by: str | None = None) -> dict:
         job.status = "failed"
         job.completed_at = now_iso()
         job.error_message = "Circular sync failed."
-        add_audit_event(store, "source_sync_failed", {"entity_type": "source", "entity_id": source_id})
+        add_audit_event(
+            store,
+            "source_sync_failed",
+            {"entity_type": "source", "entity_id": source_id, "created_by": created_by},
+        )
         write_store(store)
         return {"success": False, "message": "Circular sync failed.", "error": str(exc)}
 

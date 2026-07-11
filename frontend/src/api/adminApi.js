@@ -32,6 +32,10 @@ export function getAuditEvents() {
   return request("/api/audit/events");
 }
 
+export function getGovernmentAuditEvents() {
+  return request("/api/government/audit/events");
+}
+
 export function verifyAudit() {
   return request("/api/audit/verify");
 }
@@ -45,11 +49,11 @@ export function getOpsStatus() {
 }
 
 export function getVirtualGovStatus() {
-  return request("/api/virtual-gov/status", {}, { auth: false });
+  return request("/api/virtual-gov/status");
 }
 
 export function getVirtualGovScenarios() {
-  return request("/api/virtual-gov/scenarios", {}, { auth: false });
+  return request("/api/virtual-gov/scenarios");
 }
 
 export function runVirtualGovScenario({ scenarioId = "income_certificate_full_flow", resetBeforeRun = true } = {}) {
@@ -62,7 +66,6 @@ export function runVirtualGovScenario({ scenarioId = "income_certificate_full_fl
         reset_before_run: resetBeforeRun,
       }),
     },
-    { auth: false },
   );
 }
 
@@ -80,6 +83,16 @@ export function getCircularDocuments() {
 
 export function syncCirculars() {
   return request("/api/circulars/sync-all", { method: "POST" });
+}
+
+export function uploadCircularFile({ file, circularNumber, title, department, effectiveDate }) {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("circular_number", circularNumber);
+  body.append("title", title);
+  body.append("department", department);
+  body.append("effective_date", effectiveDate);
+  return request("/api/circulars/upload-file", { method: "POST", body });
 }
 
 export function extractCircularRules(circularId) {
@@ -145,23 +158,23 @@ export function getComplianceRuns() {
 }
 
 export function getMockSystems() {
-  return request("/api/mock-systems", {}, { auth: false });
+  return request("/api/mock-systems");
 }
 
 export function getMockMeeseva() {
-  return request("/api/mock-systems/meeseva", {}, { auth: false });
+  return request("/api/mock-systems/meeseva");
 }
 
 export function getMockPublicFaq() {
-  return request("/api/mock-systems/public-faq", {}, { auth: false });
+  return request("/api/mock-systems/public-faq");
 }
 
 export function resetMockSystems() {
-  return request("/api/mock-systems/reset-demo", { method: "POST" }, { auth: false });
+  return request("/api/mock-systems/reset-demo", { method: "POST" });
 }
 
 export function applyMockDemoPatch() {
-  return request("/api/mock-systems/apply-demo-patch", { method: "POST" }, { auth: false });
+  return request("/api/mock-systems/apply-demo-patch", { method: "POST" });
 }
 
 export function runSelfUpdateScenario({ applyDemoPatch = false, resetMockSystems: reset = false } = {}) {
@@ -174,6 +187,5 @@ export function runSelfUpdateScenario({ applyDemoPatch = false, resetMockSystems
         reset_mock_systems: reset,
       }),
     },
-    { auth: false },
   );
 }

@@ -29,8 +29,12 @@ def record_event(
     )
 
 
-def list_events(limit: int = 100, action: str | None = None) -> list[dict]:
-    return audit_repository.list(limit=limit, action=action)
+def list_events(
+    limit: int = 100,
+    action: str | None = None,
+    actor_user_id: str | None = None,
+) -> list[dict]:
+    return audit_repository.list(limit=limit, action=action, actor_user_id=actor_user_id)
 
 
 def get_event(event_id: str) -> dict | None:

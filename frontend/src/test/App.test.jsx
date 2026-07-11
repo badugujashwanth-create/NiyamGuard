@@ -93,8 +93,7 @@ async function openIncomeForm(user) {
 }
 
 async function openTextFallback(user) {
-  await user.click(screen.getByText("Having trouble? Type instead"));
-  return screen.getByLabelText("Type your question");
+  return screen.getByLabelText("Message");
 }
 
 function seedAdminSession(user = adminUser) {
@@ -108,6 +107,7 @@ function seedAdminSession(user = adminUser) {
 describe("NiyamGuard frontend", () => {
   beforeEach(() => {
     window.history.pushState({}, "", "/citizen/assistant");
+    seedAdminSession(citizenUser);
     FakeRecognition.instances = [];
     FakeAudio.instances = [];
     window.SpeechRecognition = FakeRecognition;
@@ -149,7 +149,7 @@ describe("NiyamGuard frontend", () => {
     });
   });
 
-  it("landing page shows only the two main portal choices", async () => {
+  it("landing page exposes each isolated portal and public verification", async () => {
     installApiMock();
     window.history.pushState({}, "", "/");
     render(<App />);
@@ -157,6 +157,8 @@ describe("NiyamGuard frontend", () => {
     expect(await screen.findByRole("heading", { name: "NiyamGuard" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open Citizen Portal" })).toHaveAttribute("href", "/citizen");
     expect(screen.getByRole("link", { name: "Open Government Portal" })).toHaveAttribute("href", "/government");
+    expect(screen.getByRole("link", { name: "Open Admin Portal" })).toHaveAttribute("href", "/admin");
+    expect(screen.getByRole("link", { name: "Verify a Certificate" })).toHaveAttribute("href", "/verify-certificate");
     expect(screen.queryByText(/old demo/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Run Full End-to-End Demo")).not.toBeInTheDocument();
   });
@@ -266,18 +268,18 @@ describe("NiyamGuard frontend", () => {
     await openIncomeForm(user);
 
     const assistant = screen.getByRole("complementary", {
-      name: "NiyamGuard Voice Assistant",
+      name: "NiyamGuard Chatbot",
     });
     const mainControls = within(assistant.querySelector(".voice-controls")).getAllByRole(
       "button",
     );
-    expect(mainControls.map((button) => button.textContent)).toEqual(["Start", "Stop", "Use Text Instead"]);
+    expect(mainControls.map((button) => button.textContent)).toEqual(["Start", "Stop", "Type"]);
     expect(screen.queryByText("Force Backend Voice")).not.toBeInTheDocument();
     expect(screen.queryByText("Speak Again")).not.toBeInTheDocument();
     expect(screen.queryByText("Raw JSON")).not.toBeInTheDocument();
-    expect(screen.getByText("Having trouble? Type instead").closest("details")).not.toHaveAttribute("open");
-    await user.click(screen.getByRole("button", { name: "Use Text Instead" }));
-    expect(screen.getByText("Having trouble? Type instead").closest("details")).toHaveAttribute("open");
+    expect(screen.getByLabelText("Message")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Type" }));
+    expect(screen.getByLabelText("Message")).toHaveFocus();
   });
 
   it("validates uploaded files locally", async () => {
@@ -324,7 +326,7 @@ describe("NiyamGuard frontend", () => {
       current_field: "monthly_income",
       current_document: null,
       last_visible_section: "details",
-      language: "auto",
+      language: "english",
     });
   });
 
@@ -371,6 +373,26 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Listening...");
   });
 
+  it("uses the citizen-selected Telugu language for recognition and assistant routing", async () => {
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    await user.selectOptions(screen.getByLabelText("Voice language"), "te-IN");
+    await waitFor(() => expect(FakeRecognition.instances.at(-1).lang).toBe("te-IN"));
+
+    const input = await openTextFallback(user);
+    await user.type(input, "monthly income fifteen thousand");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/assistant/ask"))).toBe(true),
+    );
+    const askCall = fetchMock.mock.calls.findLast(([url]) => url.endsWith("/api/assistant/ask"));
+    expect(JSON.parse(askCall[1].body).language).toBe("telugu");
+  });
+
   it("moves through listening, thinking, and speaking states for voice input", async () => {
     const { fetchMock } = installApiMock({ askDelayMs: 40 });
     const user = userEvent.setup();
@@ -389,6 +411,75 @@ describe("NiyamGuard frontend", () => {
     );
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Speaking..."));
     expect(await screen.findAllByText(/You can enter 15000/)).not.toHaveLength(0);
+  });
+
+  it("citizen apply form shows the Voice Form Assistant", async () => {
+    installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+    expect(screen.getByRole("heading", { name: "NiyamGuard Chatbot" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start" })).toBeInTheDocument();
+  });
+
+  it("asking mandalam renders direct mandal guidance", async () => {
+    installApiMock({
+      ask: {
+        success: true,
+        field: "mandal",
+        reply: "A mandal is the local administrative area. Enter the mandal shown on your address proof.",
+        detected_language: "english",
+        language_code: "en-IN",
+        auto_fill: false,
+        should_submit: false,
+      },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+    const input = await openTextFallback(user);
+    await user.type(input, "mandalam");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+    expect(await screen.findAllByText(/local administrative area/)).not.toHaveLength(0);
+  });
+
+  it("asking occupation with a name renders a correction", async () => {
+    installApiMock({
+      ask: {
+        success: true,
+        field: "occupation",
+        reply: "Occupation means your job or main work, not your name. Use Student, Employee, Farmer, Business, Homemaker, Unemployed, or Other.",
+        detected_language: "english",
+        language_code: "en-IN",
+        auto_fill: false,
+        should_submit: false,
+      },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+    const input = await openTextFallback(user);
+    await user.type(input, "occupation lag raha hai Imran Ali");
+    await user.click(screen.getByRole("button", { name: "Ask" }));
+    expect(await screen.findAllByText(/not your name/)).not.toHaveLength(0);
+  });
+
+  it("sends the real final voice transcript through citizen knowledge routing", async () => {
+    const { fetchMock } = installApiMock();
+    const user = userEvent.setup();
+    render(<App />);
+    await openIncomeForm(user);
+
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    window.speechSynthesis.speak.mock.calls[0][0].onend();
+    const recognition = FakeRecognition.instances.at(-1);
+    await waitFor(() => expect(recognition.startCalls).toBe(1));
+    recognition.emitFinal("scholarship documents enti");
+
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/chat"))).toBe(true));
+    const chatCall = fetchMock.mock.calls.find(([url]) => url.endsWith("/api/chat"));
+    expect(JSON.parse(chatCall[1].body).message).toBe("scholarship documents enti");
+    expect(await screen.findAllByText(/For Post-Matric Scholarship/)).not.toHaveLength(0);
   });
 
   it("uses a matching English browser voice without backend TTS", async () => {
@@ -562,12 +653,10 @@ describe("NiyamGuard frontend", () => {
 
     expect(await screen.findByRole("heading", { name: "Citizen Portal" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Open Services" })[0]).toHaveAttribute("href", "/services");
-    expect(screen.getAllByRole("link", { name: "Apply Income Certificate" })[0]).toHaveAttribute("href", "/apply/income_certificate");
     expect(screen.getAllByRole("link", { name: "Track Application" })[0]).toHaveAttribute("href", "/track");
     expect(screen.getAllByRole("link", { name: "Verify Certificate" })[0]).toHaveAttribute("href", "/verify-certificate");
-    expect(screen.getByRole("complementary", { name: "NiyamGuard Voice Assistant" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Apply for Certificates with Voice Assistant" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "income certificate validity entha" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "NiyamGuard Chatbot" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Apply for Services with Voice Assistant" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Start Voice Assistant" })).toHaveAttribute("href", "#citizen-voice-assistant");
     expect(screen.queryByText("Compliance Drift")).not.toBeInTheDocument();
     expect(screen.queryByText("Audit Trail")).not.toBeInTheDocument();
@@ -578,81 +667,100 @@ describe("NiyamGuard frontend", () => {
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/hybrid/answer"))).toBe(true);
   });
 
-  it("legacy demo route still opens the original demo dashboard", async () => {
-    const { fetchMock } = installApiMock();
-    const user = userEvent.setup();
+  it("does not expose the legacy mixed demo route to an admin", async () => {
+    installApiMock();
+    seedAdminSession();
     window.history.pushState({}, "", "/demo");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard AI Demo" })).toBeInTheDocument();
-    expect(screen.getByText("Government Admin Portal")).toBeInTheDocument();
-    expect(screen.getByText("Run Compliance Demo")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Full virtual government flow" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Run Full Virtual Government Demo" }));
-    expect(await screen.findByText("Certificate Generated")).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/virtual-gov/run"))).toBe(true);
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/admin");
+    expect(screen.queryByRole("heading", { name: "NiyamGuard AI Demo" })).not.toBeInTheDocument();
   });
 
-  it("government portal runs the backend full demo flow", async () => {
-    const { fetchMock } = installApiMock();
-    const user = userEvent.setup();
+  it("government portal exposes circular upload from overview", async () => {
+    installApiMock();
+    seedAdminSession(officerUser);
     window.history.pushState({}, "", "/government");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard Government Portal" })).toBeInTheDocument();
-    expect(screen.getByText(/Demo and pilot testing only/)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Circulars & Policy Updates" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Self-Updating Policy Engine" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Compliance Drift" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Connected Systems / Propagation" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Virtual Government Sandbox" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Officer Review" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Certificates" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Audit Trail" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Reports" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Hybrid Answer Engine / Ollama" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Readiness & Ops" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Run Full End-to-End Demo" }));
-
-    expect(await screen.findByText("Circular Published")).toBeInTheDocument();
-    expect(screen.getByTestId("demo-application-number")).toHaveTextContent("NGSP-2026-INC-000001");
-    expect(screen.getByTestId("demo-certificate-number")).toHaveTextContent("NGCERT-2026-INC-000001");
-    expect(screen.getByTestId("demo-verification-hash")).toHaveTextContent("hash_demo");
-    expect(screen.getByTestId("ollama-output")).toHaveTextContent("GO-138 means");
-    expect(screen.getByText("Ollama Explanation Generated or Fallback Active")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Explain GO-138 using Local AI" }).length).toBeGreaterThan(0);
-    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/demo/run-full-end-to-end"))).toBe(true);
+    expect(await screen.findByRole("heading", { name: "Policy Operations" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Upload New Circular" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Circular document")).toHaveAttribute("type", "file");
+    expect(screen.getByRole("button", { name: "Upload & Extract" })).toBeDisabled();
+    expect(screen.getByText("Circulars").closest("article")).toBeInTheDocument();
+    expect(screen.getByText("Rule Candidates").closest("article")).toBeInTheDocument();
+    expect(screen.getByText("Open Mismatches").closest("article")).toBeInTheDocument();
   });
 
   it("login page renders", async () => {
     installApiMock();
+    window.localStorage.clear();
     window.history.pushState({}, "", "/login");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Email")).toHaveValue("admin@niyamguard.local");
-    expect(screen.getByText(/Demo admin:/)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "NiyamGuard Login" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveValue("citizen@niyamguard.local");
+    expect(screen.getByText(/separate demo accounts/i)).toBeInTheDocument();
   });
 
   it("protects admin routes when unauthenticated", async () => {
     installApiMock();
+    window.localStorage.clear();
     window.history.pushState({}, "", "/admin");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "NiyamGuard Login" })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/login");
   });
 
-  it("admin login succeeds and opens the dashboard", async () => {
+  it("redirects a citizen away from government and admin portals", async () => {
+    installApiMock();
+    seedAdminSession(citizenUser);
+    window.history.pushState({}, "", "/government");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Citizen Portal" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/citizen");
+    expect(screen.queryByRole("heading", { name: "Policy Operations" })).not.toBeInTheDocument();
+  });
+
+  it("redirects an officer away from the admin portal", async () => {
+    installApiMock();
+    seedAdminSession(officerUser);
+    window.history.pushState({}, "", "/admin");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Policy Operations" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/government");
+    expect(screen.queryByText("NiyamGuard Admin")).not.toBeInTheDocument();
+  });
+
+  it("redirects an admin away from citizen and officer modules", async () => {
+    installApiMock();
+    seedAdminSession(adminUser);
+    window.history.pushState({}, "", "/government/applications");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/admin");
+    expect(screen.queryByRole("heading", { name: "Officer Review" })).not.toBeInTheDocument();
+  });
+
+  it("admin login succeeds and opens the separate admin portal", async () => {
     installApiMock();
     const user = userEvent.setup();
+    window.localStorage.clear();
     window.history.pushState({}, "", "/login");
     render(<App />);
 
-    await user.click(await screen.findByRole("button", { name: "Sign In" }));
+    await user.click(await screen.findByRole("button", { name: "Admin" }));
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
 
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/admin");
+    expect(screen.getByText("NiyamGuard Admin")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Policy Operations" })).not.toBeInTheDocument();
     expect(screen.getByText("admin@niyamguard.local")).toBeInTheDocument();
   });
 
@@ -666,7 +774,7 @@ describe("NiyamGuard frontend", () => {
     await user.type(input, "income certificate validity entha");
     await user.click(screen.getByRole("button", { name: "Ask" }));
 
-    expect(await screen.findByText(/Income Certificate validity 6 months/)).toBeInTheDocument();
+    expect(await screen.findByText(/Income Certificate validity is currently 6 months/)).toBeInTheDocument();
     expect(screen.getByText("Verified Source")).toBeInTheDocument();
     expect(screen.getByText("GO-138")).toBeInTheDocument();
     expect(screen.getAllByText("Revenue").length).toBeGreaterThan(0);
@@ -699,7 +807,9 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByText("RAG Source")).toBeInTheDocument();
     expect(screen.getByText("Seed Demo Data")).toBeInTheDocument();
     expect(screen.getByText("Fallback")).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/chat"))).toBe(true);
+    const chatCall = fetchMock.mock.calls.find(([url]) => url.endsWith("/api/chat"));
+    expect(chatCall).toBeDefined();
+    expect(JSON.parse(chatCall[1].body).message).toBe("scholarship documents enti");
   });
 
   it("admin dashboard renders", async () => {
@@ -709,116 +819,38 @@ describe("NiyamGuard frontend", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
-    expect(screen.getByText("NiyamGuard compares verified circular rules against portals, forms, SOPs, and FAQs to detect policy drift before citizens are harmed.")).toBeInTheDocument();
+    expect(screen.getByText("System-wide administration for NiyamGuard accounts, runtime readiness, sandbox operations, and audit integrity.")).toBeInTheDocument();
     expect(screen.getByText("Verified Rules").closest("article")).toHaveTextContent("2");
     expect(screen.getByText("Connected Systems").closest("article")).toHaveTextContent("5");
     expect(screen.getByText("Compliance Findings").closest("article")).toHaveTextContent("4");
     expect(screen.getByText("Drifted Systems").closest("article")).toHaveTextContent("3");
     expect(screen.getByText("Open Conflicts").closest("article")).toHaveTextContent("1");
-    expect(screen.getByText("High Priority Findings")).toBeInTheDocument();
+    expect(screen.getByText("Module Readiness")).toBeInTheDocument();
+    expect(screen.queryByText("High Priority Findings")).not.toBeInTheDocument();
   });
 
-  it("admin compliance page renders", async () => {
+  it("redirects an admin away from former officer-only module routes", async () => {
     installApiMock();
     seedAdminSession();
-    const user = userEvent.setup();
     window.history.pushState({}, "", "/admin/compliance");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "Compliance" })).toBeInTheDocument();
-    expect(screen.getByText("Compliance Findings")).toBeInTheDocument();
-    expect(screen.getByText("3 drifted systems")).toBeInTheDocument();
-    expect(screen.getByText("1 compliant system")).toBeInTheDocument();
-    expect(screen.getByText("MeeSeva Income Certificate Portal")).toBeInTheDocument();
-    expect(screen.getByText("Officer SOP Manual")).toBeInTheDocument();
-    expect(screen.getByText("Public FAQ")).toBeInTheDocument();
-    expect(screen.getByText("Simplified Citizen Form")).toBeInTheDocument();
-    expect(screen.getByText("Update portal validation rule from 12 months to 6 months.")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Generate AI Summary" }).length).toBeGreaterThan(0);
-    await user.click(screen.getAllByRole("button", { name: "Generate AI Summary" })[0]);
-    expect(await screen.findByText("AI Impact Summary")).toBeInTheDocument();
-    expect(screen.getAllByText("Fallback").length).toBeGreaterThan(0);
-    expect(screen.queryByText(/"findings"/)).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/admin");
+    expect(screen.queryByText("Compliance Findings")).not.toBeInTheDocument();
   });
 
-  it("admin conflict page renders", async () => {
+  it("admin navigation stays limited to current admin workspaces", async () => {
     installApiMock();
     seedAdminSession();
-    window.history.pushState({}, "", "/admin/conflicts");
+    window.history.pushState({}, "", "/admin");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "Conflicts" })).toBeInTheDocument();
-    expect(screen.getByText(/old GO-112 saying 12 months/)).toBeInTheDocument();
-    expect(screen.getByText("GO-138: 6 months")).toBeInTheDocument();
-    expect(screen.getByText("GO-112: 12 months")).toBeInTheDocument();
-    expect(screen.getByText(/keep GO-138 active and supersede GO-112/)).toBeInTheDocument();
-  });
-
-  it("admin scale and impact pages render", async () => {
-    installApiMock();
-    seedAdminSession();
-    const user = userEvent.setup();
-    window.history.pushState({}, "", "/admin/scale-view");
-    render(<App />);
-
-    expect(await screen.findByRole("heading", { name: "Scale View" })).toBeInTheDocument();
-    expect(screen.getByText("Multi-District / Department Scale View")).toBeInTheDocument();
-    expect(screen.getByText(/Demo operational data for MVP/)).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Impact" }));
-    expect(await screen.findByRole("heading", { name: "Impact" })).toBeInTheDocument();
-    expect(screen.getByText("Citizen Impact Dashboard")).toBeInTheDocument();
-    expect(screen.getByText(/Portal validity mismatch affects citizens immediately/)).toBeInTheDocument();
-  });
-
-  it("admin knowledge base page renders", async () => {
-    installApiMock();
-    seedAdminSession();
-    window.history.pushState({}, "", "/admin/knowledge-base");
-    render(<App />);
-
-    expect(await screen.findByRole("heading", { name: "Knowledge Base" })).toBeInTheDocument();
-    expect(screen.getAllByText("Income Certificate Validity").length).toBeGreaterThan(0);
-  });
-
-  it("admin self-update policy pages render from live API data", async () => {
-    installApiMock();
-    seedAdminSession();
-    const user = userEvent.setup();
-    window.history.pushState({}, "", "/admin/sources");
-    render(<App />);
-
-    expect(await screen.findByRole("heading", { name: "Sources" })).toBeInTheDocument();
-    expect(screen.getByText("Revenue Department Demo Circular Feed")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Rule Candidates" }));
-    expect(await screen.findByRole("heading", { name: "Rule Candidates" })).toBeInTheDocument();
-    expect(screen.getByText("Extracted Rule Candidates")).toBeInTheDocument();
-    expect(screen.getByText("Income Certificate validity changed from 12 months to 6 months.")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Policy Updates" }));
-    expect(await screen.findByRole("heading", { name: "Policy Updates" })).toBeInTheDocument();
-    expect(screen.getByText("Published Policy Updates")).toBeInTheDocument();
-    expect(screen.getByText("Knowledge Updates")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Propagation" }));
-    expect(await screen.findByRole("heading", { name: "Propagation" })).toBeInTheDocument();
-    expect(screen.getByText("Mock MeeSeva Portal")).toBeInTheDocument();
-    expect(screen.getByText("task_version_rule_001_2_sys_meeseva_portal")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Scheduler" }));
-    expect(await screen.findByRole("heading", { name: "Scheduler" })).toBeInTheDocument();
-    expect(screen.getByText("Self-Update Scheduler")).toBeInTheDocument();
-  });
-
-  it("mock connected system pages render stale dataset state", async () => {
-    installApiMock();
-    window.history.pushState({}, "", "/mock/meeseva");
-    render(<App />);
-
-    expect(await screen.findByRole("heading", { name: "Mock MeeSeva Portal" })).toBeInTheDocument();
-    expect(screen.getByText("Certificate validity rule")).toBeInTheDocument();
-    expect(screen.getAllByText("12 months").length).toBeGreaterThan(0);
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sandbox" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "System Audit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Users" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Impact" })).not.toBeInTheDocument();
   });
 
   it("scheme finder recommends possible citizen services", async () => {
@@ -868,17 +900,22 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByText("Document Upload")).toBeInTheDocument();
   });
 
-  it("officer portal opens pending application review", async () => {
+  it("keeps application review inside the government portal layout", async () => {
     installApiMock();
     seedAdminSession(officerUser);
     const user = userEvent.setup();
     window.history.pushState({}, "", "/officer/pending");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "Officer Review" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Policy Operations" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/government/applications/pending");
+    expect((await screen.findAllByRole("heading", { name: "Officer Review" })).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Circular Intake" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Application Review" })).toHaveClass("active");
     expect(screen.getByText("NGSP-2026-INC-000001")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Open" }));
     expect(await screen.findByRole("button", { name: "Approve and Issue" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/government/applications/app_portal_001");
   });
 
   it("public tracking and certificate verification render dataset-backed results", async () => {
@@ -899,73 +936,21 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByText("NGCERT-2026-INC-000001")).toBeInTheDocument();
   });
 
-  it("admin service portal pages render seeded service data", async () => {
-    installApiMock();
+  it("sandbox generates PDF, opens it, and publishes to the government inbox", async () => {
+    const { fetchMock } = installApiMock();
     seedAdminSession();
-    window.history.pushState({}, "", "/admin/services");
-    render(<App />);
-
-    expect(await screen.findByRole("heading", { name: "Services" })).toBeInTheDocument();
-    expect(screen.getByText("Service Definitions")).toBeInTheDocument();
-    expect(screen.getByText("Residence Certificate")).toBeInTheDocument();
-    expect(screen.getAllByText("7 days").length).toBeGreaterThan(0);
-  });
-
-  it("admin regulatory AI dataset page renders and answers QA", async () => {
-    installApiMock();
-    seedAdminSession();
-    const user = userEvent.setup();
-    window.history.pushState({}, "", "/admin/regulatory-ai");
-    render(<App />);
-
-    expect(await screen.findByRole("heading", { name: "Regulatory AI" })).toBeInTheDocument();
-    expect(screen.getByText("Regulatory AI Dataset Explorer")).toBeInTheDocument();
-    expect(screen.getByText("Regulatory circulars").closest("article")).toHaveTextContent("220");
-    expect(screen.getByText("Internal policies").closest("article")).toHaveTextContent("314");
-    expect(screen.getByText("Obligations").closest("article")).toHaveTextContent("758");
-    expect(screen.getByText("IRDAI circular on data privacy requirements for mutual funds entities")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Ask Dataset" }));
-    expect(await screen.findByText(/Intent: explain_risk_score/)).toBeInTheDocument();
-    expect(screen.getByText("policy_qa_pair")).toBeInTheDocument();
-  });
-
-  it("admin readiness page renders and runs the sandbox", async () => {
-    installApiMock();
-    seedAdminSession();
-    const user = userEvent.setup();
-    window.history.pushState({}, "", "/admin/readiness");
-    render(<App />);
-
-    expect(await screen.findByRole("heading", { name: "Readiness" })).toBeInTheDocument();
-    expect(screen.getByText("Government Pilot Readiness")).toBeInTheDocument();
-    expect(screen.getByText("Verified source-backed answers")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Run Sandbox Scenario" }));
-    expect(await screen.findByText("NGSP-2026-INC-000001")).toBeInTheDocument();
-    expect(screen.getAllByText("certificate_issued").length).toBeGreaterThan(0);
-  });
-
-  it("virtual government sandbox page runs the public scenario", async () => {
-    installApiMock();
     const user = userEvent.setup();
     window.history.pushState({}, "", "/virtual-gov");
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Virtual Government Sandbox" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Run Sandbox Scenario" }));
-    expect(await screen.findByText("Income certificate regulation-to-certificate sandbox")).toBeInTheDocument();
-    expect(screen.getByText("NGCERT-2026-INC-000001")).toBeInTheDocument();
-  });
-
-  it("admin reports page renders", async () => {
-    installApiMock();
-    seedAdminSession();
-    window.history.pushState({}, "", "/admin/reports");
-    render(<App />);
-
-    expect(await screen.findByRole("heading", { name: "Reports" })).toBeInTheDocument();
-    expect(screen.getAllByText("Export Compliance CSV").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Export Conflicts CSV").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Export Rules JSON").length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe("/admin/sandbox");
+    expect(screen.getByText("Sandbox Holding Area")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Open PDF" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Publish to NiyamGuard" }));
+    expect(await screen.findByRole("heading", { name: "Government Delivery" })).toBeInTheDocument();
+    expect(screen.getByText(/Circular published to the NiyamGuard Government Circular Inbox/)).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/sandbox/circulars/sbx_go_138/publish"))).toBe(true);
   });
 
   it("admin audit page renders", async () => {
@@ -1002,6 +987,6 @@ describe("NiyamGuard frontend", () => {
     await screen.findByRole("heading", { name: "Dashboard" });
     await user.click(screen.getByRole("button", { name: "Logout" }));
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "NiyamGuard Login" })).toBeInTheDocument();
   });
 });

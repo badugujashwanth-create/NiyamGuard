@@ -18,6 +18,17 @@ def test_hybrid_answer_decision_table_for_documents(client) -> None:
     assert body["method"] == "decision_table"
     assert body["service_id"] == "post_matric_scholarship"
     assert body["sources"][0]["type"] == "service_definition"
+    assert "Caste Certificate" in body["answer"]
+
+
+def test_hybrid_answer_compares_schemes_from_structured_rules(client) -> None:
+    response = client.post("/api/hybrid/answer", json={"question": "compare post matric scholarship vs old age pension"})
+    body = response.json()
+    assert response.status_code == 200
+    assert body["method"] == "decision_table"
+    assert body["verified"] is True
+    assert "Post-Matric Scholarship" in body["answer"]
+    assert "Old-Age Pension" in body["answer"]
 
 
 def test_hybrid_unknown_question_uses_safe_fallback(client) -> None:

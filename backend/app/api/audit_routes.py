@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.security.rbac import require_roles
+from app.security.rbac import CurrentUser, require_roles
 from app.services import audit_service
 
 router = APIRouter(
     prefix="/api/audit",
     tags=["Audit"],
-    dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))],
+    dependencies=[Depends(require_roles("admin"))],
 )
 
 
@@ -26,3 +26,22 @@ def get_event(event_id: str) -> dict:
 @router.get("/verify")
 def verify_events() -> dict:
     return audit_service.verify_events()
+
+
+officer_router = APIRouter(
+    prefix="/api/government/audit",
+    tags=["Government Audit"],
+    dependencies=[Depends(require_roles("officer", "reviewer"))],
+)
+
+
+@officer_router.get("/events")
+def list_government_events(
+    limit: int = Query(default=100, ge=1, le=500),
+    action: str | None = None,
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
+) -> dict:
+    return {
+        "success": True,
+        "events": audit_service.list_events(limit=limit, action=action, actor_user_id=actor.id),
+    }

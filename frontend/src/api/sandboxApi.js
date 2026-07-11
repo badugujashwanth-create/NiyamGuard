@@ -1,7 +1,7 @@
 import { request } from "./client";
 
 export function getSandboxStatus() {
-  return request("/api/sandbox/status", {}, { auth: false });
+  return request("/api/sandbox/status");
 }
 
 export function listSandboxCirculars() {
@@ -28,6 +28,13 @@ export function generateSandboxCircularPdf(circularId, payload = null) {
   });
 }
 
+export function exportSandboxCircular(circularId) {
+  return request(`/api/sandbox/circulars/${encodeURIComponent(circularId)}/export`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
 export function publishSandboxCircular(circularId) {
   return request(`/api/sandbox/circulars/${encodeURIComponent(circularId)}/publish`, {
     method: "POST",
@@ -35,7 +42,10 @@ export function publishSandboxCircular(circularId) {
   });
 }
 
-export function sandboxPdfUrl(circularId) {
-  const base = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
-  return `${base.replace(/\/+$/, "")}/api/sandbox/circulars/${encodeURIComponent(circularId)}/pdf`;
+export function downloadSandboxCircularPdf(circularId) {
+  return request(
+    `/api/sandbox/circulars/${encodeURIComponent(circularId)}/pdf`,
+    {},
+    { parseAs: "blob" },
+  );
 }

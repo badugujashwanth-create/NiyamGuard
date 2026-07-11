@@ -53,7 +53,12 @@ def ingest_circular(payload: dict) -> tuple[CircularDocument, bool]:
     add_audit_event(
         store,
         "circular_ingested",
-        {"entity_type": "circular_document", "entity_id": document.id, "circular": document.circular_number},
+        {
+            "entity_type": "circular_document",
+            "entity_id": document.id,
+            "circular": document.circular_number,
+            "created_by": payload.get("created_by"),
+        },
     )
     write_store(store)
     return document, True

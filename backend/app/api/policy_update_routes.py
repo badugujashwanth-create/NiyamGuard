@@ -17,24 +17,44 @@ class RollbackPayload(BaseModel):
     reason: str | None = None
 
 
-@router.get("/history", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
-def publication_history() -> dict:
+def _change_summary(old_value: str | None, new_value: str, unit: str | None = None) -> str:
+    old_label = old_value or "Current"
+    unit_label = f" {unit}" if unit else ""
+    return f"{old_label} -> {new_value}{unit_label}"
+
+
+def _event_payload(event) -> dict:
     return {
-        "success": True,
-        "events": [item.model_dump() for item in policy_publication_service.publication_history()],
+        **event.model_dump(),
+        "change_summary": _change_summary(event.old_value, event.new_value),
     }
 
 
-@router.get("/versions", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+def _version_payload(version) -> dict:
+    return {
+        **version.model_dump(),
+        "change_summary": _change_summary(None, version.value, version.unit),
+    }
+
+
+@router.get("/history", dependencies=[Depends(require_roles("officer", "reviewer"))])
+def publication_history() -> dict:
+    return {
+        "success": True,
+        "events": [_event_payload(item) for item in policy_publication_service.publication_history()],
+    }
+
+
+@router.get("/versions", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def list_versions() -> dict:
-    return {"success": True, "versions": [item.model_dump() for item in policy_publication_service.list_versions()]}
+    return {"success": True, "versions": [_version_payload(item) for item in policy_publication_service.list_versions()]}
 
 
-@router.get("/rules/{rule_id}/versions", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/rules/{rule_id}/versions", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def versions_for_rule(rule_id: str) -> dict:
     return {
         "success": True,
-        "versions": [item.model_dump() for item in policy_publication_service.versions_for_rule(rule_id)],
+        "versions": [_version_payload(item) for item in policy_publication_service.versions_for_rule(rule_id)],
     }
 
 
@@ -42,7 +62,7 @@ def versions_for_rule(rule_id: str) -> dict:
 def publish_candidate(
     candidate_id: str,
     payload: PublishPayload | None = None,
-    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     result = policy_publication_service.publish_rule_candidate(
         candidate_id,
@@ -58,7 +78,7 @@ def publish_candidate(
 def rollback_rule(
     rule_id: str,
     payload: RollbackPayload | None = None,
-    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     result = policy_publication_service.rollback_rule(
         rule_id,

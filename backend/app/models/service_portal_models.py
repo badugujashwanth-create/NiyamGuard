@@ -64,6 +64,7 @@ class ServiceDefinition(BaseModel):
     id: str
     service_id: str
     name: str
+    department: str = ""
     category: str
     description: str
     eligibility_json: list[str] = Field(default_factory=list)

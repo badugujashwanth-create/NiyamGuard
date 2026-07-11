@@ -100,6 +100,8 @@
     "timeline": ["timeline", "processing time", "days", "how long", "ఎన్ని రోజులు", "kitne din"],
     "application_status": ["track", "status", "application number", "ngsp"],
     "certificate_verification": ["verify certificate", "certificate verify", "ngcert", "verification hash"],
+    "old_vs_new": ["old vs new", "old and new", "what changed", "changed", "previous rule", "difference between old", "compare old"],
+    "scheme_comparison": ["compare schemes", "scheme comparison", "which scheme is better", "versus", " vs "],
     "policy_update": ["policy update", "rule update", "go-138", "circular update"],
     "circular_summary": ["explain circular", "explain go-138", "simple words", "summary"],
     "compliance_impact": ["impact", "risk", "mismatch", "drift", "why risky"],

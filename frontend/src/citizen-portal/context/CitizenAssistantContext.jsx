@@ -22,7 +22,16 @@ function titleCase(value = "") {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function detectQuestionLanguage(text) {
+const LANGUAGE_PREFERENCES = {
+  english: { detected_language: "english", language_code: "en-IN" },
+  telugu: { detected_language: "telugu", language_code: "te-IN" },
+  hindi: { detected_language: "hindi", language_code: "hi-IN" },
+};
+
+function detectQuestionLanguage(text, preferredLanguage = "auto") {
+  if (LANGUAGE_PREFERENCES[preferredLanguage]) {
+    return LANGUAGE_PREFERENCES[preferredLanguage];
+  }
   const normalized = text.toLowerCase();
   if (/[\u0c00-\u0c7f]/.test(text) || /\b(entha|enti|aa|kavali|cheppandi|lo|kosam)\b/.test(normalized)) {
     return { detected_language: "telugu", language_code: "te-IN" };
@@ -39,42 +48,76 @@ function valueFromRuleResponse(ruleResponse) {
   return match?.[1]?.replace(/\.$/, "") || "source not available";
 }
 
-function formatVerifiedRuleReply(ruleResponse) {
+const knownServices = [
+  { id: "income_certificate", name: "Income Certificate", pattern: /\bincome certificate\b|\bincome\b/ },
+  { id: "residence_certificate", name: "Residence Certificate", pattern: /\bresidence certificate\b|\bdomicile\b|\bresidence\b/ },
+  { id: "caste_certificate", name: "Caste Certificate", pattern: /\bcaste certificate\b|\bcommunity certificate\b|\bcaste\b/ },
+  { id: "old_age_pension", name: "Old-Age Pension", pattern: /\bold age pension\b|\bpension\b/ },
+  { id: "post_matric_scholarship", name: "Post-Matric Scholarship", pattern: /\bpost[- ]?matric scholarship\b|\bscholarship\b/ },
+  { id: "birth_certificate", name: "Birth Certificate", pattern: /\bbirth certificate\b|\bbirth\b/ },
+];
+
+function serviceForQuestion(text, fallbackFormId, fallbackName) {
+  const normalized = text.toLowerCase();
+  const match = knownServices.find((service) => service.pattern.test(normalized));
+  if (match) return match;
+  if (fallbackFormId && fallbackFormId !== "catalog") {
+    return { id: fallbackFormId, name: fallbackName || titleCase(fallbackFormId) };
+  }
+  return { id: "income_certificate", name: "Income Certificate" };
+}
+
+function formatVerifiedRuleReply(
+  ruleResponse,
+  serviceName = "service",
+  ruleKey = "validity",
+  language = "english",
+) {
   const source = ruleResponse?.source || {};
   const circular = source.circular_number || "source not available";
   const department = source.department || "department not available";
   const value = valueFromRuleResponse(ruleResponse);
   if (!ruleResponse?.verified) {
+    if (language === "telugu") {
+      return "ధృవీకరించిన నియమ మూలం అందుబాటులో లేదు. దయచేసి అధికారిక ప్రభుత్వ మూలంలో పరిశీలించండి.";
+    }
+    if (language === "hindi") {
+      return "सत्यापित नियम स्रोत उपलब्ध नहीं है। कृपया आधिकारिक सरकारी स्रोत से जाँच करें।";
+    }
     return "Verified rule source is not available. Please verify from the official government source.";
   }
-  return `According to the verified rule, Income Certificate validity ${value}. Source: ${circular}, ${department} Department.`;
+  if (language === "telugu") {
+    return `ధృవీకరించిన నియమం ప్రకారం, ${serviceName} ${ruleKey} ప్రస్తుతం ${value}. మూలం: ${circular}, ${department}.`;
+  }
+  if (language === "hindi") {
+    return `सत्यापित नियम के अनुसार, ${serviceName} की ${ruleKey} अभी ${value} है। स्रोत: ${circular}, ${department}.`;
+  }
+  return `According to the verified rule, ${serviceName} ${ruleKey} is currently ${value}. Source: ${circular}, ${department}.`;
 }
 
-function sourceCardFromRule(ruleResponse) {
+function sourceCardFromRule(ruleResponse, serviceName = "Service", ruleKey = "validity") {
   const source = ruleResponse?.source;
   if (!source) return null;
   return {
     circular: source.circular_number,
     department: source.department,
-    rule: "Income Certificate Validity",
+    rule: `${serviceName} ${titleCase(ruleKey)}`,
     currentValue: valueFromRuleResponse(ruleResponse),
     confidence: source.confidence,
     effectiveDate: source.effective_date,
     sourceType: "verified_rule",
     verified: true,
     provider: "deterministic",
-    whySelected: "Matched income certificate validity against the latest verified public rule.",
+    whySelected: `Matched ${serviceName} ${ruleKey} against the latest verified public rule.`,
   };
 }
 
-function isIncomeValidityQuestion(text, formId) {
+function isValidityQuestion(text, formId) {
   const normalized = text.toLowerCase();
   const mentionsValidity =
     /\b(validity|valid|months?|rule|entha)\b/.test(normalized) || /validity|valid/.test(normalized);
-  const mentionsIncomeCertificate =
-    /\b(income certificate|certificate|income)\b/.test(normalized) ||
-    formId === "income_certificate";
-  return mentionsValidity && mentionsIncomeCertificate;
+  const mentionsKnownService = knownServices.some((service) => service.pattern.test(normalized));
+  return mentionsValidity && (mentionsKnownService || (formId && formId !== "catalog"));
 }
 
 function isFormFieldHelp(text) {
@@ -88,15 +131,16 @@ function isCitizenKnowledgeQuestion(text, formId, mode) {
   if (mode === "form" && isFormFieldHelp(text)) return false;
 
   const hasIntent =
-    /\b(document|documents|docs|proof|eligib|qualify|process|apply|steps|validity|valid|fee|cost|timeline|days|old rule|new rule|compare|which service|which form|status|track|tracking|application|certificate|verify|verification|hash|payment|sla)\b/.test(
+    /\b(document|documents|docs|proof|eligible|eligibility|qualify|am i|process|apply|steps|validity|valid|fee|cost|timeline|days|old rule|new rule|change|changed|difference|compare|vs|versus|which service|which form|status|track|tracking|application|certificate|verify|verification|hash|payment|sla)\b/.test(
       normalized,
     ) || /\b(enti|entha|kavali|kaise|kya)\b/.test(normalized);
   const hasKnownService =
     /\b(income certificate|residence certificate|caste certificate|community certificate|ews|scholarship|post matric|pension|old age|widow|disability|birth certificate|death certificate|family member|ration card|food security|certificate|application)\b/.test(
       normalized,
     ) || (formId && formId !== "catalog");
+  const asksForKnowledge = /\b(tell me|explain|what is|what are|how do|how to|why|does|can i)\b/.test(normalized);
 
-  return hasIntent && hasKnownService;
+  return (hasIntent && hasKnownService) || asksForKnowledge;
 }
 
 function sourceCardFromChat(chatResponse) {
@@ -337,7 +381,7 @@ export function CitizenAssistantProvider({ children }) {
   }, []);
 
   const ask = useCallback(
-    async (text) => {
+    async (text, options = {}) => {
       const cleaned = text.trim();
       if (!cleaned) return null;
       if (!sessionId) {
@@ -348,13 +392,21 @@ export function CitizenAssistantProvider({ children }) {
       setError("");
       setMessages((current) => [...current, message("user", cleaned)]);
       try {
-        if (isIncomeValidityQuestion(cleaned, formId)) {
-          const language = detectQuestionLanguage(cleaned);
-          const ruleResponse = await getLatestPublicRule("income_certificate", "validity");
+        const preferredLanguage = options.language || "auto";
+        if (isValidityQuestion(cleaned, formId)) {
+          const language = detectQuestionLanguage(cleaned, preferredLanguage);
+          const service = serviceForQuestion(cleaned, formId, pageContext.serviceName);
+          const ruleKey = "validity";
+          const ruleResponse = await getLatestPublicRule(service.id, ruleKey);
           return applyAssistantResponse({
             success: Boolean(ruleResponse.success),
             field: null,
-            reply: formatVerifiedRuleReply(ruleResponse, language),
+            reply: formatVerifiedRuleReply(
+              ruleResponse,
+              service.name,
+              ruleKey,
+              language.detected_language,
+            ),
             suggested_value: null,
             related_values: {},
             location_matches: [],
@@ -366,14 +418,16 @@ export function CitizenAssistantProvider({ children }) {
             auto_fill: false,
             should_submit: false,
             verified_rule: true,
-            verified_source: sourceCardFromRule(ruleResponse),
+            verified_source: sourceCardFromRule(ruleResponse, service.name, ruleKey),
           });
         }
 
+        const knowledgeQuestion = isCitizenKnowledgeQuestion(cleaned, formId, pageContext.mode);
         const useCatalogAssistant =
           formId === "catalog" &&
-          ["catalog", "service_catalog", "service_detail"].includes(pageContext.mode);
-        const useFormAssistant = pageContext.mode === "form" && !isCitizenKnowledgeQuestion(cleaned, formId, pageContext.mode);
+          ["catalog", "service_catalog", "service_detail"].includes(pageContext.mode) &&
+          !knowledgeQuestion;
+        const useFormAssistant = pageContext.mode === "form" && !knowledgeQuestion;
 
         if (useCatalogAssistant || useFormAssistant) {
           const response = await askAssistant({
@@ -383,14 +437,14 @@ export function CitizenAssistantProvider({ children }) {
             currentField: pageContext.activeField,
             currentDocument: pageContext.activeDocument,
             lastVisibleSection: pageContext.lastVisibleSection,
-            language: "auto",
+            language: preferredLanguage,
           });
           return applyAssistantResponse(response);
         }
 
         const chatResponse = await askChat({
           message: cleaned,
-          language: "auto",
+          language: preferredLanguage,
           context: {
             route: pageContext.routePath,
             page_mode: pageContext.mode,
@@ -421,14 +475,7 @@ export function CitizenAssistantProvider({ children }) {
         });
       } catch (askError) {
         setError(askError.message);
-        return applyAssistantResponse({
-          success: false,
-          reply: "I could not contact the guidance service. Please try again.",
-          warning: askError.message,
-          detected_language: "english",
-          language_code: "en-IN",
-          auto_fill: false,
-        });
+        return null;
       } finally {
         setAsking(false);
       }
@@ -529,9 +576,10 @@ export function useCitizenAssistant() {
 }
 
 export function useCitizenAssistantPageContext(pageContext) {
-  const { updatePageContext } = useCitizenAssistant();
+  const context = useContext(CitizenAssistantContext);
+  const updatePageContext = context?.updatePageContext;
   const serializedContext = JSON.stringify(pageContext);
   useEffect(() => {
-    updatePageContext(pageContext);
+    updatePageContext?.(pageContext);
   }, [serializedContext, updatePageContext]);
 }

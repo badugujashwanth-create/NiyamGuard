@@ -85,6 +85,10 @@ export function getOfficerApplications(status = "") {
   return request(`/api/officer/applications${query}`);
 }
 
+export function getOfficerApplication(applicationId) {
+  return request(`/api/officer/applications/${encodeURIComponent(applicationId)}`);
+}
+
 export function getOfficerPendingApplications() {
   return request("/api/officer/pending");
 }

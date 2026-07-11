@@ -91,7 +91,7 @@ def get_portal_service_form(service_id: str) -> dict:
 
 
 @router.get("/api/citizen/profile")
-def get_profile(actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_profile(actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "profile": portal.get_or_create_profile(actor)}
     except portal.ServicePortalError as exc:
@@ -99,7 +99,7 @@ def get_profile(actor: CurrentUser = Depends(get_current_user)) -> dict:
 
 
 @router.patch("/api/citizen/profile")
-def update_profile(payload: ProfileRequest, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def update_profile(payload: ProfileRequest, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "profile": portal.get_or_create_profile(actor, payload.model_dump(exclude_none=True))}
     except portal.ServicePortalError as exc:
@@ -107,12 +107,12 @@ def update_profile(payload: ProfileRequest, actor: CurrentUser = Depends(get_cur
 
 
 @router.get("/api/citizen/documents")
-def list_citizen_documents(actor: CurrentUser = Depends(get_current_user)) -> dict:
+def list_citizen_documents(actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     return {"success": True, "documents": portal.list_citizen_documents(actor)}
 
 
 @router.post("/api/applications", status_code=201)
-def create_application(payload: ApplicationRequest, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def create_application(payload: ApplicationRequest, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "application": portal.create_application(actor, payload.model_dump())}
     except portal.ServicePortalError as exc:
@@ -120,7 +120,7 @@ def create_application(payload: ApplicationRequest, actor: CurrentUser = Depends
 
 
 @router.get("/api/applications")
-def list_applications(status: str | None = None, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def list_applications(status: str | None = None, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "applications": portal.list_applications(actor, status_filter=status)}
     except portal.ServicePortalError as exc:
@@ -128,7 +128,7 @@ def list_applications(status: str | None = None, actor: CurrentUser = Depends(ge
 
 
 @router.get("/api/applications/{application_id}")
-def get_application(application_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_application(application_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "application": portal.get_application(actor, application_id)}
     except portal.ServicePortalError as exc:
@@ -139,7 +139,7 @@ def get_application(application_id: str, actor: CurrentUser = Depends(get_curren
 def update_application(
     application_id: str,
     payload: ApplicationUpdateRequest,
-    actor: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(require_roles("citizen")),
 ) -> dict:
     try:
         return {"success": True, "application": portal.update_application(actor, application_id, payload.model_dump())}
@@ -148,7 +148,7 @@ def update_application(
 
 
 @router.post("/api/applications/{application_id}/submit")
-def submit_application(application_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def submit_application(application_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "application": portal.submit_application(actor, application_id)}
     except portal.ServicePortalError as exc:
@@ -160,7 +160,7 @@ async def upload_document(
     application_id: str,
     document_type: str = Form(...),
     file: UploadFile = File(...),
-    actor: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(require_roles("citizen")),
 ) -> dict:
     try:
         document = await portal.upload_application_document(actor, application_id, document_type, file)
@@ -170,7 +170,7 @@ async def upload_document(
 
 
 @router.get("/api/applications/{application_id}/documents")
-def get_application_documents(application_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_application_documents(application_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         application = portal.get_application(actor, application_id)
         return {"success": True, "documents": application["documents"]}
@@ -179,7 +179,7 @@ def get_application_documents(application_id: str, actor: CurrentUser = Depends(
 
 
 @router.get("/api/applications/{application_id}/status-history")
-def get_application_history(application_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_application_history(application_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "history": portal.get_application_history(actor, application_id)}
     except portal.ServicePortalError as exc:
@@ -187,7 +187,7 @@ def get_application_history(application_id: str, actor: CurrentUser = Depends(ge
 
 
 @router.get("/api/applications/{application_id}/sla")
-def get_application_sla(application_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_application_sla(application_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         portal.get_application(actor, application_id)
         return {"success": True, "sla": portal.get_application_sla(application_id)}
@@ -196,15 +196,18 @@ def get_application_sla(application_id: str, actor: CurrentUser = Depends(get_cu
 
 
 @router.get("/api/track/{application_number}")
-def track_application(application_number: str) -> dict:
+def track_application(
+    application_number: str,
+    actor: CurrentUser = Depends(require_roles("citizen")),
+) -> dict:
     try:
-        return {"success": True, "tracking": portal.track_application(application_number)}
+        return {"success": True, "tracking": portal.track_application(application_number, actor=actor)}
     except portal.ServicePortalError as exc:
         _handle_error(exc)
 
 
 @router.post("/api/payments/{application_id}/create", status_code=201)
-def create_payment(application_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def create_payment(application_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "payment": portal.create_payment(actor, application_id)}
     except portal.ServicePortalError as exc:
@@ -212,7 +215,7 @@ def create_payment(application_id: str, actor: CurrentUser = Depends(get_current
 
 
 @router.post("/api/payments/{payment_id}/simulate-success")
-def simulate_payment_success(payment_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def simulate_payment_success(payment_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "payment": portal.simulate_payment_success(actor, payment_id)}
     except portal.ServicePortalError as exc:
@@ -220,7 +223,7 @@ def simulate_payment_success(payment_id: str, actor: CurrentUser = Depends(get_c
 
 
 @router.post("/api/payments/{payment_id}/simulate-failure")
-def simulate_payment_failure(payment_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def simulate_payment_failure(payment_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "payment": portal.simulate_payment_failure(actor, payment_id)}
     except portal.ServicePortalError as exc:
@@ -228,7 +231,7 @@ def simulate_payment_failure(payment_id: str, actor: CurrentUser = Depends(get_c
 
 
 @router.get("/api/payments/{application_id}")
-def list_payments(application_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def list_payments(application_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "payments": portal.list_payments(actor, application_id)}
     except portal.ServicePortalError as exc:
@@ -236,7 +239,10 @@ def list_payments(application_id: str, actor: CurrentUser = Depends(get_current_
 
 
 @router.get("/api/officer/applications")
-def list_officer_applications(status: str | None = None, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def list_officer_applications(
+    status: str | None = None,
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
+) -> dict:
     try:
         return {"success": True, "applications": portal.officer_queue(actor, status_filter=status)}
     except portal.ServicePortalError as exc:
@@ -244,7 +250,10 @@ def list_officer_applications(status: str | None = None, actor: CurrentUser = De
 
 
 @router.get("/api/officer/applications/{application_id}")
-def get_officer_application(application_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_officer_application(
+    application_id: str,
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
+) -> dict:
     try:
         return {"success": True, "application": portal.get_application(actor, application_id)}
     except portal.ServicePortalError as exc:
@@ -252,20 +261,15 @@ def get_officer_application(application_id: str, actor: CurrentUser = Depends(ge
 
 
 @router.get("/api/officer/pending")
-def get_officer_pending(actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_officer_pending(actor: CurrentUser = Depends(require_roles("officer", "reviewer"))) -> dict:
     try:
-        applications = [
-            item
-            for status_value in ("under_review", "documents_required", "payment_pending")
-            for item in portal.officer_queue(actor, status_filter=status_value)
-        ]
-        return {"success": True, "applications": applications}
+        return {"success": True, "applications": portal.pending_officer_queue(actor)}
     except portal.ServicePortalError as exc:
         _handle_error(exc)
 
 
 @router.get("/api/officer/approved")
-def get_officer_approved(actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_officer_approved(actor: CurrentUser = Depends(require_roles("officer", "reviewer"))) -> dict:
     try:
         return {"success": True, "applications": portal.officer_queue(actor, status_filter="certificate_issued")}
     except portal.ServicePortalError as exc:
@@ -273,7 +277,7 @@ def get_officer_approved(actor: CurrentUser = Depends(get_current_user)) -> dict
 
 
 @router.get("/api/officer/rejected")
-def get_officer_rejected(actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_officer_rejected(actor: CurrentUser = Depends(require_roles("officer", "reviewer"))) -> dict:
     try:
         return {"success": True, "applications": portal.officer_queue(actor, status_filter="rejected")}
     except portal.ServicePortalError as exc:
@@ -281,7 +285,7 @@ def get_officer_rejected(actor: CurrentUser = Depends(get_current_user)) -> dict
 
 
 @router.get("/api/officer/escalations")
-def get_officer_escalations(actor: CurrentUser = Depends(get_current_user)) -> dict:
+def get_officer_escalations(actor: CurrentUser = Depends(require_roles("officer", "reviewer"))) -> dict:
     try:
         applications = [
             item
@@ -297,7 +301,7 @@ def get_officer_escalations(actor: CurrentUser = Depends(get_current_user)) -> d
 def assign_application(
     application_id: str,
     payload: AssignRequest,
-    actor: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     try:
         return {"success": True, "application": portal.assign_application(actor, application_id, payload.officer_user_id)}
@@ -309,7 +313,7 @@ def assign_application(
 def request_documents(
     application_id: str,
     payload: RequestDocumentsRequest,
-    actor: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     try:
         application = portal.request_documents(actor, application_id, payload.notes, payload.requested_documents)
@@ -322,7 +326,7 @@ def request_documents(
 def approve_application(
     application_id: str,
     payload: ApprovalRequest,
-    actor: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     try:
         return {"success": True, "application": portal.approve_application(actor, application_id, payload.notes)}
@@ -334,7 +338,7 @@ def approve_application(
 def reject_application(
     application_id: str,
     payload: RejectionRequest,
-    actor: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     try:
         return {"success": True, "application": portal.reject_application(actor, application_id, payload.reason)}
@@ -346,7 +350,7 @@ def reject_application(
 def add_comment(
     application_id: str,
     payload: CommentRequest,
-    actor: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     try:
         return {"success": True, "comment": portal.add_comment(actor, application_id, payload.comment)}
@@ -385,7 +389,7 @@ def verify_certificate(verification_query: str) -> dict:
 def revoke_certificate(
     certificate_id: str,
     payload: RevokeCertificateRequest,
-    actor: CurrentUser = Depends(get_current_user),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     try:
         return {"success": True, "certificate": portal.revoke_certificate(actor, certificate_id, payload.reason)}
@@ -394,12 +398,12 @@ def revoke_certificate(
 
 
 @router.get("/api/notifications")
-def list_notifications(actor: CurrentUser = Depends(get_current_user)) -> dict:
+def list_notifications(actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     return {"success": True, "notifications": portal.list_notifications(actor)}
 
 
 @router.patch("/api/notifications/{notification_id}/read")
-def mark_notification_read(notification_id: str, actor: CurrentUser = Depends(get_current_user)) -> dict:
+def mark_notification_read(notification_id: str, actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     try:
         return {"success": True, "notification": portal.mark_notification_read(actor, notification_id)}
     except portal.ServicePortalError as exc:
@@ -407,21 +411,21 @@ def mark_notification_read(notification_id: str, actor: CurrentUser = Depends(ge
 
 
 @router.patch("/api/notifications/read-all")
-def mark_all_notifications_read(actor: CurrentUser = Depends(get_current_user)) -> dict:
+def mark_all_notifications_read(actor: CurrentUser = Depends(require_roles("citizen"))) -> dict:
     return {"success": True, "notifications": portal.mark_all_notifications_read(actor)}
 
 
-@router.get("/api/admin/services", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/api/admin/services", dependencies=[Depends(require_roles("admin"))])
 def admin_services() -> dict:
     return {"success": True, "services": portal.list_services()}
 
 
-@router.get("/api/admin/forms", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/api/admin/forms", dependencies=[Depends(require_roles("admin"))])
 def admin_forms() -> dict:
     return {"success": True, "forms": [portal.get_service_form(item["service_id"]) for item in portal.list_services()]}
 
 
-@router.get("/api/admin/certificates", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/api/admin/certificates", dependencies=[Depends(require_roles("admin"))])
 def admin_certificates(actor: CurrentUser = Depends(get_current_user)) -> dict:
     certificates = []
     for application in portal.list_applications(actor):

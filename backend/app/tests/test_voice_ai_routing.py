@@ -18,5 +18,6 @@ def test_scheme_document_question_uses_chat_rag_route(client) -> None:
     response = client.post("/api/chat", json={"message": "scholarship documents enti"})
     body = response.json()
     assert response.status_code == 200
-    assert body["source"]["type"] == "rag"
-    assert body["fallback"] is True
+    assert body["source"]["type"] == "deterministic_rule_engine"
+    assert body["fallback"] is False
+    assert body["verified"] is True

@@ -104,10 +104,17 @@ class AuditRepository:
             session.commit()
         return _legacy_payload(record)
 
-    def list(self, limit: int = 100, action: str | None = None) -> list[dict]:
+    def list(
+        self,
+        limit: int = 100,
+        action: str | None = None,
+        actor_user_id: str | None = None,
+    ) -> list[dict]:
         statement = select(AuditEventRecord)
         if action:
             statement = statement.where(AuditEventRecord.action == action)
+        if actor_user_id:
+            statement = statement.where(AuditEventRecord.actor_user_id == actor_user_id)
         statement = statement.order_by(AuditEventRecord.created_at.desc()).limit(limit)
         with SessionLocal() as session:
             return [_legacy_payload(record) for record in session.scalars(statement).all()]

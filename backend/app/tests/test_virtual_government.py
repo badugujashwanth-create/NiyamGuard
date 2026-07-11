@@ -1,15 +1,16 @@
-def test_virtual_government_scenario_catalog(client) -> None:
-    response = client.get("/api/virtual-gov/scenarios")
+def test_virtual_government_scenario_catalog(client, admin_headers) -> None:
+    response = client.get("/api/virtual-gov/scenarios", headers=admin_headers)
     body = response.json()
     assert response.status_code == 200
     assert body["success"] is True
     assert body["scenarios"][0]["scenario_id"] == "income_certificate_full_flow"
 
 
-def test_virtual_government_full_flow(client) -> None:
+def test_virtual_government_full_flow(client, admin_headers) -> None:
     response = client.post(
         "/api/virtual-gov/run",
         json={"scenario_id": "income_certificate_full_flow", "reset_before_run": True},
+        headers=admin_headers,
     )
     body = response.json()
     assert response.status_code == 200
@@ -23,7 +24,7 @@ def test_virtual_government_full_flow(client) -> None:
     assert verify.status_code == 200
     assert verify.json()["valid"] is True
 
-    status = client.get("/api/virtual-gov/status").json()
+    status = client.get("/api/virtual-gov/status", headers=admin_headers).json()
     assert status["applications"] >= 1
     assert status["certificates"] >= 1
     assert status["audit_events"] >= 1

@@ -59,7 +59,7 @@ def _date_string(days_from_now: int = 0) -> str:
 
 
 def _actor_can_review(actor: CurrentUser) -> bool:
-    return actor.role in {"admin", "reviewer", "officer"}
+    return actor.role in {"reviewer", "officer"}
 
 
 def _service(store: PolicyDataStore, service_id: str) -> ServiceDefinition:
@@ -573,11 +573,13 @@ def get_application_history(actor: CurrentUser, application_id: str) -> list[dic
     ]
 
 
-def track_application(application_number: str) -> dict[str, Any]:
+def track_application(application_number: str, actor: CurrentUser | None = None) -> dict[str, Any]:
     store = read_store()
     application = next((item for item in store.applications if item.application_number == application_number), None)
     if application is None:
         raise ServicePortalError(status.HTTP_404_NOT_FOUND, "Application not found in available dataset.")
+    if actor is not None:
+        _assert_application_access(actor, application)
     service = _service(store, application.service_id)
     history = [
         item.model_dump()
@@ -1012,3 +1014,11 @@ def get_application_sla(application_id: str, *, store: PolicyDataStore | None = 
 def officer_queue(actor: CurrentUser, status_filter: str | None = None) -> list[dict[str, Any]]:
     _assert_review_access(actor)
     return list_applications(actor, status_filter=status_filter)
+
+
+def pending_officer_queue(actor: CurrentUser) -> list[dict[str, Any]]:
+    return [
+        item
+        for status_value in ("under_review", "documents_required", "payment_pending")
+        for item in officer_queue(actor, status_filter=status_value)
+    ]

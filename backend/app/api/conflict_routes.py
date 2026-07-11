@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/conflicts", tags=["Conflicts"])
 @router.post("/scan")
 def scan_conflicts(
     request: Request,
-    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     conflicts = service.scan_conflicts()
     audit_service.record_event(
@@ -23,12 +23,12 @@ def scan_conflicts(
     return {"success": True, "conflicts": [item.model_dump() for item in conflicts]}
 
 
-@router.get("", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def list_conflicts() -> dict:
     return {"success": True, "conflicts": [item.model_dump() for item in service.list_conflicts()]}
 
 
-@router.get("/{conflict_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/{conflict_id}", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def get_conflict(conflict_id: str) -> dict:
     conflict = service.get_conflict(conflict_id)
     if conflict is None:
@@ -40,7 +40,7 @@ def get_conflict(conflict_id: str) -> dict:
 def resolve_conflict(
     conflict_id: str,
     request: Request,
-    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     conflict = service.update_conflict_status(conflict_id, "resolved")
     if conflict is None:
@@ -59,7 +59,7 @@ def resolve_conflict(
 def ignore_conflict(
     conflict_id: str,
     request: Request,
-    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     conflict = service.update_conflict_status(conflict_id, "ignored")
     if conflict is None:

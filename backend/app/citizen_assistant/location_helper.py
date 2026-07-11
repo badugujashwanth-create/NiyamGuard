@@ -109,17 +109,21 @@ def search_location(
 
 
 def _ask_for_details(language: str) -> str:
+    explanation = (
+        "A mandal is the local administrative area (similar to a taluk). "
+        "Enter the mandal shown on your address proof. "
+    )
     if language == "telugu":
-        return (
+        return explanation + (
             "పరవాలేదు. మీ మండలం తెలుసుకోవడానికి నేను సహాయం చేస్తాను. "
             "మీ గ్రామం లేదా ఊరి పేరు, లేదా pincode చెప్పగలరా?"
         )
     if language == "hindi":
-        return (
+        return explanation + (
             "कोई बात नहीं। मंडल पता करने में मैं मदद करूँगा। "
             "कृपया अपने गाँव का नाम या pincode बताइए।"
         )
-    return (
+    return explanation + (
         "No problem. I can help you identify the mandal. "
         "Please tell me your village name or pincode."
     )

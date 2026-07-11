@@ -37,6 +37,19 @@ def test_missing_rule_returns_safe_not_found(client) -> None:
     assert body["answer"] == "Verified rule not found."
 
 
+def test_certificate_baseline_uses_form_catalog_and_verified_rule(client) -> None:
+    response = client.get("/api/knowledge/certificates/income_certificate")
+    body = response.json()
+    assert response.status_code == 200
+    certificate = body["certificate"]
+    assert certificate["service_id"] == "income_certificate"
+    assert certificate["title"] == "Income Certificate"
+    assert certificate["required_documents"]
+    assert certificate["validity"]["verified"] is True
+    assert certificate["validity"]["source"]["circular_number"] == "GO-138"
+    assert certificate["how_to_verify"]["route"] == "/verify-certificate"
+
+
 def test_superseding_older_rule_marks_old_rule_superseded() -> None:
     updated = supersede_older_rules("rule_001")
     assert updated is not None

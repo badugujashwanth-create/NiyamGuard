@@ -15,6 +15,7 @@ COLLECTIONS = (
     "circulars",
     "extracted_rules",
     "verified_rules",
+    "certificate_reference_drafts",
     "connected_systems",
     "snapshots",
     "compliance_findings",

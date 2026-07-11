@@ -7,7 +7,5 @@ export function askChat({ message, language = "auto", context = {}, profile = {}
       method: "POST",
       body: JSON.stringify({ message, language, context, profile }),
     },
-    { auth: false },
   );
 }
-

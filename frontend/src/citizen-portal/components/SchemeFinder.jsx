@@ -72,7 +72,6 @@ export default function SchemeFinder({ onStartForm }) {
         </div>
         <nav className="scheme-header-actions" aria-label="Citizen navigation">
           <a className="button button-secondary" href="/">Citizen portal</a>
-          <a className="button button-secondary" href="/demo">Demo</a>
         </nav>
       </header>
 

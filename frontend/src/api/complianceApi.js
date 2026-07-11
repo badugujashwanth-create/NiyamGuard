@@ -17,6 +17,5 @@ export function getConflicts() {
 }
 
 export function runDemo() {
-  return request("/api/demo/run", { method: "POST" }, { auth: false });
+  return request("/api/demo/run", { method: "POST" });
 }
-

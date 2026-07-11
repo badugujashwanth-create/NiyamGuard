@@ -1,3 +1,26 @@
+function pathnameOnly(path = "/") {
+  const value = String(path || "/").split(/[?#]/, 1)[0];
+  return value.startsWith("/") ? value : `/${value}`;
+}
+
+function isPath(path, root) {
+  return path === root || path.startsWith(`${root}/`);
+}
+
+const citizenRoots = [
+  "/citizen",
+  "/services",
+  "/apply",
+  "/applications",
+  "/track",
+  "/payment",
+  "/scheme-finder",
+  "/chatbot",
+];
+
+const governmentRoots = ["/government"];
+const adminPages = new Set(["/admin", "/admin/sandbox", "/admin/audit", "/admin/users"]);
+
 export function roleHomePath(user) {
   if (!user) return "/login";
   switch (user.role) {
@@ -5,10 +28,11 @@ export function roleHomePath(user) {
       return "/citizen";
     case "officer":
     case "reviewer":
-    case "admin":
       return "/government";
     case "sandbox_admin":
-      return "/sandbox";
+      return "/admin/sandbox";
+    case "admin":
+      return "/admin";
     default:
       return "/login";
   }
@@ -16,39 +40,30 @@ export function roleHomePath(user) {
 
 export function canAccessRoute(path, user) {
   if (!user) return false;
-  if (path.startsWith("/citizen")) {
-    return user.role === "citizen" || user.role === "admin";
+  const pathname = pathnameOnly(path);
+
+  if (user.role === "citizen") {
+    return citizenRoots.some((root) => isPath(pathname, root));
   }
-  if (path.startsWith("/government") || path.startsWith("/officer")) {
-    return ["officer", "reviewer", "admin"].includes(user.role);
+  if (["officer", "reviewer"].includes(user.role)) {
+    return governmentRoots.some((root) => isPath(pathname, root));
   }
-  if (path.startsWith("/sandbox") || path.startsWith("/virtual-gov")) {
-    return user.role === "sandbox_admin" || user.role === "admin";
+  if (user.role === "sandbox_admin") {
+    return pathname === "/admin/sandbox";
   }
-  if (path.startsWith("/chatbot")) {
-    return true;
+  if (user.role === "admin") {
+    return adminPages.has(pathname);
   }
-  if (path.startsWith("/admin")) {
-    return ["admin", "reviewer", "officer"].includes(user.role);
-  }
-  if (
-    path.startsWith("/services") ||
-    path.startsWith("/apply") ||
-    path.startsWith("/applications") ||
-    path.startsWith("/track") ||
-    path.startsWith("/verify-certificate") ||
-    path.startsWith("/payment")
-  ) {
-    return user.role === "citizen" || user.role === "admin";
-  }
-  return true;
+  return false;
 }
 
 export function isPublicRoute(path) {
+  const pathname = pathnameOnly(path);
   return (
-    path === "/login" ||
-    path.startsWith("/demo") ||
-    path.startsWith("/mock/") ||
-    path.startsWith("/scheme-finder")
+    pathname === "/" ||
+    isPath(pathname, "/portal") ||
+    pathname === "/login" ||
+    isPath(pathname, "/verify") ||
+    isPath(pathname, "/verify-certificate")
   );
 }

@@ -133,7 +133,11 @@ def publish_rule_candidate(candidate_id: str, reviewer_user_id: str | None = Non
         created_at=timestamp,
     )
     store.policy_publication_events.append(event)
-    add_audit_event(store, "rule_published", {"entity_type": "rule_candidate", "entity_id": candidate_id})
+    add_audit_event(
+        store,
+        "rule_published",
+        {"entity_type": "rule_candidate", "entity_id": candidate_id, "published_by": reviewer_user_id},
+    )
     write_store(store)
     knowledge_event = knowledge_update_service.update_for_rule(version)
     plan = propagation_service.create_plan(version)

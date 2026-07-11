@@ -26,18 +26,18 @@ class SourcePatchPayload(BaseModel):
     enabled: bool | None = None
 
 
-@router.get("", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def list_sources() -> dict:
     return {"success": True, "sources": [item.model_dump() for item in source_registry_service.list_sources()]}
 
 
-@router.post("", dependencies=[Depends(require_roles("admin", "reviewer"))])
+@router.post("", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def create_source(payload: SourcePayload) -> dict:
     source = source_registry_service.create_source(payload.model_dump(exclude_none=True))
     return {"success": True, "source": source.model_dump()}
 
 
-@router.get("/{source_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/{source_id}", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def get_source(source_id: str) -> dict:
     source = source_registry_service.get_source(source_id)
     if source is None:
@@ -45,7 +45,7 @@ def get_source(source_id: str) -> dict:
     return {"success": True, "source": source.model_dump()}
 
 
-@router.patch("/{source_id}", dependencies=[Depends(require_roles("admin", "reviewer"))])
+@router.patch("/{source_id}", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def update_source(source_id: str, payload: SourcePatchPayload) -> dict:
     source = source_registry_service.update_source(source_id, payload.model_dump(exclude_unset=True))
     if source is None:
@@ -56,7 +56,7 @@ def update_source(source_id: str, payload: SourcePatchPayload) -> dict:
 @router.post("/{source_id}/sync")
 def sync_source(
     source_id: str,
-    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     result = circular_sync_service.sync_source(source_id, created_by=actor.id)
     if not result.get("success"):

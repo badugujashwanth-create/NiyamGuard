@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/compliance", tags=["Compliance"])
 @router.post("/run")
 def run_compliance(
     request: Request,
-    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     findings = service.run_compliance()
     audit_service.record_event(
@@ -23,12 +23,12 @@ def run_compliance(
     return {"success": True, "findings": [item.model_dump() for item in findings]}
 
 
-@router.get("/findings", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/findings", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def list_findings() -> dict:
     return {"success": True, "findings": [item.model_dump() for item in service.list_findings()]}
 
 
-@router.get("/findings/{finding_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/findings/{finding_id}", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def get_finding(finding_id: str) -> dict:
     finding = service.get_finding(finding_id)
     if finding is None:
@@ -36,12 +36,12 @@ def get_finding(finding_id: str) -> dict:
     return {"success": True, "finding": finding.model_dump()}
 
 
-@router.get("/service/{service_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/service/{service_id}", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def findings_by_service(service_id: str) -> dict:
     return {"success": True, "findings": [item.model_dump() for item in service.findings_by_service(service_id)]}
 
 
-@router.get("/system/{connected_system_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/system/{connected_system_id}", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def findings_by_system(connected_system_id: str) -> dict:
     return {"success": True, "findings": [item.model_dump() for item in service.findings_by_system(connected_system_id)]}
 
@@ -50,7 +50,7 @@ def findings_by_system(connected_system_id: str) -> dict:
 def mark_fixed(
     finding_id: str,
     request: Request,
-    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+    actor: CurrentUser = Depends(require_roles("officer", "reviewer")),
 ) -> dict:
     finding = service.mark_fixed(finding_id)
     if finding is None:

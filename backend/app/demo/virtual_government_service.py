@@ -149,8 +149,14 @@ def run_scenario(scenario_id: str = "income_certificate_full_flow", *, reset_bef
 def attach_synthetic_documents(actor: CurrentUser, application_id: str) -> None:
     store = read_store()
     application = next(item for item in store.applications if item.id == application_id)
+    service = next(item for item in store.service_definitions if item.service_id == application.service_id)
+    document_types = [
+        str(document.get("key"))
+        for document in service.required_documents_json
+        if document.get("required") and document.get("key")
+    ]
     timestamp = now_iso()
-    for document_type in ("aadhaar", "income_proof", "address_proof"):
+    for document_type in document_types:
         doc = ApplicationDocument(
             id=f"appdoc_{uuid4().hex}",
             application_id=application_id,
@@ -182,7 +188,7 @@ def attach_synthetic_documents(actor: CurrentUser, application_id: str) -> None:
             "entity_type": "application",
             "entity_id": application_id,
             "actor_user_id": actor.id,
-            "document_types": ["aadhaar", "income_proof", "address_proof"],
+            "document_types": document_types,
         },
     )
     write_store(store)

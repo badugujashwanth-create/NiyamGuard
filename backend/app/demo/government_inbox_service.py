@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from app.services import circular_ingestion_service, policy_publication_service, rule_extraction_service
 from app.knowledge_base.platform_store import add_audit_event, now_iso, read_store, write_store
 from app.extraction.sandbox_circular_service import _load_records as load_sandbox_circulars
+
+APP_DIR = Path(__file__).resolve().parents[1]
 
 
 def _inbox_status(document_status: str, sandbox_delivery: str | None) -> str:
@@ -51,11 +55,21 @@ def circular_inbox() -> dict:
     return {"success": True, "circulars": inbox}
 
 
+def get_circular_pdf(circular_id: str) -> tuple[bytes, str] | None:
+    document = circular_ingestion_service.get_document(circular_id)
+    if document is None or not document.storage_path:
+        return None
+    path = (APP_DIR / document.storage_path).resolve()
+    if APP_DIR.resolve() not in path.parents or not path.is_file():
+        return None
+    return path.read_bytes(), f"{document.circular_number}.pdf"
+
+
 def parse_circular(circular_id: str, actor_id: str | None = None) -> dict:
     document = circular_ingestion_service.get_document(circular_id)
     if document is None:
         return {"success": False, "message": "Circular not found in inbox."}
-    extraction = rule_extraction_service.extract_rules(circular_id)
+    extraction = rule_extraction_service.extract_rules(circular_id, actor_user_id=actor_id)
     candidate = extraction.get("candidates", [{}])[0] if extraction.get("candidates") else None
 
     store = read_store()

@@ -150,7 +150,7 @@ def _has_phrase(text: str, phrase: str) -> bool:
 def detect_language(
     message: str, selected_language: str | None = None
 ) -> dict[str, str | float]:
-    """Detect the citizen's language, using the selector as a fallback preference."""
+    """Detect input language, using a selected language only when evidence is weak."""
     normalized = " ".join(message.casefold().split())
     selected: LanguageName | None = (
         selected_language

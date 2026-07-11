@@ -21,7 +21,7 @@ def _seed_users() -> None:
     seed_default_users()
 
 
-def test_sandbox_circular_create_generate_publish_and_government_inbox(client) -> None:
+def test_sandbox_circular_create_generate_export_and_manual_government_upload(client) -> None:
     sandbox_login = _login(client, "sandbox@niyamguard.local", "Sandbox@12345")
     sandbox_token = sandbox_login["access_token"]
 
@@ -51,21 +51,41 @@ def test_sandbox_circular_create_generate_publish_and_government_inbox(client) -
     assert body["circular_number"] == "GO-138"
     assert body["pdf_url"].endswith("/pdf")
 
-    pdf_download = client.get(f"/api/sandbox/circulars/{circular_id}/pdf")
+    pdf_download = client.get(
+        f"/api/sandbox/circulars/{circular_id}/pdf",
+        headers=_auth_headers(sandbox_token),
+    )
     assert pdf_download.status_code == 200
     assert pdf_download.headers["content-type"].startswith("application/pdf")
     assert pdf_download.content[:4] == b"%PDF"
 
-    publish = client.post(
-        f"/api/sandbox/circulars/{circular_id}/publish",
+    export = client.post(
+        f"/api/sandbox/circulars/{circular_id}/export",
         headers=_auth_headers(sandbox_token),
     )
-    assert publish.status_code == 200
-    assert publish.json()["success"] is True
-    assert publish.json()["government_document"]["circular_number"] == "GO-138"
+    assert export.status_code == 200
+    export_body = export.json()
+    assert export_body["success"] is True
+    assert export_body["manual_upload"]["required"] is True
+    assert "government_document" not in export_body
 
     admin_login = _login(client, "admin@niyamguard.local", "Admin@12345")
     admin_token = admin_login["access_token"]
+    upload = client.post(
+        "/api/circulars/upload",
+        json={
+            "source_id": "manual_upload",
+            "circular_number": "GO-138",
+            "title": "Income Certificate Validity Update",
+            "department": "Revenue Department",
+            "effective_date": "2026-07-01",
+            "document_url": export_body["manual_upload"]["pdf_url"],
+            "raw_text": export_body["manual_upload"]["raw_text"],
+        },
+        headers=_auth_headers(admin_token),
+    )
+    assert upload.status_code == 200
+    assert upload.json()["document"]["circular_number"] == "GO-138"
 
     inbox = client.get("/api/government/circular-inbox", headers=_auth_headers(admin_token))
     assert inbox.status_code == 200
@@ -124,12 +144,15 @@ def test_auth_role_access_for_portals(client) -> None:
 
 
 def test_portal_summary_and_sandbox_status(client) -> None:
-    summary = client.get("/api/demo/portal-summary")
+    officer_login = _login(client, "officer@niyamguard.local", "Officer@12345")
+    sandbox_login = _login(client, "sandbox@niyamguard.local", "Sandbox@12345")
+
+    summary = client.get("/api/demo/portal-summary", headers=_auth_headers(officer_login["access_token"]))
     assert summary.status_code == 200
     assert summary.json()["success"] is True
     assert "citizen" in summary.json()["portals"]
 
-    status = client.get("/api/sandbox/status")
+    status = client.get("/api/sandbox/status", headers=_auth_headers(sandbox_login["access_token"]))
     assert status.status_code == 200
     assert status.json()["sandbox"] == "virtual_government"
 

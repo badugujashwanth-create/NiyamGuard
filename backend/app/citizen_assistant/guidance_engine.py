@@ -181,6 +181,21 @@ def _identity_number_guidance(
     }
 
     if not digits:
+        if field_name == "aadhaar_number":
+            return Guidance(
+                field=field_name,
+                reply=(
+                    "Enter the 12-digit Aadhaar number from your card, without spaces if the form does not allow them. "
+                    "Keep it private and do not share Aadhaar publicly."
+                ),
+            )
+        if field_name == "mobile_number":
+            return Guidance(
+                field=field_name,
+                reply=(
+                    "Enter a valid 10-digit active mobile number so you can receive application updates or OTP messages."
+                ),
+            )
         replies = {
             "english": f"Please say or type the {expected}-digit {label.lower()} clearly.",
             "telugu": (
@@ -303,7 +318,14 @@ SIMPLE_FIELD_REPLIES = {
         "applicant_name": "Enter your full name as it appears on Aadhaar or another official record.",
         "father_name": "Enter your father's full name as it appears on official records.",
         "district": "Enter the name of the district where you live.",
-        "mandal": "Enter the name of the mandal where you live.",
+        "mandal": (
+            "A mandal is the local administrative area (similar to a taluk) that contains your village or locality. "
+            "Enter the mandal shown on your address proof; for example, Ameerpet."
+        ),
+        "occupation": (
+            "Occupation means your job or main work, not your name. Enter Student, Employee, Farmer, Business, "
+            "Homemaker, Unemployed, or Other. For example, 'Imran Ali' is a person's name, not an occupation."
+        ),
         "village": "Enter your village or town name.",
         "date_of_birth": "Date of birth means your birth date. Select it from your official record.",
         "gender": "Choose the gender shown in your official or hospital record.",
@@ -330,6 +352,10 @@ SIMPLE_FIELD_REPLIES = {
             "మండలం అంటే మీ ఊరు ఏ mandal పరిధిలోకి వస్తుందో అది. మీకు మండలం "
             "తెలియకపోతే, మీ గ్రామం పేరు లేదా pincode చెప్పండి; నేను సహాయం చేస్తాను."
         ),
+        "occupation": (
+            "Occupation అంటే మీ ప్రధాన పని లేదా ఉద్యోగం, మీ పేరు కాదు. Student, Employee, "
+            "Farmer, Business, Homemaker, Unemployed లేదా Other లో సరైనదాన్ని నమోదు చేయండి."
+        ),
         "village": "ఇక్కడ మీ గ్రామం, ఊరు లేదా town పేరు మీరే టైప్ చేయాలి.",
         "date_of_birth": "పుట్టిన తేదీ అంటే మీ జన్మ తేదీ. Official recordలో ఉన్న dateని ఎంచుకోండి.",
         "gender": "Official లేదా hospital recordలో ఉన్న genderని ఎంచుకోండి.",
@@ -353,6 +379,10 @@ SIMPLE_FIELD_REPLIES = {
             "मंडल का मतलब आपका गाँव किस mandal या taluk में आता है। अगर मंडल नहीं "
             "पता, तो अपना गाँव या pincode बताइए; मैं मदद करूँगा।"
         ),
+        "occupation": (
+            "Occupation का अर्थ आपका मुख्य काम या नौकरी है, आपका नाम नहीं। Student, Employee, "
+            "Farmer, Business, Homemaker, Unemployed या Other में सही विकल्प लिखें।"
+        ),
         "village": "यहाँ अपने गाँव या town का नाम स्वयं लिखें।",
         "date_of_birth": "Date of birth मतलब आपकी जन्म तिथि. Official record में जो date है वही चुनें.",
         "gender": "Official या hospital record में जो gender है उसे चुनें.",
@@ -372,6 +402,52 @@ def _simple_field_guidance(field_name: str, language: str) -> Guidance:
     return Guidance(field=field_name, reply=reply)
 
 
+def _knowledge_intent_guidance(field_name: str, language: str) -> Guidance:
+    replies = {
+        "english": {
+            "validity": (
+                "Validity differs by service and can change through a circular. Use the verified-rule result "
+                "for the selected service; if no verified source is shown, check the official department source."
+            ),
+            "eligibility": (
+                "Eligibility depends on the selected service and its current verified rules. Check the service "
+                "eligibility section and provide truthful income, residence, and category details."
+            ),
+            "status": (
+                "Open My Applications or Track Application and enter the application number to see its current status."
+            ),
+        },
+        "telugu": {
+            "validity": (
+                "చెల్లుబాటు కాలం సేవను బట్టి మారుతుంది; కొత్త సర్క్యులర్‌తో కూడా మారవచ్చు. ఎంచుకున్న సేవకు "
+                "ధృవీకరించిన నియమ ఫలితాన్ని చూడండి. ధృవీకరించిన మూలం లేకపోతే అధికారిక శాఖ మూలంలో పరిశీలించండి."
+            ),
+            "eligibility": (
+                "అర్హత ఎంచుకున్న సేవకు వర్తించే ప్రస్తుత ధృవీకరించిన నియమాలపై ఆధారపడి ఉంటుంది. ఆదాయం, "
+                "నివాసం, వర్గం వివరాలను నిజంగా నమోదు చేసి సేవ అర్హత విభాగాన్ని చూడండి."
+            ),
+            "status": (
+                "My Applications లేదా Track Application తెరిచి, దరఖాస్తు సంఖ్యను నమోదు చేసి ప్రస్తుత స్థితిని చూడండి."
+            ),
+        },
+        "hindi": {
+            "validity": (
+                "वैधता सेवा के अनुसार अलग होती है और नए परिपत्र से बदल सकती है। चुनी हुई सेवा का सत्यापित "
+                "नियम परिणाम देखें; सत्यापित स्रोत न मिले तो आधिकारिक विभागीय स्रोत से जाँच करें।"
+            ),
+            "eligibility": (
+                "पात्रता चुनी हुई सेवा के वर्तमान सत्यापित नियमों पर निर्भर करती है। आय, निवास और वर्ग की "
+                "सही जानकारी देकर सेवा का पात्रता भाग देखें।"
+            ),
+            "status": (
+                "My Applications या Track Application खोलें और वर्तमान स्थिति देखने के लिए आवेदन संख्या डालें।"
+            ),
+        },
+    }
+    reply_language = _reply_language(language)
+    return Guidance(field=field_name, reply=replies[reply_language][field_name])
+
+
 def generate_guidance(
     message: str, detected_field: str | None, language: str = "english"
 ) -> Guidance:
@@ -383,4 +459,6 @@ def generate_guidance(
         return _identity_number_guidance(message, detected_field, language)
     if detected_field == "purpose":
         return _purpose_guidance(message, language)
+    if detected_field in {"validity", "eligibility", "status"}:
+        return _knowledge_intent_guidance(detected_field, language)
     return _simple_field_guidance(detected_field, language)

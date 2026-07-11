@@ -83,7 +83,7 @@ def test_propagation_demo_patch_updates_snapshot_and_mock_system(client, reviewe
     assert patch.status_code == 200
     assert patch.json()["task"]["status"] == "auto_patched"
 
-    mock = client.get("/api/mock-systems/meeseva").json()["system"]
+    mock = client.get("/api/mock-systems/meeseva", headers=reviewer_headers).json()["system"]
     assert mock["displayed_value"] == "6 months"
     assert mock["sync_status"] == "updated"
 
@@ -108,10 +108,11 @@ def test_scheduler_status_and_run_now(client, reviewer_headers) -> None:
     assert run.json()["results"][0]["success"] is True
 
 
-def test_self_update_demo_flow_can_patch_mock_systems(client) -> None:
+def test_self_update_demo_flow_can_patch_mock_systems(client, reviewer_headers) -> None:
     response = client.post(
         "/api/demo/run-self-update-scenario",
         json={"apply_demo_patch": True, "reset_mock_systems": True},
+        headers=reviewer_headers,
     )
 
     assert response.status_code == 200
@@ -122,9 +123,9 @@ def test_self_update_demo_flow_can_patch_mock_systems(client) -> None:
     assert steps["mock_systems"]["public_faq"]["faq_value"] == "6 months"
 
 
-def test_mock_systems_reset_and_patch_endpoints(client) -> None:
-    patched = client.post("/api/mock-systems/apply-demo-patch")
-    reset = client.post("/api/mock-systems/reset-demo")
+def test_mock_systems_reset_and_patch_endpoints(client, reviewer_headers) -> None:
+    patched = client.post("/api/mock-systems/apply-demo-patch", headers=reviewer_headers)
+    reset = client.post("/api/mock-systems/reset-demo", headers=reviewer_headers)
 
     assert patched.status_code == 200
     assert patched.json()["systems"]["meeseva"]["displayed_value"] == "6 months"

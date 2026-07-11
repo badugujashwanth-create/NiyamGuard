@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException
 
 from app.models.assistant_models import (
@@ -13,10 +15,17 @@ from app.citizen_assistant.session_service import SessionNotFoundError
 from app.citizen_assistant.validator import validate_field
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
+logger = logging.getLogger("niyamguard.assistant")
 
 
 @router.post("/ask", response_model=AskResponse)
 def ask_assistant(request: AskRequest) -> AskResponse:
+    logger.info(
+        "assistant_request session_id=%s form_id=%s message=%r",
+        request.session_id,
+        request.form_id,
+        request.message,
+    )
     try:
         return assistant_service.ask(
             request.session_id,

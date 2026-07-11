@@ -51,28 +51,12 @@ import {
   syncSource,
   verifyAudit,
 } from "../../services/api";
+import VirtualGovernmentSandbox from "./VirtualGovernmentSandbox";
 
 const pages = [
   { path: "/admin", label: "Dashboard" },
-  { path: "/admin/compliance", label: "Compliance" },
-  { path: "/admin/cascade", label: "Cascade" },
-  { path: "/admin/conflicts", label: "Conflicts" },
-  { path: "/admin/scale-view", label: "Scale View" },
-  { path: "/admin/impact", label: "Impact" },
-  { path: "/admin/knowledge-base", label: "Knowledge Base" },
-  { path: "/admin/sources", label: "Sources" },
-  { path: "/admin/circulars", label: "Circulars" },
-  { path: "/admin/rule-candidates", label: "Rule Candidates" },
-  { path: "/admin/policy-updates", label: "Policy Updates" },
-  { path: "/admin/propagation", label: "Propagation" },
-  { path: "/admin/scheduler", label: "Scheduler" },
-  { path: "/admin/regulatory-ai", label: "Regulatory AI" },
-  { path: "/admin/readiness", label: "Readiness" },
-  { path: "/admin/services", label: "Services" },
-  { path: "/admin/forms", label: "Forms" },
-  { path: "/admin/certificates", label: "Certificates" },
-  { path: "/admin/reports", label: "Reports" },
-  { path: "/admin/audit", label: "Audit" },
+  { path: "/admin/sandbox", label: "Sandbox" },
+  { path: "/admin/audit", label: "System Audit" },
   { path: "/admin/users", label: "Users" },
 ];
 
@@ -214,70 +198,32 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
       setLoading(true);
       setError("");
       try {
-        if (["admin", "reviewer"].includes(currentUser?.role)) {
-          await runCompliance();
-          await recalculatePriority();
-          await scanConflicts();
+        if (currentUser?.role === "sandbox_admin") {
+          setLoading(false);
+          return;
         }
         const [
           adminSummary,
           modules,
-          systemList,
-          compliance,
-          priorities,
-          conflictList,
-          knowledge,
           reportSummary,
           ai,
-          dataStatus,
-          dataFlow,
           auditList,
           auditVerify,
-          selfUpdateData,
-          adminPortalServices,
-          adminPortalForms,
-          adminPortalCertificates,
-          readinessReport,
         ] = await Promise.all([
           getAdminSummary(),
           getModuleStatus(),
-          getConnectedSystems(),
-          getComplianceFindings(),
-          getPriorityFindings(),
-          getConflicts(),
-          getKnowledgeRules(),
           getReportsSummary(),
           getAIStatus(),
-          getDatasetStatus(),
-          getDatasetDemoFlow("ORG-0029"),
           getAuditEvents(),
           verifyAudit(),
-          loadSelfUpdateData(),
-          getAdminPortalServices(),
-          getAdminPortalForms(),
-          getAdminPortalCertificates(),
-          getAdminReadiness(),
         ]);
         if (!active) return;
-        const nextFindings = compliance.findings || [];
         setSummary(adminSummary.summary);
         setModuleStatus(modules.modules || []);
-        setSystems(systemList.systems || []);
-        setFindings(nextFindings);
-        setPriorityFindings(priorities.priority_findings || []);
-        setConflicts(conflictList.conflicts || []);
-        setRules(knowledge.rules || []);
         setReports(reportSummary.summary);
         setAiStatus(ai);
-        setDatasetStatus(dataStatus);
-        setDatasetFlow(dataFlow);
         setAuditEvents(auditList.events || []);
         setAuditVerification(auditVerify);
-        applySelfUpdateData(selfUpdateData);
-        setPortalServices(adminPortalServices.services || []);
-        setPortalForms(adminPortalForms.forms || []);
-        setPortalCertificates(adminPortalCertificates.certificates || []);
-        setReadiness(readinessReport);
         if (currentUser?.role === "admin") {
           try {
             const userList = await getUsers();
@@ -285,11 +231,6 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           } catch (userLoadError) {
             if (active) setUsersError(userLoadError.message);
           }
-        }
-        const firstDrift = nextFindings.find((item) => item.status === "drifted");
-        if (firstDrift) {
-          const cascade = await getCascadeForFinding(firstDrift.id);
-          if (active) setTrace(cascade.trace);
         }
       } catch (loadError) {
         if (loadError.status === 401) {
@@ -312,7 +253,14 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
     setPath(nextPath);
   }
 
-  const activePage = path === "/admin/dashboard" ? "/admin" : path;
+  const visiblePages = currentUser?.role === "sandbox_admin"
+    ? pages.filter((page) => page.path === "/admin/sandbox")
+    : pages;
+  const visiblePagePaths = new Set(visiblePages.map((page) => page.path));
+  const requestedPage = path === "/admin/dashboard" ? "/admin" : path;
+  const activePage = currentUser?.role === "sandbox_admin"
+    ? (requestedPage === "/admin/sandbox" ? requestedPage : "/admin/sandbox")
+    : (visiblePagePaths.has(requestedPage) ? requestedPage : "/admin");
   const systemsById = useMemo(
     () => Object.fromEntries(systems.map((system) => [system.id, system])),
     [systems],
@@ -346,7 +294,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           </div>
         </div>
         <nav aria-label="Admin pages">
-          {pages.map((page) => (
+          {visiblePages.map((page) => (
             <button
               className={activePage === page.path ? "admin-nav-active" : ""}
               key={page.path}
@@ -363,22 +311,14 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
         <header className="admin-header">
           <div>
             <p className="eyebrow">Verified policy operations</p>
-            <h2>{pages.find((page) => page.path === activePage)?.label || "Dashboard"}</h2>
-          </div>
-          <div className="admin-header-actions">
-            <div className="admin-user-chip" aria-label="Current user">
-              <span>{currentUser?.email || "Signed in"}</span>
-              <StatusPill tone="blue">{currentUser?.role || "user"}</StatusPill>
-            </div>
-            <a className="button button-secondary" href="/demo">
-              Demo dashboard
-            </a>
-            <a className="button button-secondary" href="/">
-              Citizen app
-            </a>
-            <button className="button button-secondary" onClick={onLogout} type="button">
-              Logout
-            </button>
+            <h2>{
+              {
+                "/admin": "Dashboard",
+                "/admin/sandbox": "Sandbox",
+                "/admin/audit": "System Audit",
+                "/admin/users": "Users",
+              }[activePage] || "Dashboard"
+            }</h2>
           </div>
         </header>
 
@@ -389,8 +329,6 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
         {!loading && activePage === "/admin" ? (
           <DashboardPage
             cards={cards}
-            conflicts={conflicts}
-            findings={findings}
             moduleStatus={moduleStatus}
             onExport={async (type, format) => {
               setReportStatus(`Preparing ${titleCase(type)} ${format.toUpperCase()} export...`);
@@ -401,9 +339,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
                 setReportStatus(downloadError.message);
               }
             }}
-            priorityFindings={priorityFindings}
             reports={reports}
-            rules={rules}
             aiStatus={aiStatus}
           />
         ) : null}
@@ -439,6 +375,10 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           <ConflictPage conflicts={conflicts} rulesById={rulesById} />
         ) : null}
 
+        {!loading && activePage === "/admin/sandbox" ? (
+          <VirtualGovernmentSandbox embedded />
+        ) : null}
+
         {!loading && activePage === "/admin/scale-view" ? (
           <ScaleViewPage findings={findings} systems={systems} />
         ) : null}
@@ -471,9 +411,13 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           />
         ) : null}
 
-        {!loading && activePage === "/admin/circulars" ? (
-          <CircularsPage
+        {!loading && ["/admin/circulars", "/admin/rule-candidates", "/admin/policy-updates"].includes(activePage) ? (
+          <CircularPolicyPage
+            candidates={ruleCandidates}
             circulars={circularDocuments}
+            complianceRuns={complianceRuns}
+            events={policyHistory}
+            knowledgeEvents={knowledgeEvents}
             onExtract={async (circularId) => {
               setReportStatus(`Extracting rules from ${circularId}...`);
               await extractCircularRules(circularId);
@@ -486,12 +430,6 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
               await refreshSelfUpdateData();
               setReportStatus("Circular sync completed.");
             }}
-          />
-        ) : null}
-
-        {!loading && activePage === "/admin/rule-candidates" ? (
-          <RuleCandidatesPage
-            candidates={ruleCandidates}
             onApprove={async (candidateId) => {
               setReportStatus(`Approving ${candidateId}...`);
               await approveRuleCandidate(candidateId, "Approved from admin console.");
@@ -504,14 +442,6 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
               await refreshSelfUpdateData();
               setReportStatus("Policy update published.");
             }}
-          />
-        ) : null}
-
-        {!loading && activePage === "/admin/policy-updates" ? (
-          <PolicyUpdatesPage
-            complianceRuns={complianceRuns}
-            events={policyHistory}
-            knowledgeEvents={knowledgeEvents}
             onReindex={async () => {
               setReportStatus("Reindexing verified policy knowledge...");
               await reindexKnowledge();
@@ -656,22 +586,15 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
 function DashboardPage({
   aiStatus,
   cards,
-  conflicts,
-  findings,
   moduleStatus,
   onExport,
-  priorityFindings,
   reports,
-  rules,
 }) {
-  const driftedCount = findings.filter((item) => item.status === "drifted").length;
-  const compliantCount = findings.filter((item) => item.status === "compliant").length;
-
   return (
     <section className="admin-section" aria-label="Dashboard summary">
       <p className="admin-explainer">
-        NiyamGuard compares verified circular rules against portals, forms, SOPs,
-        and FAQs to detect policy drift before citizens are harmed.
+        System-wide administration for NiyamGuard accounts, runtime readiness,
+        sandbox operations, and audit integrity.
       </p>
       <div className="admin-card-grid">
         {cards.map(([label, value, caption]) => (
@@ -685,44 +608,8 @@ function DashboardPage({
 
       <div className="admin-insight-grid">
         <section className="admin-panel">
-          <h3>Compliance Snapshot</h3>
-          <p>
-            {driftedCount} drifted systems and {compliantCount} compliant system
-            found for the GO-138 income certificate demo.
-          </p>
-          <div className="admin-mini-metrics">
-            <StatusPill tone="red">3 drifted</StatusPill>
-            <StatusPill tone="green">1 compliant</StatusPill>
-          </div>
-        </section>
-
-        <section className="admin-panel">
-          <h3>High Priority Findings</h3>
-          <ul className="admin-compact-list">
-            {priorityFindings.slice(0, 3).map((priority) => (
-              <li key={priority.id || priority.finding_id}>
-                <strong>{priority.priority_level}</strong>
-                <span>{priority.finding_id}</span>
-                <em>{priority.score}</em>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="admin-panel">
-          <h3>Conflict Summary</h3>
-          <p>
-            Old GO-112 says 12 months. New GO-138 says 6 months. Recommended
-            action: keep GO-138 active and supersede GO-112.
-          </p>
-          <StatusPill tone={conflicts.length ? "red" : "green"}>
-            {conflicts.length} open conflict
-          </StatusPill>
-        </section>
-
-        <section className="admin-panel">
-          <h3>Knowledge Base Status</h3>
-          <p>{rules.length} verified rules are available to admin and public APIs.</p>
+          <h3>Module Readiness</h3>
+          <p>System modules report their current operational readiness.</p>
           <div className="admin-module-grid">
             {moduleStatus.slice(0, 4).map((module) => (
               <div key={module.name}>
@@ -1009,11 +896,91 @@ function ScaleViewPage({ findings, systems }) {
   );
 }
 
+function groupCount(items, keyForItem) {
+  return items.reduce((acc, item) => {
+    const key = keyForItem(item) || "Unknown";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function countRows(items, keyForItem) {
+  return Object.entries(groupCount(items, keyForItem))
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+}
+
+function BarChart({ rows, title }) {
+  const max = Math.max(...rows.map((row) => row.value), 1);
+  return (
+    <section className="admin-chart-card">
+      <h4>{title}</h4>
+      <div className="admin-chart-bars">
+        {rows.length ? rows.map((row) => (
+          <div className="admin-chart-row" key={row.label}>
+            <span>{row.label}</span>
+            <div aria-hidden="true"><i style={{ width: `${Math.max((row.value / max) * 100, 8)}%` }} /></div>
+            <strong>{row.value}</strong>
+          </div>
+        )) : <p>No data.</p>}
+      </div>
+    </section>
+  );
+}
+
+function TimelineChart({ rows }) {
+  const max = Math.max(...rows.map((row) => row.value), 1);
+  const points = rows.map((row, index) => {
+    const x = rows.length === 1 ? 50 : (index / (rows.length - 1)) * 100;
+    const y = 90 - (row.value / max) * 70;
+    return `${x},${y}`;
+  }).join(" ");
+  return (
+    <section className="admin-chart-card">
+      <h4>Findings Over Time</h4>
+      {rows.length ? (
+        <>
+          <svg className="admin-line-chart" viewBox="0 0 100 100" role="img" aria-label="Findings over time chart">
+            <polyline points={points} fill="none" stroke="#17684e" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+            {rows.map((row, index) => {
+              const x = rows.length === 1 ? 50 : (index / (rows.length - 1)) * 100;
+              const y = 90 - (row.value / max) * 70;
+              return <circle cx={x} cy={y} fill="#17684e" key={row.label} r="3" />;
+            })}
+          </svg>
+          <div className="admin-line-labels">
+            {rows.map((row) => <span key={row.label}>{row.label}: {row.value}</span>)}
+          </div>
+        </>
+      ) : <p>No data.</p>}
+    </section>
+  );
+}
+
 function ImpactPage({ findings, priorityFindings, rulesById, systemsById }) {
   const priorityByFinding = Object.fromEntries(priorityFindings.map((item) => [item.finding_id, item]));
   const highImpact = findings
     .filter((finding) => finding.status !== "compliant")
     .sort((a, b) => (priorityByFinding[b.id]?.score || 0) - (priorityByFinding[a.id]?.score || 0));
+  const criticalCount = highImpact.filter((finding) => {
+    const priority = priorityByFinding[finding.id];
+    return priority?.priority_level === "critical" || finding.severity === "critical";
+  }).length;
+  const impactedSystems = new Set(highImpact.map((finding) => finding.connected_system_id)).size;
+  const impactedServices = new Set(highImpact.map((finding) => finding.service_id)).size;
+  const averageScore = highImpact.length
+    ? Math.round(highImpact.reduce((sum, finding) => sum + (priorityByFinding[finding.id]?.score || 0), 0) / highImpact.length)
+    : 0;
+  const priorityRows = countRows(
+    highImpact,
+    (finding) => priorityByFinding[finding.id]?.priority_level || finding.severity,
+  );
+  const departmentRows = countRows(
+    highImpact,
+    (finding) => systemsById[finding.connected_system_id]?.department,
+  );
+  const serviceRows = countRows(highImpact, (finding) => titleCase(finding.service_id));
+  const timelineRows = countRows(highImpact, (finding) => (finding.created_at || "").slice(0, 10)).reverse();
 
   return (
     <section className="admin-section">
@@ -1023,6 +990,19 @@ function ImpactPage({ findings, priorityFindings, rulesById, systemsById }) {
           <p>Prioritizes circular drift by citizen impact, service urgency, and live application risk.</p>
         </div>
         <StatusPill tone={highImpact.length ? "red" : "green"}>{highImpact.length} high-impact items</StatusPill>
+      </div>
+      <div className="admin-card-grid">
+        <article className="admin-stat-card"><span>High Impact</span><strong>{highImpact.length}</strong><p>Non-compliant findings with citizen-facing risk.</p></article>
+        <article className="admin-stat-card"><span>Critical</span><strong>{criticalCount}</strong><p>Highest urgency priority or severity.</p></article>
+        <article className="admin-stat-card"><span>Systems</span><strong>{impactedSystems}</strong><p>Connected systems requiring review.</p></article>
+        <article className="admin-stat-card"><span>Avg Score</span><strong>{averageScore}</strong><p>Backend priority score average.</p></article>
+        <article className="admin-stat-card"><span>Services</span><strong>{impactedServices}</strong><p>Services represented in findings.</p></article>
+      </div>
+      <div className="admin-chart-grid">
+        <BarChart rows={priorityRows} title="Priority / Urgency" />
+        <TimelineChart rows={timelineRows} />
+        <BarChart rows={departmentRows} title="By Department" />
+        <BarChart rows={serviceRows} title="By Service" />
       </div>
       <div className="admin-finding-grid">
         {highImpact.map((finding) => {
@@ -1134,149 +1114,146 @@ function SourcesPage({ onRefresh, onRunScheduler, onSyncSource, schedulerStatus,
   );
 }
 
-function CircularsPage({ circulars, onExtract, onSyncAll }) {
+function CircularPolicyPage({
+  candidates,
+  circulars,
+  complianceRuns,
+  events,
+  knowledgeEvents,
+  onApprove,
+  onExtract,
+  onPublish,
+  onReindex,
+  onRerunCompliance,
+  onSyncAll,
+  versions,
+}) {
+  const [selected, setSelected] = useState(null);
+  const candidateCircularIds = new Set(candidates.map((candidate) => candidate.circular_id));
+  const rows = [
+    ...candidates.map((candidate) => ({
+      id: candidate.id,
+      kind: "candidate",
+      circularId: candidate.circular_id,
+      service: titleCase(candidate.service_id),
+      changed: candidate.change_summary || "Backend extracted change",
+      status: candidate.status,
+      date: candidate.effective_date || candidate.created_at,
+      payload: candidate,
+    })),
+    ...versions
+      .filter((version) => !candidateCircularIds.has(version.source_circular_id))
+      .map((version) => ({
+        id: version.id,
+        kind: "version",
+        circularId: version.source_circular_number,
+        service: titleCase(version.service_id),
+        changed: version.change_summary || "Current rule version",
+        status: version.is_current ? "published current" : "published old",
+        date: version.effective_date || version.published_at,
+        payload: version,
+      })),
+    ...circulars
+      .filter((circular) => !candidateCircularIds.has(circular.id))
+      .map((circular) => ({
+        id: circular.id,
+        kind: "circular",
+        circularId: circular.circular_number,
+        service: circular.title,
+        changed: "Pending backend extraction",
+        status: circular.status,
+        date: circular.effective_date || circular.published_date,
+        payload: circular,
+      })),
+  ].sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+
   return (
     <section className="admin-section">
       <div className="admin-page-summary">
         <div>
-          <h3>Circular Intake</h3>
-          <p>New regulatory documents are ingested, deduplicated, and prepared for rule extraction.</p>
+          <h3>Policy Update Queue</h3>
+          <p>Circular intake, extraction review, approval, and publication in one backend-driven queue.</p>
         </div>
-        <button className="button button-primary" onClick={() => void onSyncAll()} type="button">
-          Sync Circulars
-        </button>
+        <div className="admin-mini-metrics">
+          <button className="button button-secondary" onClick={() => void onSyncAll()} type="button">Sync Circulars</button>
+          <button className="button button-secondary" onClick={() => void onReindex()} type="button">Reindex Knowledge</button>
+          <button className="button button-primary" onClick={() => void onRerunCompliance()} type="button">Rerun Compliance</button>
+        </div>
+      </div>
+      <div className="admin-card-grid">
+        <article className="admin-stat-card"><span>Circulars</span><strong>{circulars.length}</strong><p>Government intake documents.</p></article>
+        <article className="admin-stat-card"><span>Candidates</span><strong>{candidates.length}</strong><p>Backend-extracted rule candidates.</p></article>
+        <article className="admin-stat-card"><span>Publications</span><strong>{events.length}</strong><p>Approved rule updates.</p></article>
+        <article className="admin-stat-card"><span>Compliance Runs</span><strong>{complianceRuns.length}</strong><p>Backend reruns after publication.</p></article>
       </div>
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Circular</th>
-              <th>Title</th>
-              <th>Department</th>
-              <th>Effective</th>
+              <th>Circular ID</th>
+              <th>Service affected</th>
+              <th>What Changed</th>
               <th>Status</th>
-              <th>Action</th>
+              <th>Date</th>
             </tr>
           </thead>
           <tbody>
-            {circulars.length ? circulars.map((circular) => (
-              <tr key={circular.id}>
-                <td>{circular.circular_number}</td>
-                <td>{circular.title}</td>
-                <td>{circular.department}</td>
-                <td>{circular.effective_date}</td>
-                <td>{circular.status}</td>
-                <td>
-                  <button className="button button-secondary" onClick={() => void onExtract(circular.id)} type="button">
-                    Extract Rules
-                  </button>
-                </td>
+            {rows.length ? rows.map((row) => (
+              <tr className="admin-click-row" key={row.id} onClick={() => setSelected(row)}>
+                <td>{row.circularId}</td>
+                <td>{row.service}</td>
+                <td>{row.changed}</td>
+                <td>{row.status}</td>
+                <td>{row.date || "-"}</td>
               </tr>
             )) : (
-              <tr><td colSpan="6">No circular documents synced yet.</td></tr>
+              <tr><td colSpan="5">No policy updates available.</td></tr>
             )}
           </tbody>
         </table>
       </div>
-    </section>
-  );
-}
-
-function RuleCandidatesPage({ candidates, onApprove, onPublish }) {
-  return (
-    <section className="admin-section">
-      <div className="admin-page-summary">
-        <div>
-          <h3>Extracted Rule Candidates</h3>
-          <p>Officer review queue for AI/deterministic policy-rule extraction before publication.</p>
-        </div>
-        <StatusPill tone={candidates.length ? "blue" : "neutral"}>{candidates.length} candidates</StatusPill>
-      </div>
-      <div className="admin-finding-grid">
-        {candidates.length ? candidates.map((candidate) => (
-          <article className="admin-finding-card" key={candidate.id}>
-            <div className="admin-card-heading">
-              <div>
-                <span>{candidate.service_id}</span>
-                <h3>{titleCase(candidate.rule_key)}</h3>
+      {selected ? (
+        <aside className="admin-detail-drawer" aria-label="Policy update details">
+          <div className="admin-card-heading">
+            <div>
+              <span>{selected.kind}</span>
+              <h3>{selected.circularId}</h3>
+            </div>
+            <button className="button button-secondary" onClick={() => setSelected(null)} type="button">Close</button>
+          </div>
+          <dl>
+            {Object.entries(selected.payload).slice(0, 12).map(([key, value]) => (
+              <div key={key}>
+                <dt>{key.replaceAll("_", " ")}</dt>
+                <dd>{typeof value === "object" ? JSON.stringify(value) : String(value ?? "-")}</dd>
               </div>
-              <StatusPill tone={candidate.status === "approved" ? "green" : "blue"}>{candidate.status}</StatusPill>
-            </div>
-            <dl>
-              <div><dt>Old value</dt><dd>{candidate.old_value || "New rule"}</dd></div>
-              <div><dt>New value</dt><dd>{candidate.new_value} {candidate.unit}</dd></div>
-              <div><dt>Effective</dt><dd>{candidate.effective_date}</dd></div>
-              <div><dt>Confidence</dt><dd>{Math.round(candidate.confidence_score * 100)}%</dd></div>
-              <div><dt>Delta</dt><dd>{candidate.delta?.change_type || "Not calculated"}</dd></div>
-              <div><dt>Impact</dt><dd>{candidate.delta?.impact_level || "Not calculated"}</dd></div>
-            </dl>
-            <p>{candidate.source_excerpt}</p>
-            <div className="admin-report-actions">
-              <button className="button button-secondary" onClick={() => void onApprove(candidate.id)} type="button">
-                Approve
-              </button>
-              <button className="button button-primary" onClick={() => void onPublish(candidate.id)} type="button">
-                Publish
-              </button>
-            </div>
-          </article>
-        )) : (
-          <section className="admin-panel"><p>No rule candidates yet. Sync and extract circulars first.</p></section>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function PolicyUpdatesPage({ complianceRuns, events, knowledgeEvents, onReindex, onRerunCompliance, versions }) {
-  const currentVersions = versions.filter((version) => version.is_current);
-  return (
-    <section className="admin-section">
-      <div className="admin-page-summary">
-        <div>
-          <h3>Published Policy Updates</h3>
-          <p>Version history, knowledge-base refreshes, and compliance reruns triggered by policy changes.</p>
-        </div>
-        <div className="admin-mini-metrics">
-          <button className="button button-secondary" onClick={() => void onReindex()} type="button">
-            Reindex Knowledge
-          </button>
-          <button className="button button-primary" onClick={() => void onRerunCompliance()} type="button">
-            Rerun Compliance
-          </button>
-        </div>
-      </div>
-      <div className="admin-card-grid">
-        <article className="admin-stat-card"><span>Versions</span><strong>{versions.length}</strong><p>Immutable policy-rule version records.</p></article>
-        <article className="admin-stat-card"><span>Publications</span><strong>{events.length}</strong><p>Approved rule updates published to the source of truth.</p></article>
-        <article className="admin-stat-card"><span>Compliance Runs</span><strong>{complianceRuns.length}</strong><p>Verification jobs after updates or patches.</p></article>
-      </div>
-      <div className="admin-insight-grid">
-        <section className="admin-panel">
-          <h3>Current Rule Versions</h3>
-          <ul className="admin-compact-list">
-            {currentVersions.map((version) => (
-              <li key={version.id}>
-                <strong>{version.source_circular_number}</strong>
-                <span>{titleCase(version.service_id)} / {version.rule_key}: {version.value} {version.unit}</span>
-                <em>v{version.version_number}</em>
-              </li>
             ))}
-          </ul>
-        </section>
-        <section className="admin-panel">
-          <h3>Knowledge Updates</h3>
-          <ul className="admin-compact-list">
-            {knowledgeEvents.length ? knowledgeEvents.slice(-5).map((event) => (
-              <li key={event.id}>
-                <strong>{event.status}</strong>
-                <span>{event.update_type}</span>
-                <em>{event.rule_key}</em>
-              </li>
-            )) : <li><span>No knowledge update events yet.</span></li>}
-          </ul>
-        </section>
-      </div>
+          </dl>
+          <div className="admin-report-actions">
+            {selected.kind === "circular" ? (
+              <button className="button button-primary" onClick={() => void onExtract(selected.payload.id)} type="button">Extract Rules</button>
+            ) : null}
+            {selected.kind === "candidate" && selected.payload.status !== "approved" ? (
+              <button className="button button-secondary" onClick={() => void onApprove(selected.payload.id)} type="button">Approve</button>
+            ) : null}
+            {selected.kind === "candidate" ? (
+              <button className="button button-primary" onClick={() => void onPublish(selected.payload.id)} type="button">Publish</button>
+            ) : null}
+          </div>
+        </aside>
+      ) : null}
+      <section className="admin-panel">
+        <h3>Knowledge Events</h3>
+        <ul className="admin-compact-list">
+          {knowledgeEvents.length ? knowledgeEvents.slice(-5).map((event) => (
+            <li key={event.id}>
+              <strong>{event.status}</strong>
+              <span>{event.update_type}</span>
+              <em>{event.rule_key}</em>
+            </li>
+          )) : <li><span>No knowledge update events yet.</span></li>}
+        </ul>
+      </section>
     </section>
   );
 }
@@ -1290,8 +1267,6 @@ function PropagationPage({ mockSystems, onApplyMockPatch, onApplyTaskPatch, onRe
           <p>Downstream portal, form, FAQ, and SOP update tasks created after a verified policy publication.</p>
         </div>
         <div className="admin-mini-metrics">
-          <a className="button button-secondary" href="/mock/meeseva">Open Mock MeeSeva</a>
-          <a className="button button-secondary" href="/mock/public-faq">Open Mock FAQ</a>
           <button className="button button-secondary" onClick={() => void onResetMocks()} type="button">Reset Mocks</button>
           <button className="button button-primary" onClick={() => void onApplyMockPatch()} type="button">Patch Mocks</button>
         </div>

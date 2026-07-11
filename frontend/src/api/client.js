@@ -52,6 +52,19 @@ function buildUrl(path) {
 }
 
 function errorMessage(payload, status) {
+  if (status === 404) {
+    return "Route doesn't exist: The requested backend route was not found (404).";
+  }
+  if (status === 403) {
+    return "You're not authorized to see this: Insufficient role permissions (403).";
+  }
+  if (status === 401) {
+    return "Session expired or authentication required. Please log in (401).";
+  }
+  if (status >= 500) {
+    const detail = payload?.error?.message || payload?.message || (typeof payload?.detail === "string" ? payload.detail : "") || "Internal server error";
+    return `The request failed: Server error (${status}). ${detail}`.trim();
+  }
   if (payload?.error?.message) return payload.error.message;
   if (payload?.message) return payload.message;
   if (typeof payload?.detail === "string") return payload.detail;

@@ -10,7 +10,6 @@ export function createSession(language = "auto", formId = "income_certificate") 
         language,
       }),
     },
-    { auth: false },
   );
 }
 
@@ -37,7 +36,6 @@ export function askAssistant({
         language,
       }),
     },
-    { auth: false },
   );
 }
 
@@ -175,4 +173,3 @@ export function reverseLocation({ latitude, longitude, language = "auto" }) {
     { auth: false },
   );
 }
-

@@ -1,0 +1,27 @@
+.reactbits-spotlight-card {
+  position: relative;
+  overflow: hidden;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --spotlight-color: rgba(23, 104, 78, 0.14);
+}
+
+.reactbits-spotlight-card::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), var(--spotlight-color), transparent 76%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.reactbits-spotlight-card:hover::before,
+.reactbits-spotlight-card:focus-within::before {
+  opacity: 1;
+}
+
+.reactbits-spotlight-card > * {
+  position: relative;
+  z-index: 1;
+}

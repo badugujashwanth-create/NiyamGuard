@@ -6,7 +6,7 @@ from app.knowledge_base.platform_store import read_store
 router = APIRouter(
     prefix="/api/admin",
     tags=["Admin"],
-    dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))],
+    dependencies=[Depends(require_roles("admin"))],
 )
 
 

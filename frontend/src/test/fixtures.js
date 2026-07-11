@@ -598,6 +598,7 @@ export const ruleCandidates = [
     old_value: "12",
     new_value: "6",
     unit: "months",
+    change_summary: "12 -> 6 months",
     effective_date: "2026-07-01",
     confidence_score: 0.91,
     extraction_method: "deterministic",
@@ -619,6 +620,7 @@ export const policyHistory = [
     rule_key: "validity",
     old_value: "12",
     new_value: "6",
+    change_summary: "12 -> 6 months",
     created_at: "2026-07-09T00:00:00+00:00",
   },
 ];
@@ -632,6 +634,7 @@ export const ruleVersions = [
     rule_key: "validity",
     value: "6",
     unit: "months",
+    change_summary: "Validity updated to 6 months",
     source_circular_number: "GO-138",
     effective_date: "2026-07-01",
     is_current: true,
@@ -857,6 +860,31 @@ export const virtualGovStatus = {
   scenarios: 1,
 };
 
+export const sandboxStatus = {
+  success: true,
+  sandbox: "virtual_government",
+  circular_count: 1,
+  latest_status: "PDF Generated",
+};
+
+export const sandboxCirculars = [
+  {
+    id: "sbx_go_138",
+    department: "Revenue Department",
+    circular_number: "GO-138",
+    title: "Income Certificate Validity Update",
+    service_affected: "Income Certificate",
+    rule_key: "validity",
+    old_value: "12 months",
+    new_value: "6 months",
+    effective_date: "2026-07-01",
+    body: "Income Certificate validity is revised from 12 months to 6 months.",
+    status: "pdf_generated",
+    delivery_status: "PDF Generated",
+    pdf_url: "/api/sandbox/circulars/sbx_go_138/pdf",
+  },
+];
+
 export const virtualGovScenarios = [
   {
     scenario_id: "income_certificate_full_flow",
@@ -896,7 +924,7 @@ export const fullDemoResult = {
   success: true,
   steps: [
     ["reset_sandbox", "Reset sandbox", "Demo store reset to known GO-138 baseline."],
-    ["publish_circular", "Published GO-138 circular", "Virtual Gazette made GO-138 available."],
+    ["publish_circular", "Prepared GO-138 circular", "Sandbox circular was prepared for manual intake."],
     ["ingest_circular", "Ingested circular and extracted rule candidate", "Extracted 12 month to 6 month change."],
     ["update_verified_rule", "Updated verified rule engine", "Verified rule now points to GO-138."],
     ["update_service_portal", "Updated service portal rule context", "Income Certificate service is available."],
@@ -1023,6 +1051,7 @@ export function installApiMock(overrides = {}) {
   }
 
   const fetchMock = vi.fn((url, options = {}) => {
+    const method = (options.method || "GET").toUpperCase();
     if (url.endsWith("/api/auth/login")) {
       const requestBody = JSON.parse(options.body);
       if (requestBody.email === "admin@niyamguard.local" && requestBody.password === "Admin@12345") {
@@ -1097,6 +1126,49 @@ export function installApiMock(overrides = {}) {
     }
     if (url.endsWith("/api/virtual-gov/run")) {
       return jsonResponse(overrides.virtualGovResult || virtualGovResult);
+    }
+    if (url.endsWith("/api/sandbox/status")) {
+      return jsonResponse(overrides.sandboxStatus || sandboxStatus);
+    }
+    if (url.endsWith("/api/sandbox/circulars")) {
+      if (method === "POST") {
+        return jsonResponse({ success: true, circular: (overrides.sandboxCirculars || sandboxCirculars)[0] });
+      }
+      return jsonResponse({ success: true, circulars: overrides.sandboxCirculars || sandboxCirculars });
+    }
+    if (url.includes("/api/sandbox/circulars/") && url.endsWith("/generate-pdf")) {
+      return jsonResponse({
+        success: true,
+        circular_id: "sbx_go_138",
+        pdf_url: "/api/sandbox/circulars/sbx_go_138/pdf",
+        circular_number: "GO-138",
+        circular: (overrides.sandboxCirculars || sandboxCirculars)[0],
+      });
+    }
+    if (url.includes("/api/sandbox/circulars/") && url.endsWith("/export")) {
+      return jsonResponse({
+        success: true,
+        circular: (overrides.sandboxCirculars || sandboxCirculars)[0],
+        manual_upload: {
+          required: true,
+          upload_endpoint: "/api/circulars/upload",
+          pdf_url: "/api/sandbox/circulars/sbx_go_138/pdf",
+          raw_text: "GO-138 Income Certificate validity changed from 12 months to 6 months.",
+        },
+        message: "Circular is ready for government intake.",
+      });
+    }
+    if (url.includes("/api/sandbox/circulars/") && url.endsWith("/publish")) {
+      return jsonResponse({
+        success: true,
+        circular: (overrides.sandboxCirculars || sandboxCirculars)[0],
+        government_document: {
+          id: "cirdoc_sbx_go_138",
+          circular_number: "GO-138",
+          document_url: "/api/government/circulars/cirdoc_sbx_go_138/pdf",
+        },
+        message: "Circular published to the NiyamGuard Government Circular Inbox.",
+      });
     }
     if (url.endsWith("/api/sources")) {
       return jsonResponse({ success: true, sources: overrides.sources || sources });
@@ -1257,6 +1329,9 @@ export function installApiMock(overrides = {}) {
     }
     if (url.endsWith("/api/officer/pending") || url.endsWith("/api/officer/applications")) {
       return jsonResponse({ success: true, applications: [overrides.portalApplication || portalApplication] });
+    }
+    if (url.endsWith("/api/officer/applications/app_portal_001")) {
+      return jsonResponse({ success: true, application: overrides.portalApplication || portalApplication });
     }
     if (url.endsWith("/api/officer/applications/app_portal_001/approve")) {
       return jsonResponse({

@@ -19,6 +19,7 @@ from app.middleware.version_alias import ApiVersionAliasMiddleware
 from app.api.assistant_routes import router as assistant_router
 from app.api.admin_routes import router as admin_router
 from app.api.ai_routes import router as ai_router
+from app.api.audit_routes import officer_router as government_audit_router
 from app.api.audit_routes import router as audit_router
 from app.api.auth_routes import router as auth_router
 from app.api.cascade_routes import router as cascade_router
@@ -131,6 +132,7 @@ app.include_router(admin_router)
 app.include_router(report_router)
 app.include_router(public_router)
 app.include_router(audit_router)
+app.include_router(government_audit_router)
 app.include_router(demo_router)
 app.include_router(demo_self_update_router)
 app.include_router(virtual_government_router)

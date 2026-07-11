@@ -4,9 +4,33 @@ import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "../../hooks/useSpeechSynthesis";
 import { transcribeAudio } from "../../services/api";
 import { SPEECH_FALLBACK_MESSAGE } from "../../services/speechService";
+import AssistantTranscript from "./AssistantTranscript";
 
 const INTRO_TEXT =
   "Namaste. I am NiyamGuard Voice Assistant. I will help you fill this form step by step. You can speak in Telugu, Hindi, or English. Tell me where you need help.";
+
+const VOICE_LANGUAGES = [
+  { code: "en-IN", language: "english", label: "English", whisper: "en" },
+  { code: "te-IN", language: "telugu", label: "తెలుగు", whisper: "te" },
+  { code: "hi-IN", language: "hindi", label: "हिन्दी", whisper: "hi" },
+  { code: "auto", language: "auto", label: "Auto-detect", whisper: "auto" },
+];
+
+const LOCALIZED_INTROS = {
+  telugu:
+    "నమస్తే. నేను నియమ్‌గార్డ్ వాయిస్ అసిస్టెంట్‌ని. నేను మీకు దశలవారీగా సహాయం చేస్తాను. మీరు తెలుగులో మాట్లాడవచ్చు. మీకు ఏ సహాయం కావాలో చెప్పండి.",
+  hindi:
+    "नमस्ते। मैं नियमगार्ड वॉइस असिस्टेंट हूँ। मैं आपको चरण-दर-चरण सहायता दूँगा। आप हिन्दी में बोल सकते हैं। बताइए आपको किस विषय में मदद चाहिए।",
+};
+
+const DEFAULT_RECORDING_MS = 5500;
+const PREFER_BROWSER_STT_FOR_TELUGU =
+  String(import.meta.env.VITE_PREFER_BROWSER_STT_FOR_TELUGU || "true").toLowerCase() !== "false";
+
+function recordingWindowMs() {
+  const configured = Number(import.meta.env.VITE_STT_RECORDING_MS || DEFAULT_RECORDING_MS);
+  return Number.isFinite(configured) ? Math.min(8000, Math.max(3000, configured)) : DEFAULT_RECORDING_MS;
+}
 
 const STATE_LABELS = {
   idle: "Stopped",
@@ -25,7 +49,8 @@ function sourceBadges(source) {
   if (source?.method === "rag_search") badges.push("RAG Search");
   if (source?.method === "local_llm") badges.push("Local LLM");
   if (source?.method === "safe_fallback") badges.push("Safe Fallback");
-  if (source?.sourceType === "verified_rule" || source?.verified) badges.push("Verified Rule");
+  if (source?.sourceType === "certificate_baseline") badges.push("Certificate Baseline");
+  if (source?.sourceType === "verified_rule") badges.push("Verified Rule");
   if (source?.sourceType === "rag") badges.push("RAG Source");
   if (source?.sourceSourceType === "seed_demo" || /seed/i.test(source?.circular || "")) {
     badges.push("Seed Demo Data");
@@ -56,7 +81,9 @@ export default function VoiceAssistantPanel({
   const [textMessage, setTextMessage] = useState("");
   const [lastHeard, setLastHeard] = useState("");
   const [statusMessage, setStatusMessage] = useState("Stopped");
-  const [textFallbackOpen, setTextFallbackOpen] = useState(false);
+  const [selectedLanguageCode, setSelectedLanguageCode] = useState("en-IN");
+  const [sttWarning, setSttWarning] = useState("");
+  const [sttMetrics, setSttMetrics] = useState(null);
   const [locationStatus, setLocationStatus] = useState("");
   const [pincode, setPincode] = useState("");
   const activeRef = useRef(false);
@@ -64,6 +91,8 @@ export default function VoiceAssistantPanel({
   const mediaStreamRef = useRef(null);
   const recorderRef = useRef(null);
   const recordTimerRef = useRef(null);
+  const silenceMonitorRef = useRef(null);
+  const audioContextRef = useRef(null);
   const chunksRef = useRef([]);
   const useBrowserFallbackRef = useRef(false);
   const processingTranscriptRef = useRef("");
@@ -78,9 +107,14 @@ export default function VoiceAssistantPanel({
     stop: stopSpeaking,
   } = useSpeechSynthesis();
 
+  const selectedLanguage =
+    VOICE_LANGUAGES.find((option) => option.code === selectedLanguageCode) || VOICE_LANGUAGES[0];
+  const recognitionLanguageCode =
+    selectedLanguage.code === "auto" ? lastLanguageCode || "en-IN" : selectedLanguage.code;
+
   async function processTranscript(transcript, source = "voice") {
     const cleaned = transcript.trim();
-    if (!cleaned || cleaned.length < 3 || cleaned === processingTranscriptRef.current) {
+    if (!cleaned || cleaned.length < 3) {
       failedAttemptsRef.current += 1;
       setAssistantState("error");
       setStatusMessage(
@@ -91,13 +125,31 @@ export default function VoiceAssistantPanel({
       if (activeRef.current) window.setTimeout(startListening, 900);
       return;
     }
+    if (cleaned === processingTranscriptRef.current) return;
     processingTranscriptRef.current = cleaned;
     failedAttemptsRef.current = 0;
     setLastHeard(cleaned);
     setAssistantState("processing");
     setStatusMessage("Thinking...");
     pauseBrowserRecognition();
-    await onAsk(cleaned, { source });
+    try {
+      const response = await onAsk(cleaned, {
+        source,
+        language: selectedLanguage.language,
+        languageCode: recognitionLanguageCode,
+      });
+      if (!response) {
+        throw new Error("The assistant did not return a response.");
+      }
+    } catch (requestError) {
+      setAssistantState("error");
+      setStatusMessage(
+        requestError?.message || "Assistant request failed. Review the error below and try again.",
+      );
+      if (activeRef.current) window.setTimeout(startListening, 1200);
+    } finally {
+      processingTranscriptRef.current = "";
+    }
   }
 
   const {
@@ -112,13 +164,59 @@ export default function VoiceAssistantPanel({
     clearTranscript,
     support: speechSupport,
   } = useSpeechRecognition({
-    languageCode: lastLanguageCode,
+    languageCode: recognitionLanguageCode,
     onFinalTranscript: (transcript) => {
       if (useBrowserFallbackRef.current && activeRef.current) {
         void processTranscript(transcript, "browser-fallback");
       }
     },
   });
+
+  const cleanupSilenceMonitor = useCallback(() => {
+    clearInterval(silenceMonitorRef.current);
+    silenceMonitorRef.current = null;
+    const context = audioContextRef.current;
+    audioContextRef.current = null;
+    if (context && context.state !== "closed") {
+      void context.close().catch(() => {});
+    }
+  }, []);
+
+  const monitorRecordingSilence = useCallback((recorder, stream) => {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    try {
+      const context = new AudioContextClass();
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 1024;
+      context.createMediaStreamSource(stream).connect(analyser);
+      const samples = new Uint8Array(analyser.fftSize);
+      const startedAt = performance.now();
+      let heardVoice = false;
+      let silenceStartedAt = null;
+      audioContextRef.current = context;
+      silenceMonitorRef.current = window.setInterval(() => {
+        if (recorder.state === "inactive") return;
+        analyser.getByteTimeDomainData(samples);
+        const rms = Math.sqrt(
+          samples.reduce((sum, sample) => {
+            const normalized = (sample - 128) / 128;
+            return sum + normalized * normalized;
+          }, 0) / samples.length,
+        );
+        const now = performance.now();
+        if (rms >= 0.022) {
+          heardVoice = true;
+          silenceStartedAt = null;
+        } else if (heardVoice && now - startedAt >= 900) {
+          silenceStartedAt ??= now;
+          if (now - silenceStartedAt >= 850) recorder.stop();
+        }
+      }, 100);
+    } catch {
+      cleanupSilenceMonitor();
+    }
+  }, [cleanupSilenceMonitor]);
 
   const cleanupRecording = useCallback(() => {
     clearTimeout(recordTimerRef.current);
@@ -131,7 +229,8 @@ export default function VoiceAssistantPanel({
       }
     }
     recorderRef.current = null;
-  }, []);
+    cleanupSilenceMonitor();
+  }, [cleanupSilenceMonitor]);
 
   const stopAllListening = useCallback(() => {
     cleanupRecording();
@@ -165,7 +264,6 @@ export default function VoiceAssistantPanel({
       activeRef.current = false;
       setAssistantState("stopped");
       setStatusMessage("Voice input needs localhost or HTTPS. You can continue using text.");
-      setTextFallbackOpen(true);
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
@@ -187,6 +285,7 @@ export default function VoiceAssistantPanel({
         if (event.data?.size) chunksRef.current.push(event.data);
       };
       recorder.onstop = async () => {
+        cleanupSilenceMonitor();
         if (!activeRef.current || useBrowserFallbackRef.current) return;
         const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
         chunksRef.current = [];
@@ -195,34 +294,43 @@ export default function VoiceAssistantPanel({
         try {
           const stt = await transcribeAudio({
             audioBlob,
-            languageHint: "auto",
+            languageHint: selectedLanguage.whisper,
             formId,
             sessionId,
+          });
+          setSttWarning("");
+          setSttMetrics({
+            provider: stt.provider || "speech service",
+            processingMs: stt.processing_ms ?? stt.timing_ms?.processing,
           });
           if (!stt.transcript || stt.confidence < 0.3) {
             await processTranscript("", "backend-stt");
             return;
           }
           await processTranscript(stt.transcript, "backend-stt");
-        } catch {
+        } catch (sttError) {
+          setSttWarning(
+            `${sttError?.message || "Local transcription failed."} Using browser speech recognition.`,
+          );
           useBrowserFallbackRef.current = true;
+          setSttMetrics({ provider: "browser speech recognition", processingMs: null });
           startBrowserFallback();
         }
       };
       setAssistantState("listening");
       setStatusMessage("Listening...");
       recorder.start();
+      monitorRecordingSilence(recorder, mediaStreamRef.current);
       clearTimeout(recordTimerRef.current);
       recordTimerRef.current = window.setTimeout(() => {
         if (recorder.state !== "inactive") recorder.stop();
-      }, 4500);
+      }, recordingWindowMs());
     } catch (recordingError) {
       useBrowserFallbackRef.current = true;
       if (recordingError?.name === "NotAllowedError") {
         activeRef.current = false;
         setAssistantState("stopped");
         setStatusMessage("Microphone permission was denied. Use Text Instead.");
-        setTextFallbackOpen(true);
         return;
       }
       startBrowserFallback();
@@ -235,7 +343,6 @@ export default function VoiceAssistantPanel({
       activeRef.current = false;
       setAssistantState("stopped");
       setStatusMessage(SPEECH_FALLBACK_MESSAGE);
-      setTextFallbackOpen(true);
       return;
     }
     useBrowserFallbackRef.current = true;
@@ -246,6 +353,16 @@ export default function VoiceAssistantPanel({
 
   function startListening() {
     if (!activeRef.current) return;
+    if (
+      selectedLanguage.language === "telugu" &&
+      PREFER_BROWSER_STT_FOR_TELUGU &&
+      browserRecognitionSupported
+    ) {
+      useBrowserFallbackRef.current = true;
+      setSttMetrics({ provider: "browser speech recognition (Telugu)", processingMs: null });
+      startBrowserFallback();
+      return;
+    }
     if (useBrowserFallbackRef.current) {
       startBrowserFallback();
       return;
@@ -257,7 +374,6 @@ export default function VoiceAssistantPanel({
     if (sessionStatus !== "ready") return;
     if (!speechSupport.supported) {
       setStatusMessage(speechSupport.reason || SPEECH_FALLBACK_MESSAGE);
-      setTextFallbackOpen(true);
       return;
     }
     activeRef.current = true;
@@ -267,7 +383,12 @@ export default function VoiceAssistantPanel({
     processingTranscriptRef.current = "";
     if (!introSpokenRef.current) {
       introSpokenRef.current = true;
-      await speakAndMaybeResume(introText, "en-IN", "english");
+      const introduction = LOCALIZED_INTROS[selectedLanguage.language] || introText;
+      await speakAndMaybeResume(
+        introduction,
+        recognitionLanguageCode,
+        selectedLanguage.language === "auto" ? "english" : selectedLanguage.language,
+      );
     } else {
       startListening();
     }
@@ -350,25 +471,44 @@ export default function VoiceAssistantPanel({
     [stopAllListening, stopSpeaking],
   );
 
-  const latestUserMessage = lastHeard || browserTranscript;
-  const latestAssistantText = assistantReply?.reply || "";
   const voiceUnavailable = !speechSupport.supported;
 
   return (
-    <aside className="assistant-card simple-assistant" aria-labelledby="assistant-title">
+    <aside className="assistant-card chatbot-card" aria-labelledby="assistant-title">
       <div className="assistant-header">
         <div className="assistant-mark" aria-hidden="true">
           NG
         </div>
         <div>
-          <p className="eyebrow">Voice guidance</p>
-          <h2 id="assistant-title">NiyamGuard Voice Assistant</h2>
+          <p className="eyebrow">Citizen assistant</p>
+          <h2 id="assistant-title">NiyamGuard Chatbot</h2>
         </div>
       </div>
 
       <div className="assistant-status" role="status" aria-live="polite">
         {statusMessage || STATE_LABELS[assistantState]}
       </div>
+
+      <label className="voice-language-control" htmlFor="assistant-voice-language">
+        Voice language
+        <select
+          disabled={activeRef.current || assistantState === "speaking"}
+          id="assistant-voice-language"
+          onChange={(event) => {
+            setSelectedLanguageCode(event.target.value);
+            useBrowserFallbackRef.current = false;
+            introSpokenRef.current = false;
+            setSttWarning("");
+          }}
+          value={selectedLanguageCode}
+        >
+          {VOICE_LANGUAGES.map((option) => (
+            <option key={option.code} value={option.code}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <div className="voice-controls">
         <button
@@ -390,23 +530,14 @@ export default function VoiceAssistantPanel({
         </button>
         <button
           className="button button-secondary"
-          onClick={() => setTextFallbackOpen(true)}
+          onClick={() => document.getElementById("assistant-question")?.focus()}
           type="button"
         >
-          Use Text Instead
+          Type
         </button>
       </div>
 
-      <div className="assistant-brief">
-        <p>
-          <span>Last thing you said</span>
-          {latestUserMessage || "Nothing heard yet."}
-        </p>
-        <p>
-          <span>Assistant answer</span>
-          {latestAssistantText || "Start voice help and ask a question."}
-        </p>
-      </div>
+      <AssistantTranscript messages={messages} liveTranscript={browserTranscript || lastHeard} />
 
       {assistantReply?.warning ? (
         <p className="reply-warning">{assistantReply.warning}</p>
@@ -416,33 +547,20 @@ export default function VoiceAssistantPanel({
         <VerifiedSourceCard source={assistantReply.verified_source} />
       ) : null}
 
-      {synthesisError || lastVoiceWarning || browserSpeechError || (voiceUnavailable && speechSupport.reason) ? (
-        <p className="support-message support-error">
-          {synthesisError || lastVoiceWarning || browserSpeechError || speechSupport.reason}
+      {sttMetrics?.provider ? (
+        <p className="support-message voice-provider-status">
+          Listening provider: {sttMetrics.provider}
+          {Number.isFinite(sttMetrics.processingMs)
+            ? ` (${Math.round(sttMetrics.processingMs)} ms)`
+            : ""}
         </p>
       ) : null}
 
-      <details className="trouble-panel" open={textFallbackOpen} onToggle={(event) => setTextFallbackOpen(event.currentTarget.open)}>
-        <summary>Having trouble? Type instead</summary>
-        <form className="text-question" onSubmit={sendTypedMessage}>
-          <label htmlFor="assistant-question">Type your question</label>
-          <div>
-            <input
-              id="assistant-question"
-              onChange={(event) => setTextMessage(event.target.value)}
-              placeholder={textPlaceholder}
-              value={textMessage}
-            />
-            <button
-              className="button button-primary"
-              disabled={!textMessage.trim() || asking || sessionStatus !== "ready"}
-              type="submit"
-            >
-              Ask
-            </button>
-          </div>
-        </form>
-      </details>
+      {sttWarning || synthesisError || lastVoiceWarning || browserSpeechError || (voiceUnavailable && speechSupport.reason) ? (
+        <p className="support-message support-error">
+          {sttWarning || synthesisError || lastVoiceWarning || browserSpeechError || speechSupport.reason}
+        </p>
+      ) : null}
 
       <details className="trouble-panel">
         <summary>Need mandal or location help?</summary>
@@ -471,6 +589,25 @@ export default function VoiceAssistantPanel({
         </button>
         {locationStatus ? <p className="support-message">{locationStatus}</p> : null}
       </details>
+
+      <form className="chatbot-composer text-question" onSubmit={sendTypedMessage}>
+        <label htmlFor="assistant-question">Message</label>
+        <div className="chatbot-composer-row">
+          <input
+            id="assistant-question"
+            onChange={(event) => setTextMessage(event.target.value)}
+            placeholder={textPlaceholder}
+            value={textMessage}
+          />
+          <button
+            className="button button-primary"
+            disabled={!textMessage.trim() || asking || sessionStatus !== "ready"}
+            type="submit"
+          >
+            Ask
+          </button>
+        </div>
+      </form>
     </aside>
   );
 }
@@ -504,7 +641,7 @@ function VerifiedSourceCard({ source }) {
         </div>
         <div>
           <dt>Rule</dt>
-          <dd>{source.rule || "Income Certificate Validity"}</dd>
+          <dd>{source.rule || "Citizen Service Guidance"}</dd>
         </div>
         <div>
           <dt>Current Value</dt>

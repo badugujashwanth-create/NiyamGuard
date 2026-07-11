@@ -1,5 +1,5 @@
 import { getAccessToken, getStoredUser } from "../../services/api";
-import { canAccessRoute, isPublicRoute, roleHomePath } from "../utils/authUtils";
+import { canAccessRoute, isPublicRoute, roleHomePath } from "../../utils/authUtils";
 
 export default function AuthGuard({ path, children, onRedirect }) {
   const user = getStoredUser();

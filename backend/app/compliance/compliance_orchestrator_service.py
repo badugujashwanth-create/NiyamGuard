@@ -20,7 +20,11 @@ def rerun_for_rule(rule_id: str, trigger_type: str = "manual", triggered_by: str
         finding_count=len(findings),
     )
     store.compliance_runs.append(run)
-    add_audit_event(store, "compliance_rerun", {"entity_type": "verified_rule", "entity_id": rule_id})
+    add_audit_event(
+        store,
+        "compliance_rerun",
+        {"entity_type": "verified_rule", "entity_id": rule_id, "triggered_by": triggered_by},
+    )
     write_store(store)
     return run
 

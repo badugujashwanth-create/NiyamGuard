@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.services import scheme_finder_service
+from app.security.rbac import require_roles
 
 router = APIRouter(prefix="/api/scheme-finder", tags=["Scheme Finder"])
 
@@ -22,6 +23,6 @@ class SchemeFinderRequest(BaseModel):
     purpose: str | None = None
 
 
-@router.post("/recommend")
+@router.post("/recommend", dependencies=[Depends(require_roles("citizen"))])
 def recommend(payload: SchemeFinderRequest) -> dict[str, Any]:
     return scheme_finder_service.recommend_schemes(payload.model_dump())

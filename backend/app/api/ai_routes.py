@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.schemas.chat_schemas import ChatRequest, ChatResponse
 from app.services import cascade_trace_service, compliance_service, priority_service
@@ -11,6 +11,7 @@ from app.services.ai import AIProviderFactory
 from app.services.ai.prompt_builder import circular_summary_prompt
 from app.citizen_assistant.knowledge_chat_service import answer_chat
 from app.knowledge_base.platform_store import read_store
+from app.security.rbac import require_roles
 
 router = APIRouter(prefix="/api/ai", tags=["Local AI"])
 
@@ -20,7 +21,7 @@ def ai_status() -> dict[str, Any]:
     return AIProviderFactory.status()
 
 
-@router.post("/verified-explanation")
+@router.post("/verified-explanation", dependencies=[Depends(require_roles("citizen"))])
 def verified_explanation(payload: dict[str, Any]) -> dict[str, Any]:
     question = str(payload.get("question") or "Explain GO-138 in simple words").strip()
     fallback_text = (
@@ -84,12 +85,12 @@ def _finding_payload(finding_id: str) -> dict[str, Any]:
     }
 
 
-@router.post("/impact-summary")
+@router.post("/impact-summary", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def generate_impact_summary(payload: dict[str, Any]) -> dict[str, Any]:
     return AIProviderFactory.get_client().generate_impact_summary(payload)
 
 
-@router.post("/finding/{finding_id}/impact-summary")
+@router.post("/finding/{finding_id}/impact-summary", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def finding_impact_summary(finding_id: str) -> dict[str, Any]:
     payload = _finding_payload(finding_id)
     return AIProviderFactory.get_client().generate_impact_summary(payload)
@@ -114,7 +115,7 @@ def _circular_payload(identifier: str) -> dict[str, Any] | None:
     return None
 
 
-@router.post("/circular-summary")
+@router.post("/circular-summary", dependencies=[Depends(require_roles("officer", "reviewer"))])
 def circular_summary(payload: dict[str, Any]) -> dict[str, Any]:
     circular_id = str(payload.get("circular_id") or payload.get("circular_number") or "").strip()
     circular = _circular_payload(circular_id) if circular_id else payload.get("circular")
@@ -145,7 +146,7 @@ def circular_summary(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post("/chat", response_model=ChatResponse, dependencies=[Depends(require_roles("citizen"))])
 def ai_chat(payload: ChatRequest) -> ChatResponse:
     return answer_chat(
         payload.message,

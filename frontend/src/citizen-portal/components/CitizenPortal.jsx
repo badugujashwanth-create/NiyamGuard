@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { askHybridDemoQuestion } from "../../services/api";
+import SpotlightCard from "../../shared/react-bits/SpotlightCard";
 import { useCitizenAssistant, useCitizenAssistantPageContext } from "../context/CitizenAssistantContext";
 
 function message(role, text) {
@@ -19,10 +20,16 @@ const citizenActions = [
     action: "Open Services",
   },
   {
-    title: "Apply for Service",
-    description: "Start the Income Certificate application flow.",
-    href: "/apply/income_certificate",
-    action: "Apply Income Certificate",
+    title: "Apply Residence Certificate",
+    description: "Use the same guided form renderer for a Revenue Department certificate.",
+    href: "/apply/residence_certificate",
+    action: "Apply Residence",
+  },
+  {
+    title: "Apply Scholarship",
+    description: "Start an Education Department scholarship application.",
+    href: "/apply/post_matric_scholarship",
+    action: "Apply Scholarship",
   },
   {
     title: "My Applications",
@@ -43,12 +50,6 @@ const citizenActions = [
     action: "Verify Certificate",
   },
   {
-    title: "Citizen Assistant / Hybrid Answer Engine",
-    description: "Ask questions and receive source-backed answers.",
-    href: "/citizen/assistant",
-    action: "Open Assistant",
-  },
-  {
     title: "Find Possible Services",
     description: "Answer simple questions to find matching services.",
     href: "/scheme-finder",
@@ -57,15 +58,15 @@ const citizenActions = [
 ];
 
 const assistantChips = [
-  "income certificate validity entha",
-  "What documents are needed for income certificate?",
+  "What documents are needed for scholarship?",
+  "How do I apply for old age pension?",
+  "What is needed for birth certificate?",
   "How do I track my application?",
-  "Certificate verify kaise kare?",
 ];
 
 export default function CitizenPortal() {
   const assistant = useCitizenAssistant();
-  const [question, setQuestion] = useState("income certificate validity entha");
+  const [question, setQuestion] = useState("What documents are needed for scholarship?");
   const [answer, setAnswer] = useState(null);
   const [asking, setAsking] = useState(false);
   const [status, setStatus] = useState("");
@@ -75,7 +76,7 @@ export default function CitizenPortal() {
     () => ({
       mode: "landing",
       routePath: "/citizen",
-      formId: "income_certificate",
+      formId: "catalog",
       serviceName: "Citizen Portal",
       lastVisibleSection: "landing",
     }),
@@ -92,13 +93,13 @@ export default function CitizenPortal() {
       provider: response.provider,
       sourceType: source.type || "verified_rule",
       verified: Boolean(response.verified || source.verified),
-      circular: source.circular_number || metadata.circular_number || source.label || "GO-138",
+      circular: source.circular_number || metadata.circular_number || source.label || "NiyamGuard Knowledge Base",
       department: source.department || metadata.department || "Revenue",
-      rule: source.rule_key || "Income Certificate Validity",
-      currentValue: source.value || "6 months",
+      rule: source.rule_key || "Citizen Service Guidance",
+      currentValue: source.value || "Guidance",
       confidence: source.confidence || metadata.confidence || response.confidence,
       effectiveDate: source.effective_date || metadata.effective_date,
-      whySelected: "Selected because the question asks about the verified income certificate validity rule.",
+      whySelected: "Selected because the question matches the citizen service catalog or verified rule baseline.",
     };
   }
 
@@ -124,20 +125,13 @@ export default function CitizenPortal() {
     setStatus("Asking assistant...");
     setError("");
     try {
-      const response = await askHybridDemoQuestion(cleaned);
+      const response = await askHybridDemoQuestion(cleaned, { service_id: "catalog", page_mode: "landing" });
       const reply = applyAssistantResponse(response, cleaned);
       setStatus("Source-backed answer returned.");
       return reply;
     } catch (assistantError) {
       setStatus("");
       setError(assistantError.message);
-      const reply = {
-        reply: "I could not contact the guidance service. Please try again.",
-        warning: assistantError.message,
-        detected_language: "english",
-        language_code: "en-IN",
-      };
-      assistant.publishAssistantReply(reply);
       return null;
     } finally {
       setAsking(false);
@@ -174,7 +168,8 @@ export default function CitizenPortal() {
 
       <section className="citizen-quick-actions" aria-label="Citizen quick demo actions">
         <a className="button button-primary" href="/services">Open Services</a>
-        <a className="button button-primary" href="/apply/income_certificate">Apply Income Certificate</a>
+        <a className="button button-primary" href="/apply/residence_certificate">Apply Residence</a>
+        <a className="button button-primary" href="/apply/post_matric_scholarship">Apply Scholarship</a>
         <a className="button button-secondary" href="/track">Track Application</a>
         <a className="button button-secondary" href="/verify-certificate">Verify Certificate</a>
         <button className="button button-secondary" onClick={(event) => void handleAskAssistant(event)} type="button">
@@ -189,11 +184,11 @@ export default function CitizenPortal() {
         <div className="unified-section-heading citizen-section-heading">
           <div>
             <p className="eyebrow">Main Voice Assistant</p>
-            <h2>Apply for Certificates with Voice Assistant</h2>
+            <h2>Apply for Services with Voice Assistant</h2>
           </div>
           <span className="unified-status unified-status-ready">Text fallback ready</span>
         </div>
-        <article className="unified-result-panel citizen-voice-notes">
+        <SpotlightCard as="article" className="unified-result-panel citizen-voice-notes">
           <p className="eyebrow">Text Assistant Fallback</p>
           <h2>Voice is optional. Text always works.</h2>
           <p>
@@ -202,15 +197,15 @@ export default function CitizenPortal() {
           </p>
           <div className="source-badges">
             <span>Verified Source</span>
-            <span>GO-138</span>
+            <span>Service Catalog</span>
             <span>Hybrid Answer Engine</span>
           </div>
-        </article>
+        </SpotlightCard>
       </section>
 
       <section className="unified-grid citizen-feature-grid" aria-label="Citizen features">
         {citizenActions.map((item) => (
-          <article className="unified-card" key={item.title}>
+          <SpotlightCard as="article" className="unified-card" key={item.title}>
             <div className="unified-card-top">
               <h2>{item.title}</h2>
             </div>
@@ -218,11 +213,11 @@ export default function CitizenPortal() {
             <div className="unified-card-actions">
               <a className="button button-secondary" href={item.href}>{item.action}</a>
             </div>
-          </article>
+          </SpotlightCard>
         ))}
       </section>
 
-      <section className="unified-result-panel citizen-assistant-panel" aria-labelledby="citizen-assistant-title">
+      <SpotlightCard as="section" className="unified-result-panel citizen-assistant-panel" aria-labelledby="citizen-assistant-title">
         <p className="eyebrow">Citizen Assistant / Hybrid Answer Engine</p>
         <h2 id="citizen-assistant-title">Ask a Source-Backed Question</h2>
         <div className="citizen-question-chips" aria-label="Source-backed citizen Q&A examples">
@@ -262,7 +257,7 @@ export default function CitizenPortal() {
             <p>{answer.answer}</p>
           </div>
         ) : null}
-      </section>
+      </SpotlightCard>
     </main>
   );
 }
