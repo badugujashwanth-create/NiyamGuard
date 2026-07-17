@@ -6,6 +6,8 @@
 
 > Watch the locally recorded sandbox overview. It is explicitly a demo and not an official government portal.
 
+[Case study](docs/CASE_STUDY.md) · [Architecture](docs/architecture.md) · [Test evidence](docs/TEST_REPORT.md) · [Interview guide](docs/INTERVIEW_GUIDE.md)
+
 > NiyamGuard AI is a government policy compliance and citizen assistance platform: officials upload a circular once, the system extracts exactly what changed, checks every connected system (portals, SOPs, forms, FAQs) against that change, flags and prioritizes anything out of sync, and gives citizens verified, up-to-date answers and guided help through the same knowledge base - all with a full audit trail.
 
 NiyamGuard AI is a sandbox/pilot prototype. It does not submit real government applications, does not connect to real MeeSeva or department systems, and does not replace official government verification.
