@@ -119,8 +119,8 @@ const platformFlowCards = [
     href: "/officer",
   },
   {
-    title: "Certificate Authority",
-    description: "Generates a signed demo certificate after officer approval.",
+    title: "Demo Certificate Service",
+    description: "Generates a synthetic demo certificate after officer approval.",
     href: "/officer",
   },
   {
@@ -344,14 +344,17 @@ export default function DemoDashboard() {
 
   return (
     <main className="demo-shell">
+      <section className="unified-banner" role="note">
+        Recruiter walkthrough — synthetic data only. No official application, payment, or certificate is created.
+      </section>
       <section className="demo-hero">
         <div>
-          <p className="eyebrow">Final presentation dashboard</p>
+          <p className="eyebrow">Guided product simulation</p>
           <h1>NiyamGuard AI Demo</h1>
           <p>
-            One path for judges: verified circulars, compliance drift detection,
-            citizen impact tracing, and a voice assistant that answers from the
-            approved public rule API.
+            One recruiter-friendly path through a policy change, human approval,
+            compliance drift, citizen impact, a synthetic service journey, and
+            source-backed guidance.
           </p>
         </div>
         <div className="demo-hero-actions" aria-label="Demo quick links">
@@ -481,7 +484,7 @@ export default function DemoDashboard() {
           <p className="eyebrow">Where AI is used</p>
           <h2 id="demo-ai-title">Local explanations, deterministic decisions</h2>
           <p>
-            NiyamGuard uses deterministic verification for official compliance decisions.
+            NiyamGuard uses deterministic verification for sandbox compliance decisions.
             A local LLM through Ollama is used only to explain verified findings and answer
             citizen questions from retrieved knowledge sources.
           </p>

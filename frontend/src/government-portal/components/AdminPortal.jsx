@@ -753,7 +753,7 @@ function DashboardPage({
         <section className="admin-panel admin-panel-wide">
           <h3>Report Export</h3>
           <p>
-            Export official-ready CSV or JSON artifacts after the demo run.
+            Export sandbox-review CSV or JSON artifacts after the demo run.
             Current report summary includes {numberOrZero(reports?.compliance_findings)} compliance findings.
           </p>
           <div className="admin-report-actions">
@@ -1910,8 +1910,8 @@ function AuditPage({ events, verification }) {
           <h3>Audit Log</h3>
           <p>Important government-core actions are recorded with actor, request, and hash-chain metadata.</p>
         </div>
-        <StatusPill tone={verification?.valid ? "green" : "red"}>
-          {verification?.valid ? "Hash chain verified" : "Verification warning"}
+        <StatusPill tone={verification?.chain_intact ? "green" : "red"}>
+          {verification?.chain_intact ? "Hash chain verified" : "Verification warning"}
         </StatusPill>
       </div>
       <div className="admin-table-wrap">

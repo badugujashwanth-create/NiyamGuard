@@ -1,16 +1,28 @@
 WEBVTT
 
-00:00.000 --> 00:05.000
-NiyamGuard AI
+00:00.000 --> 00:24.000
+NiyamGuard is a synthetic policy-compliance and citizen-service sandbox, not an official government portal.
 
-00:05.000 --> 00:15.000
-The problem, intended user, and starting point.
+00:24.000 --> 00:52.000
+GO-138 changes Income Certificate validity from 12 months to 6 months. Ingestion, extraction, human review, publication, and propagation remain separate states.
 
-00:15.000 --> 00:32.000
-A walkthrough of the primary workflow using safe demonstration data.
+00:52.000 --> 01:35.000
+The real end-to-end simulation creates reviewed policy state, checks mock systems, creates a synthetic application and simulated payment, performs officer review, issues a demo certificate, verifies it, and records audit evidence.
 
-00:32.000 --> 00:42.000
-Architecture, technology boundaries, and verified behavior.
+01:35.000 --> 02:03.000
+The hybrid engine answers from the verified source. Optional Ollama explanation falls back honestly when the local model is unavailable.
 
-00:42.000 --> 00:50.000
-Current status, known limitation, and repository owner badugujashwanth-create.
+02:03.000 --> 02:50.000
+Mock systems are reset to the stale 12-month value, then the explicit demo workflow publishes and patches them to the verified 6-month rule. No real portal is contacted.
+
+02:50.000 --> 03:28.000
+The citizen portal answers a validity question from the same verified rule and shows provenance. It does not auto-fill or submit an official application.
+
+03:28.000 --> 03:52.000
+The generated demo certificate is verified using the simulation hash. This is not a government signature or certificate authority.
+
+03:52.000 --> 04:18.000
+Audit evidence makes sandbox actions reviewable. Tests, builds, dependency checks, and secret scans support a strong local prototype claim.
+
+04:18.000 --> 04:35.000
+Real deployment still requires authorized integrations, managed secrets, privacy, accessibility, security, legal, and department review.

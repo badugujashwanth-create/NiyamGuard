@@ -13,6 +13,13 @@ const portalChoices = [
     href: "/government",
     action: "Open Government Portal",
   },
+  {
+    title: "Guided Product Demo",
+    description:
+      "Watch the complete synthetic rule-to-service simulation with verified sources, human approval, compliance evidence, and audit history.",
+    href: "/demo",
+    action: "Open Guided Demo",
+  },
 ];
 
 export default function UnifiedLanding() {
@@ -25,7 +32,7 @@ export default function UnifiedLanding() {
       <header className="two-portal-header">
         <p className="eyebrow">NiyamGuard</p>
         <h1>NiyamGuard</h1>
-        <p>Choose one portal to start the demo.</p>
+        <p>Choose a safe sandbox path. Recruiters can start with the guided product demo.</p>
       </header>
 
       <section className="two-portal-grid" aria-label="NiyamGuard portals">
