@@ -109,7 +109,7 @@ describe("API client", () => {
             get: (name) =>
               ({
                 "X-TTS-Language-Code": "te-IN",
-                "X-TTS-Provider": "gtts",
+                "X-TTS-Provider": "edge_tts",
                 "X-TTS-Cache": "MISS",
               })[name] || null,
           },
@@ -131,7 +131,7 @@ describe("API client", () => {
       provider: "auto",
     });
     expect(result.blob).toBe(audioBlob);
-    expect(result.provider).toBe("gtts");
+    expect(result.provider).toBe("edge_tts");
   });
 
   it("sends audio blobs to the backend STT endpoint", async () => {

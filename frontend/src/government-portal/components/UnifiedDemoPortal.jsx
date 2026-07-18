@@ -67,14 +67,14 @@ const portalCards = [
     key: "virtual_government",
     title: "Virtual Government Sandbox",
     description:
-      "Virtual gazette, identity provider, OTP provider, payment gateway, certificate authority, document vault, integration monitor, and scenario runner.",
+      "Virtual gazette, identity provider, OTP provider, payment gateway, demo certificate service, document vault, integration monitor, and scenario runner.",
     href: "/virtual-gov",
     status: "Working",
     action: "Run Virtual Government Scenario",
     primaryLabel: "Open Sandbox",
     links: [
       { href: "/virtual-gov/scenario-runner", label: "Scenario Runner" },
-      { href: "/virtual-gov/cert-authority", label: "Certificate Authority" },
+      { href: "/virtual-gov/cert-authority", label: "Demo Certificate Service" },
     ],
   },
   {
@@ -89,12 +89,12 @@ const portalCards = [
   {
     key: "certificates",
     title: "Certificates",
-    description: "Generate certificates, sign in the sandbox certificate authority, and verify publicly.",
+    description: "Generate synthetic certificates in the sandbox and verify them publicly.",
     href: "/verify-certificate",
     status: "Working",
     action: "Verify Certificate",
     primaryLabel: "Open Verification",
-    links: [{ href: "/virtual-gov/cert-authority", label: "Certificate Authority" }],
+    links: [{ href: "/virtual-gov/cert-authority", label: "Demo Certificate Service" }],
   },
   {
     key: "audit",

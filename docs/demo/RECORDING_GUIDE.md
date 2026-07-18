@@ -10,9 +10,9 @@
 
 ## Record
 
-For a web-capable build, run scripts/record-demo.ps1 with the healthy local BaseUrl. The Playwright specification captures an overview screenshot, thumbnail, and WebM video. Review every frame before committing it.
+Run `scripts/record-demo.ps1 -BaseUrl http://127.0.0.1:5180` after the final UI and feature build is healthy. The Playwright specification executes the real recruiter simulation: policy lifecycle, full synthetic service flow, sourced answer, stale-system reset and patch, certificate verification, and audit view. The script then adds narration, preserves WebVTT captions, creates seven verification frames, and rejects output shorter than three minutes.
 
 ## Post-production
 
-Trim loading time only; do not splice in fake success states. Add demo-captions.vtt. If FFmpeg is available, create a compressed MP4 and preview GIF, then verify size and readability. Never commit a large raw capture.
+Do not splice in fake success states. Inspect all seven generated frames, verify narration/captions against visible states, and reject any frame containing unrelated or personal content. Commit only the compressed WebM, caption file, thumbnail, and verification evidence.
 

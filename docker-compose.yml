@@ -20,11 +20,11 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      APP_ENV: production
+      APP_ENV: development
       DEBUG: "false"
       DEMO_MODE: "true"
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/niyamguard
-      SECRET_KEY: change-this-secret-key-before-production
+      SECRET_KEY: local-compose-demo-only
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       TRUSTED_HOSTS: localhost,127.0.0.1,backend
       SEED_DEMO_ON_STARTUP: "true"

@@ -1,10 +1,10 @@
 # NiyamGuard AI
 
-> **Status: MVP / Pilot Prototype** — Automated backend and frontend checks pass, while external government and identity integrations remain mocked or sandboxed.
+> **Status: MVP / pilot sandbox** — automated backend and frontend checks pass, while government, identity, payment, and messaging integrations remain mocked or synthetic.
 
 [![Watch the NiyamGuard demo](docs/demo/demo-thumbnail.png)](docs/demo/demo.webm)
 
-> Watch the locally recorded sandbox overview. It is explicitly a demo and not an official government portal.
+> Watch the **4:44 narrated recruiter walkthrough**. It runs the real synthetic simulation from policy publication through drift remediation, citizen guidance, certificate verification, and audit review. It is a demo, not an official government portal. [Captions](docs/demo/demo-captions.vtt) · [verification evidence](docs/demo/verification/verification.json)
 
 [Case study](docs/CASE_STUDY.md) · [Architecture](docs/architecture.md) · [Test evidence](docs/TEST_REPORT.md) · [Interview guide](docs/INTERVIEW_GUIDE.md)
 
@@ -131,6 +131,17 @@ http://127.0.0.1:5180
 /mock/meeseva
 /mock/public-faq
 ```
+
+## Reproduce the Full Demo
+
+Start the isolated synthetic services, then record the same browser-driven journey used for the published video:
+
+```powershell
+.\scripts\start-recording-services.ps1
+.\scripts\record-demo.ps1 -BaseUrl http://127.0.0.1:5180
+```
+
+The recorder fails if the simulation fails or the final video is shorter than three minutes, is not 1280×720, or has no audio stream. It also writes sampled frames and machine-readable media evidence under `docs/demo/verification/`.
 
 ## Key APIs
 

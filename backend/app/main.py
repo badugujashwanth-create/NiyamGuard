@@ -1,11 +1,12 @@
 import logging
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.config import APP_NAME, APP_VERSION, PYTHON_REQUIREMENT, settings
+from app.config import APP_NAME, APP_VERSION, PYTHON_REQUIREMENT, settings, validate_runtime_settings
+from app.dependencies import require_demo_mode
 from app.database import init_db
 from app.middleware.error_handler import (
     http_exception_handler,
@@ -60,6 +61,7 @@ from app.services.auth_service import seed_default_users
 from app.knowledge_base.platform_store import ensure_demo_store_seeded
 
 logging.basicConfig(level=getattr(logging, settings.log_level, logging.INFO))
+validate_runtime_settings()
 
 app = FastAPI(
     title=APP_NAME,
@@ -124,17 +126,17 @@ app.include_router(policy_update_router)
 app.include_router(propagation_router)
 app.include_router(readiness_router)
 app.include_router(scheduler_router)
-app.include_router(mock_system_router)
+app.include_router(mock_system_router, dependencies=[Depends(require_demo_mode)])
 app.include_router(scheme_finder_router)
 app.include_router(service_portal_router)
 app.include_router(admin_router)
 app.include_router(report_router)
 app.include_router(public_router)
 app.include_router(audit_router)
-app.include_router(demo_router)
-app.include_router(demo_self_update_router)
-app.include_router(virtual_government_router)
-app.include_router(sandbox_router)
+app.include_router(demo_router, dependencies=[Depends(require_demo_mode)])
+app.include_router(demo_self_update_router, dependencies=[Depends(require_demo_mode)])
+app.include_router(virtual_government_router, dependencies=[Depends(require_demo_mode)])
+app.include_router(sandbox_router, dependencies=[Depends(require_demo_mode)])
 app.include_router(government_router)
 app.include_router(chatbot_router)
 

@@ -135,6 +135,27 @@ class Settings:
 
 settings = Settings()
 
+
+_PLACEHOLDER_SECRETS = {
+    "change-this-secret-key",
+    "change-this-secret-key-before-production",
+    "ci-secret-key",
+}
+
+
+def validate_runtime_settings(candidate: Settings = settings) -> None:
+    """Fail closed when production is configured with demo/development controls."""
+
+    if candidate.app_env.strip().lower() not in {"production", "prod"}:
+        return
+    secret = candidate.secret_key.strip()
+    if len(secret) < 32 or secret.lower() in _PLACEHOLDER_SECRETS:
+        raise RuntimeError("Production requires a non-placeholder SECRET_KEY of at least 32 characters.")
+    if candidate.debug:
+        raise RuntimeError("DEBUG must be false in production.")
+    if candidate.demo_mode:
+        raise RuntimeError("DEMO_MODE must be false in production.")
+
 APP_NAME = settings.app_name
 APP_VERSION = "1.0.0"
 PYTHON_REQUIREMENT = "3.12"
@@ -146,6 +167,6 @@ TELANGANA_LOCATIONS_PATH = APP_DIR / "data" / "telangana_locations.json"
 SESSION_STORAGE_PATH = APP_DIR / "storage" / "sessions.json"
 TTS_CACHE_DIR = APP_DIR / "storage" / "tts_cache"
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "auto").strip().lower() or "auto"
-ENABLE_GTTS = _bool_env("ENABLE_GTTS", True)
+ENABLE_EDGE_TTS = _bool_env("ENABLE_EDGE_TTS", True)
 ENABLE_BHASHINI = _bool_env("ENABLE_BHASHINI", False)
 SEED_KNOWLEDGE_PATH = APP_DIR / "data" / "seed_knowledge.json"

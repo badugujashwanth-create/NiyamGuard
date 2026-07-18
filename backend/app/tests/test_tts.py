@@ -6,24 +6,24 @@ from fastapi.testclient import TestClient
 from app.services import tts_service
 
 
-class FakeGtts:
+class FakeCommunicate:
     calls: list[tuple[str, str]] = []
 
-    def __init__(self, text: str, lang: str) -> None:
+    def __init__(self, text: str, voice: str) -> None:
         self.text = text
-        self.lang = lang
-        self.calls.append((text, lang))
+        self.voice = voice
+        self.calls.append((text, voice))
 
-    def write_to_fp(self, target) -> None:
-        target.write(b"ID3-niyamguard-test-audio")
+    def save_sync(self, target: str) -> None:
+        Path(target).write_bytes(b"ID3-niyamguard-test-audio")
 
 
 @pytest.fixture(autouse=True)
 def isolated_tts(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    FakeGtts.calls = []
-    monkeypatch.setattr(tts_service, "gTTS", FakeGtts)
+    FakeCommunicate.calls = []
+    monkeypatch.setattr(tts_service.edge_tts, "Communicate", FakeCommunicate)
     monkeypatch.setattr(tts_service, "TTS_CACHE_DIR", tmp_path / "tts-cache")
 
 
@@ -32,8 +32,8 @@ def test_tts_health(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "success": True,
-        "available_providers": ["browser", "gtts"],
-        "default_provider": "gtts",
+        "available_providers": ["browser", "edge_tts"],
+        "default_provider": "edge_tts",
         "supported_languages": {
             "telugu": "te-IN",
             "hindi": "hi-IN",
@@ -58,18 +58,18 @@ def test_cors_exposes_tts_metadata_headers(client: TestClient) -> None:
 
 
 @pytest.mark.parametrize(
-    ("text", "language_code", "gtts_language"),
+    ("text", "language_code", "edge_voice"),
     [
-        ("నమస్తే", "te-IN", "te"),
-        ("नमस्ते", "hi-IN", "hi"),
-        ("Hello", "en-IN", "en"),
+        ("నమస్తే", "te-IN", "te-IN-ShrutiNeural"),
+        ("नमस्ते", "hi-IN", "hi-IN-SwaraNeural"),
+        ("Hello", "en-IN", "en-IN-NeerjaNeural"),
     ],
 )
 def test_tts_speak_returns_mp3(
     client: TestClient,
     text: str,
     language_code: str,
-    gtts_language: str,
+    edge_voice: str,
 ) -> None:
     response = client.post(
         "/api/tts/speak",
@@ -82,24 +82,24 @@ def test_tts_speak_returns_mp3(
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("audio/mpeg")
     assert response.headers["x-tts-language-code"] == language_code
-    assert response.headers["x-tts-provider"] == "gtts"
+    assert response.headers["x-tts-provider"] == "edge_tts"
     assert response.headers["x-tts-cache"] == "MISS"
     assert response.content.startswith(b"ID3")
-    assert FakeGtts.calls[-1] == (text, gtts_language)
+    assert FakeCommunicate.calls[-1] == (text, edge_voice)
 
 
 def test_tts_cache_uses_hashed_filename(client: TestClient) -> None:
     payload = {
         "text": "private spoken reply",
         "language_code": "en-IN",
-        "provider": "gtts",
+        "provider": "edge_tts",
     }
     first = client.post("/api/tts/speak", json=payload)
     second = client.post("/api/tts/speak", json=payload)
 
     assert first.headers["x-tts-cache"] == "MISS"
     assert second.headers["x-tts-cache"] == "HIT"
-    assert len(FakeGtts.calls) == 1
+    assert len(FakeCommunicate.calls) == 1
     cached_files = list(tts_service.TTS_CACHE_DIR.glob("*.mp3"))
     assert len(cached_files) == 1
     assert "private" not in cached_files[0].name
@@ -140,11 +140,11 @@ def test_unknown_tts_provider_returns_400(client: TestClient) -> None:
 def test_tts_provider_failure_returns_503(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    class BrokenGtts(FakeGtts):
-        def write_to_fp(self, target) -> None:
+    class BrokenCommunicate(FakeCommunicate):
+        def save_sync(self, target: str) -> None:
             raise OSError("network unavailable")
 
-    monkeypatch.setattr(tts_service, "gTTS", BrokenGtts)
+    monkeypatch.setattr(tts_service.edge_tts, "Communicate", BrokenCommunicate)
     response = client.post(
         "/api/tts/speak",
         json={"text": "నమస్తే", "language_code": "te-IN"},

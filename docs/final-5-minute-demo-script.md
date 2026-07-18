@@ -16,7 +16,7 @@ This is a virtual government sandbox and MeeSeva-style prototype, not an officia
 
 Open `http://127.0.0.1:5180/demo`.
 
-Start with the "How everything works" section. Explain that the cards show the full pilot flow: virtual gazette, policy engine, service portal, citizen application, officer review, certificate authority, public verification, compliance engine, audit trail, and hybrid answer engine.
+Start with the "How everything works" section. Explain that the cards show the full pilot flow: virtual gazette, policy engine, service portal, citizen application, officer review, synthetic certificate service, public verification, compliance engine, audit trail, and hybrid answer engine.
 
 ## 4. Circular update flow
 

@@ -992,7 +992,7 @@ export function audioResponse(
   content = "fake-mp3",
   {
     languageCode = "te-IN",
-    provider = "gtts",
+    provider = "edge_tts",
     cacheStatus = "MISS",
   } = {},
 ) {
@@ -1081,7 +1081,7 @@ export function installApiMock(overrides = {}) {
       return jsonResponse({ success: true, events: overrides.auditEvents || auditEvents });
     }
     if (url.endsWith("/api/audit/verify")) {
-      return jsonResponse({ success: true, valid: true, checked_events: 2 });
+      return jsonResponse({ success: true, chain_intact: true, checked_events: 2 });
     }
     if (url.endsWith("/api/ops/status")) {
       return jsonResponse(overrides.opsStatus || readinessReport.ops);
@@ -1487,8 +1487,8 @@ export function installApiMock(overrides = {}) {
     if (url.endsWith("/api/tts/health")) {
       return jsonResponse({
         success: true,
-        available_providers: ["browser", "gtts"],
-        default_provider: "gtts",
+        available_providers: ["browser", "edge_tts"],
+        default_provider: "edge_tts",
         supported_languages: {
           telugu: "te-IN",
           hindi: "hi-IN",
