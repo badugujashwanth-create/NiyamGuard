@@ -176,7 +176,7 @@ export function useSpeechSynthesis() {
             finish();
           };
           setLastVoiceMode("backend");
-          setLastProvider(result.provider || "gtts");
+          setLastProvider(result.provider || "edge_tts");
           setLastVoiceName("");
           setIsSpeaking(true);
           console.log("Speaking assistant reply");
@@ -186,7 +186,7 @@ export function useSpeechSynthesis() {
             mode: "backend",
             voiceFound: false,
             voiceName: null,
-            provider: result.provider || "gtts",
+            provider: result.provider || "edge_tts",
             languageCode,
           };
         } catch (backendError) {

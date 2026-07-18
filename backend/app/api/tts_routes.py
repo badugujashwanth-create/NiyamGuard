@@ -21,8 +21,8 @@ class TtsRequest(BaseModel):
 def tts_health() -> dict:
     return {
         "success": True,
-        "available_providers": ["browser", "gtts"],
-        "default_provider": "gtts",
+        "available_providers": ["browser", "edge_tts"],
+        "default_provider": "edge_tts",
         "supported_languages": {
             "telugu": "te-IN",
             "hindi": "hi-IN",
