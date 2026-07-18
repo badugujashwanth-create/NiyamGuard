@@ -133,15 +133,6 @@ const portalCards = [
     action: "Open Readiness",
     primaryLabel: "Open Readiness",
   },
-  {
-    key: "legacy_demo",
-    title: "Legacy Demo Dashboard",
-    description: "Original live presentation dashboard remains available as a secondary route.",
-    href: "/demo",
-    status: "Working",
-    action: "Open Demo",
-    primaryLabel: "Open Demo",
-  },
 ];
 
 const orderedStepKeys = [
@@ -386,7 +377,7 @@ async function handleAskHybrid() {
   return (
     <main className="unified-shell">
       <section className="unified-banner" role="note">
-        NiyamGuard Virtual Government Sandbox - Demo and pilot testing only. Not an official government portal.
+        NiyamGuard Virtual Government Sandbox - Synthetic pilot testing only. Not an official government portal.
       </section>
 
       <header className="unified-header">
@@ -401,7 +392,7 @@ async function handleAskHybrid() {
         </div>
         <div className="unified-actions">
           <button className="button button-primary" disabled={runStatus === "running"} onClick={handleRunFullDemo} type="button">
-            {runStatus === "running" ? "Running Full Demo..." : "Run Full End-to-End Demo"}
+            {runStatus === "running" ? "Running Full Simulation..." : "Run Full End-to-End Simulation"}
           </button>
           <button className="button button-secondary" disabled={loading} onClick={() => void loadStatus()} type="button">
             Refresh Status
@@ -413,7 +404,7 @@ async function handleAskHybrid() {
       {error ? <div className="global-error" role="alert">{error}</div> : null}
       {loading ? <p className="demo-loading">Loading portal status...</p> : null}
 
-      <section className="unified-live-strip" aria-label="Live demo status">
+      <section className="unified-live-strip" aria-label="Live system status">
         <article>
           <span>Backend</span>
           <strong>{liveStatus.integration?.status || "Unknown"}</strong>
@@ -440,7 +431,7 @@ async function handleAskHybrid() {
         </article>
       </section>
 
-      <section className="unified-grid" aria-label="Unified demo modules">
+      <section className="unified-grid" aria-label="Government product modules">
         {cards.map((card) => (
           <article className="unified-card" key={card.key}>
             <div className="unified-card-top">
@@ -488,7 +479,7 @@ async function handleAskHybrid() {
         <div className="unified-section-heading">
           <div>
             <p className="eyebrow">Guided workflow</p>
-            <h2 id="portal-stepper-title">Run Full End-to-End Demo</h2>
+            <h2 id="portal-stepper-title">Run Full End-to-End Simulation</h2>
           </div>
           <StatusBadge>{runStatus === "success" ? "success" : runStatus === "failed" ? "failed" : runStatus === "running" ? "running" : "pending"}</StatusBadge>
         </div>

@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.config import settings, validate_runtime_settings
+from app.database import normalize_database_url
 
 
 @pytest.mark.parametrize(
@@ -34,6 +35,19 @@ def test_production_accepts_hardened_runtime_settings() -> None:
             demo_mode=False,
         )
     )
+
+
+@pytest.mark.parametrize(
+    ("input_url", "expected_url"),
+    [
+        ("postgres://user:pass@db:5432/app", "postgresql+psycopg://user:pass@db:5432/app"),
+        ("postgresql://user:pass@db:5432/app", "postgresql+psycopg://user:pass@db:5432/app"),
+        ("postgresql+psycopg://user:pass@db:5432/app", "postgresql+psycopg://user:pass@db:5432/app"),
+        ("sqlite:///./niyamguard.db", "sqlite:///./niyamguard.db"),
+    ],
+)
+def test_database_url_uses_the_installed_postgres_driver(input_url: str, expected_url: str) -> None:
+    assert normalize_database_url(input_url) == expected_url
 
 
 @pytest.mark.parametrize(

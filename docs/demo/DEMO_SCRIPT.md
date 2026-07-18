@@ -1,6 +1,6 @@
 # NiyamGuard recruiter walkthrough
 
-**Runtime:** 4:44
+**Runtime:** 4:43
 
 **Format:** browser-driven Playwright simulation with narration and captions
 

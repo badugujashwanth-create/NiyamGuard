@@ -1,4 +1,4 @@
-import { request } from "./client";
+import { API_BASE_URL, request } from "./client";
 
 export function getSandboxStatus() {
   return request("/api/sandbox/status", {}, { auth: false });
@@ -36,6 +36,5 @@ export function publishSandboxCircular(circularId) {
 }
 
 export function sandboxPdfUrl(circularId) {
-  const base = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
-  return `${base.replace(/\/+$/, "")}/api/sandbox/circulars/${encodeURIComponent(circularId)}/pdf`;
+  return `${API_BASE_URL}/api/sandbox/circulars/${encodeURIComponent(circularId)}/pdf`;
 }

@@ -14,7 +14,7 @@ test("final two portal demo flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "NiyamGuard" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Citizen Portal" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Government Portal" })).toBeVisible();
-  await expect(page.getByText("Run Full End-to-End Demo")).toHaveCount(0);
+  await expect(page.getByText("Run Full End-to-End Simulation")).toHaveCount(0);
   await screenshot(page, "final-two-portal-01-landing.png");
 
   await page.getByRole("link", { name: "Open Citizen Portal" }).click();
@@ -38,7 +38,7 @@ test("final two portal demo flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Hybrid Answer Engine / Ollama" })).toBeVisible();
   await screenshot(page, "final-two-portal-03-government.png");
 
-  await page.getByRole("button", { name: "Run Full End-to-End Demo" }).click();
+  await page.getByRole("button", { name: "Run Full End-to-End Simulation" }).click();
   await expect(page.getByTestId("demo-application-number")).toContainText("NGSP-", { timeout: 60_000 });
   await expect(page.getByTestId("demo-certificate-number")).toContainText("NGCERT-", { timeout: 60_000 });
   await expect(page.getByText("Ollama Explanation Generated or Fallback Active")).toBeVisible();

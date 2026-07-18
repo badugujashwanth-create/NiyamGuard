@@ -26,7 +26,7 @@ Add contract-tested adapters, production identity/authorization, realistic load 
 
 ## How did you test it?
 
-The verified branch passes 235 backend and 60 frontend tests, plus a frontend production build and security checks in CI. A 4:44 browser-driven walkthrough exercises the real synthetic workflow. Explain that this is strong local evidence, not proof of production integrations.
+The verified branch passes 239 backend and 60 frontend tests, plus a frontend production build and security checks in CI. A 4:43 browser-driven walkthrough exercises the real synthetic workflow. Explain that this is strong local evidence, not proof of production integrations.
 
 ## What are its security limitations?
 

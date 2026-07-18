@@ -54,7 +54,7 @@ Demo identities and credentials are synthetic. The project does not submit real 
 
 ## 11. Testing strategy
 
-The verified branch passes 235 backend tests and 60 frontend tests. Coverage includes API behavior, production configuration boundaries, demo-route isolation, policy workflows, permissions, service logic, and portal behavior. CI runs both suites, dependency/security checks, and the frontend production build.
+The verified branch passes 239 backend tests and 60 frontend tests. Coverage includes API behavior, production configuration boundaries, demo-route isolation, deployment URL normalization, policy workflows, permissions, service logic, and portal behavior. CI runs both suites, dependency/security checks, and the frontend production build.
 
 ## 12. Performance considerations
 
@@ -69,7 +69,7 @@ The current focus is deterministic pilot behavior rather than scale benchmarks. 
 
 ## 14. Results demonstrated
 
-The repository demonstrates a working local policy lifecycle, two role-oriented interfaces, compliance-drift modeling, source-aware citizen guidance, an audit trail, 295 passing tests, a production frontend build, and a 4:44 narrated, captioned sandbox walkthrough.
+The repository demonstrates a working policy lifecycle, two role-oriented interfaces, compliance-drift modeling, source-aware citizen guidance, an audit trail, 299 passing tests, a production frontend build, a verified full-stack container, and a 4:43 narrated, captioned sandbox walkthrough.
 
 ## 15. What the developer learned
 

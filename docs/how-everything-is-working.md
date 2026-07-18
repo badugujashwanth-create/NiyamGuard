@@ -52,7 +52,7 @@ How to open:
 Frontend: `http://127.0.0.1:5180/admin/compliance`
 Backend: `http://127.0.0.1:8010/api/compliance/findings`
 How to test:
-Click `Run Compliance Demo` on `/demo`, then open the compliance page.
+Click `Run Compliance Check` on the product overview, then open the compliance page.
 
 7. Audit Trail
 What it does:

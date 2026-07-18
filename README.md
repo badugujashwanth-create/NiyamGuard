@@ -4,9 +4,9 @@
 
 [![Watch the NiyamGuard demo](docs/demo/demo-thumbnail.png)](docs/demo/demo.webm)
 
-> Watch the **4:44 narrated recruiter walkthrough**. It runs the real synthetic simulation from policy publication through drift remediation, citizen guidance, certificate verification, and audit review. It is a demo, not an official government portal. [Captions](docs/demo/demo-captions.vtt) · [verification evidence](docs/demo/verification/verification.json)
+> Watch the **4:43 narrated recruiter walkthrough**. It runs the real synthetic simulation from policy publication through drift remediation, citizen guidance, certificate verification, and audit review. It is a demo, not an official government portal. [Captions](docs/demo/demo-captions.vtt) · [verification evidence](docs/demo/verification/verification.json)
 
-[Case study](docs/CASE_STUDY.md) · [Architecture](docs/architecture.md) · [Test evidence](docs/TEST_REPORT.md) · [Interview guide](docs/INTERVIEW_GUIDE.md)
+[Case study](docs/CASE_STUDY.md) · [Architecture](docs/architecture.md) · [Test evidence](docs/TEST_REPORT.md) · [Deployment](docs/deployment.md) · [Interview guide](docs/INTERVIEW_GUIDE.md)
 
 > NiyamGuard AI is a government policy compliance and citizen assistance platform: officials upload a circular once, the system extracts exactly what changed, checks every connected system (portals, SOPs, forms, FAQs) against that change, flags and prioritizes anything out of sync, and gives citizens verified, up-to-date answers and guided help through the same knowledge base - all with a full audit trail.
 

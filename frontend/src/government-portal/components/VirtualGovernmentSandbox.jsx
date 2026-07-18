@@ -96,7 +96,7 @@ export default function VirtualGovernmentSandbox() {
           <h1>Virtual Government Sandbox</h1>
         </div>
         <div className="admin-header-actions">
-          <a className="button button-secondary" href="/demo">Demo dashboard</a>
+          <a className="button button-secondary" href="/demo">Product overview</a>
           <a className="button button-secondary" href="/admin/readiness">Readiness</a>
         </div>
       </header>
