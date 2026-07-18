@@ -74,6 +74,24 @@ def test_knowledge_reindex_records_current_rule_versions(client, reviewer_header
     assert events.json()["events"][0]["status"] == "completed"
 
 
+def test_policy_lineage_links_versions_and_downstream_evidence(client, viewer_headers) -> None:
+    response = client.get("/api/policy-updates/rules/rule_001/lineage", headers=viewer_headers)
+
+    assert response.status_code == 200
+    lineage = response.json()["lineage"]
+    assert lineage["chain_status"] == "intact"
+    assert lineage["current_version_id"] == "version_rule_001_2"
+    assert [node["version"]["version_number"] for node in lineage["nodes"]] == [1, 2]
+    assert lineage["nodes"][0]["superseded_by_version_id"] == "version_rule_001_2"
+    assert lineage["nodes"][1]["version"]["previous_version_id"] == "version_rule_001_1"
+
+
+def test_unknown_policy_lineage_returns_404(client, viewer_headers) -> None:
+    response = client.get("/api/policy-updates/rules/missing/lineage", headers=viewer_headers)
+
+    assert response.status_code == 404
+
+
 def test_propagation_demo_patch_updates_snapshot_and_mock_system(client, reviewer_headers) -> None:
     _publish_candidate(client, reviewer_headers)
     tasks = client.get("/api/propagation/tasks", headers=reviewer_headers).json()["tasks"]

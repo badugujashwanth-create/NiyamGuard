@@ -1,6 +1,6 @@
-# NiyamGuard recruiter walkthrough
+# NiyamGuard product walkthrough
 
-**Runtime:** 4:43
+**Accepted runtime:** 5:37 (337.408 seconds)
 
 **Format:** browser-driven Playwright simulation with narration and captions
 
@@ -16,7 +16,10 @@
 6. Reset the connected mock systems to stale 12-month guidance, then run and patch them to the verified 6-month state.
 7. Ask the citizen portal for verified income-certificate validity and show its source-aware answer.
 8. Verify the generated demo certificate by hash on the public page.
-9. Sign in with the synthetic admin account and review recorded audit events.
-10. Close on the feature map and state the remaining mocked government, identity, payment, and messaging integrations.
+9. Sign in with the synthetic admin account and show evidence-derived compliance score, coverage, and department readiness.
+10. Show policy lineage across immutable versions, knowledge refresh, propagation, and compliance evidence.
+11. Search the knowledge-relationship explorer for `Public FAQ` and show the linked drift state.
+12. Review recorded audit events.
+13. Close on the feature map and state the remaining mocked government, identity, payment, and messaging integrations.
 
 Do not show environment files, tokens, browser chrome containing personal data, notifications, real accounts, or private URLs. Do not edit footage to imply an unavailable integration succeeded.

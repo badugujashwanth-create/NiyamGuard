@@ -1,8 +1,8 @@
 # Final test and video report
 
-Date: 2026-07-18
+Date: 2026-07-19
 
-Branch: `product-completion-2026`
+Branch: `pilot-readiness-2026`
 
 ## Verified status
 
@@ -10,11 +10,11 @@ NiyamGuard is a portfolio-ready synthetic sandbox. It is not an official governm
 
 | Check | Result | Evidence |
 |---|---|---|
-| Backend suite | Pass | 239 tests; 2 known framework deprecation warnings |
+| Backend suite | Pass | 243 tests; 2 known framework deprecation warnings |
 | Frontend suite | Pass | 60 tests across 3 files |
 | Frontend build | Pass | Vite production bundle generated |
-| Recruiter simulation | Pass | Playwright completed the real browser flow in 4.9 minutes |
-| Final video | Pass | 283.648 seconds, 1280×720, VP9, Opus narration |
+| Product simulation | Pass | Playwright completed the real browser flow and recording |
+| Final video | Pass | 337.408 seconds, 1280×720, VP9, Opus narration |
 | Full-stack container | Pass | Same-origin SPA/API runtime, health endpoint, deep route, and API 404 verified |
 | Captions | Pass | `docs/demo/demo-captions.vtt` |
 | Production npm audit | Pass | 0 known production dependency vulnerabilities |
@@ -23,16 +23,17 @@ NiyamGuard is a portfolio-ready synthetic sandbox. It is not an official governm
 
 ## Demonstrated flow
 
-The accepted walkthrough shows the synthetic boundary, policy circular publication and extraction, human approval, verified-rule publication, downstream drift, mock-system remediation, citizen service application, mock payment and officer review, demo certificate generation, public verification, source-backed citizen guidance, optional local-AI fallback, and authenticated audit history.
+The accepted walkthrough shows the synthetic boundary, policy circular publication and extraction, human approval, verified-rule publication, downstream drift, mock-system remediation, citizen service application, mock payment and officer review, demo certificate generation, public verification, source-backed citizen guidance, optional local-AI fallback, evidence-derived compliance and department readiness, immutable policy lineage, searchable knowledge relationships, and authenticated audit history.
 
 ## Video evidence
 
 - Asset: `docs/demo/demo.webm`
 - Captions: `docs/demo/demo-captions.vtt`
-- Duration: 283.648 seconds
-- SHA-256: `5802108062397c3e95d234d58832672589d1b027d908a82c680318e6e2e0c633`
+- Duration: 337.408 seconds (5:37)
+- Size: 13,708,739 bytes
+- SHA-256: `859c36d0571f9b18ec32edf2520d500617ef5f595bdeeec7c460edd052f3aff2`
 - Machine-readable evidence: `docs/demo/verification/verification.json`
-- Visual samples: `docs/demo/verification/01-frame.png` through `07-frame.png`
+- Visual samples: `docs/demo/verification/01-frame.png` through `11-frame.png`
 
 ## Honest limits
 

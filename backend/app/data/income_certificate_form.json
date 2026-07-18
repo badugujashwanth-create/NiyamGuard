@@ -1,7 +1,7 @@
 {
   "form_id": "income_certificate",
   "form_name": "Income Certificate Application",
-  "description": "Simplified income certificate application form used for NiyamGuard Call Assistant MVP.",
+  "description": "Simplified income certificate application form used in the NiyamGuard citizen-service sandbox.",
   "fields": [
     {
       "key": "applicant_name",

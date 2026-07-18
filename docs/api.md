@@ -28,8 +28,13 @@ OpenAPI is available at `/docs` when the backend is running.
 - Compliance: `/api/compliance/*`
 - Cascade: `/api/cascade/*`
 - Priority: `/api/dashboard/*`
+- Evidence-derived readiness: `GET /api/dashboard/departments`
+- Policy versions: `GET /api/policy-updates/rules/{rule_id}/versions`
+- Policy lineage: `GET /api/policy-updates/rules/{rule_id}/lineage`
 - Conflicts: `/api/conflicts/*`
 - Reports: `/api/reports/*`
 - Audit: `/api/audit/*`
 
 Legacy `/api/...` routes remain available. `/api/v1/...` aliases are provided for versioned clients.
+
+The lineage response is read-only. It links immutable versions to publication, knowledge-update, propagation, compliance, and rollback evidence; it does not publish or modify a rule.

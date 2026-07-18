@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from app.compliance.analytics_service import compliance_metrics, department_readiness
 from app.security.rbac import require_roles
 from app.services import priority_service
 from app.knowledge_base.platform_store import read_store
@@ -11,6 +12,7 @@ router = APIRouter(prefix="/api/dashboard", tags=["Priority Dashboard"])
 def summary() -> dict:
     store = read_store()
     priorities = priority_service.list_priorities()
+    metrics = compliance_metrics()
     return {
         "success": True,
         "summary": {
@@ -22,8 +24,14 @@ def summary() -> dict:
             "drifted_findings": len([item for item in store.compliance_findings if item.status == "drifted"]),
             "critical_findings": len([item for item in priorities if item.priority_level == "critical"]),
             "open_conflicts": len([item for item in store.conflicts if item.status == "open"]),
+            **metrics,
         },
     }
+
+
+@router.get("/departments", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+def departments() -> dict:
+    return {"success": True, "departments": department_readiness()}
 
 
 @router.get("/priority-findings", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])

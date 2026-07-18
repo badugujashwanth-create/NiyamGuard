@@ -1,1 +1,1 @@
-"""NiyamGuard Call Assistant backend package."""
+"""NiyamGuard policy-compliance and citizen-service API package."""

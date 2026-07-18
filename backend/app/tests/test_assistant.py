@@ -12,8 +12,8 @@ def test_health_endpoint(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {
-        "message": "NiyamGuard Call Assistant Backend is running",
-        "version": "1.0.0",
+        "message": "NiyamGuard API is running",
+        "version": "1.1.0",
         "python": "3.12",
     }
 

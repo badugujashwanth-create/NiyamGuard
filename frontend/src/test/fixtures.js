@@ -167,6 +167,11 @@ export const adminSummary = {
   connected_systems: 5,
   compliance_findings: 4,
   drifted_findings: 3,
+  compliant_findings: 1,
+  assessed_findings: 4,
+  compliance_score: 25,
+  checked_systems: 4,
+  coverage_score: 80,
   critical_findings: 3,
   open_conflicts: 1,
   recent_audit_events: 2,
@@ -635,6 +640,20 @@ export const ruleVersions = [
     source_circular_number: "GO-138",
     effective_date: "2026-07-01",
     is_current: true,
+    previous_version_id: "version_rule_001_1",
+  },
+  {
+    id: "version_rule_001_1",
+    rule_id: "rule_001",
+    version_number: 1,
+    service_id: "income_certificate",
+    rule_key: "validity",
+    value: "12",
+    unit: "months",
+    source_circular_number: "GO-112",
+    effective_date: "2025-04-15",
+    is_current: false,
+    previous_version_id: null,
   },
 ];
 
@@ -1367,7 +1386,7 @@ export function installApiMock(overrides = {}) {
       return jsonResponse({
         module: "niyamguard_government_core",
         status: "online",
-        version: "1.0.0",
+        version: "1.1.0",
         features: [
           "verified_knowledge_base",
           "connected_systems_registry",
@@ -1393,6 +1412,24 @@ export function installApiMock(overrides = {}) {
     }
     if (url.endsWith("/api/dashboard/recalculate-priority")) {
       return jsonResponse({ success: true, priority_findings: priorityFindings });
+    }
+    if (url.endsWith("/api/dashboard/departments")) {
+      return jsonResponse({
+        success: true,
+        departments: [
+          {
+            department: "Revenue Department",
+            total_systems: 4,
+            checked_systems: 4,
+            compliant_findings: 1,
+            drifted_findings: 3,
+            critical_findings: 1,
+            compliance_score: 25,
+            coverage_score: 100,
+            readiness_status: "at_risk",
+          },
+        ],
+      });
     }
     if (url.endsWith("/api/conflicts/scan")) {
       return jsonResponse({ success: true, conflicts });

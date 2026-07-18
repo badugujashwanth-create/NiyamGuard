@@ -53,8 +53,8 @@ if ($health.StatusCode -ne 200) { throw "The frontend is not healthy at $BaseUrl
 $env:DEMO_BASE_URL = $BaseUrl.TrimEnd('/')
 Push-Location $frontendDir
 try {
-  npm exec playwright test tests/e2e/recruiter-walkthrough.spec.ts -- --workers=1
-  if ($LASTEXITCODE -ne 0) { throw "The complete recruiter simulation failed." }
+  npm exec playwright test tests/e2e/product-walkthrough.spec.ts -- --workers=1
+  if ($LASTEXITCODE -ne 0) { throw "The complete product simulation failed." }
 }
 finally { Pop-Location }
 
@@ -82,7 +82,19 @@ $audioFilter = "[1:a]apad=pad_dur=$duration[a]"
 if ($LASTEXITCODE -ne 0) { throw "Final demo encoding failed." }
 
 & $ffmpeg -hide_banner -loglevel error -y -ss 00:01:40 -i $output -frames:v 1 (Join-Path $demoDir "demo-thumbnail.png")
-$frameTimes = @("00:00:10", "00:00:30", "00:01:00", "00:01:40", "00:02:40", "00:03:50", "00:04:10")
+$frameTimes = @(
+  "00:00:10",
+  "00:00:35",
+  "00:01:10",
+  "00:02:20",
+  "00:03:15",
+  "00:04:00",
+  "00:04:10",
+  "00:04:20",
+  "00:04:28",
+  "00:04:40",
+  "00:05:05"
+)
 for ($index = 0; $index -lt $frameTimes.Count; $index++) {
   & $ffmpeg -hide_banner -loglevel error -y -ss $frameTimes[$index] -i $output -frames:v 1 `
     (Join-Path $verificationDir ("{0:D2}-frame.png" -f ($index + 1)))

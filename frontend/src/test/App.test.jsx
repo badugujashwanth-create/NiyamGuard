@@ -714,8 +714,11 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByText("Connected Systems").closest("article")).toHaveTextContent("5");
     expect(screen.getByText("Compliance Findings").closest("article")).toHaveTextContent("4");
     expect(screen.getByText("Drifted Systems").closest("article")).toHaveTextContent("3");
+    expect(screen.getByText("Compliance Score").closest("article")).toHaveTextContent("25%");
     expect(screen.getByText("Open Conflicts").closest("article")).toHaveTextContent("1");
     expect(screen.getByText("High Priority Findings")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Department Readiness" })).toBeInTheDocument();
+    expect(screen.getByText("Revenue Department").closest("tr")).toHaveTextContent("At Risk");
   });
 
   it("admin compliance page renders", async () => {
@@ -774,11 +777,15 @@ describe("NiyamGuard frontend", () => {
   it("admin knowledge base page renders", async () => {
     installApiMock();
     seedAdminSession();
+    const user = userEvent.setup();
     window.history.pushState({}, "", "/admin/knowledge-base");
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Knowledge Base" })).toBeInTheDocument();
     expect(screen.getAllByText("Income Certificate Validity").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Knowledge Relationships" })).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/Search sources, rules, departments/), "Public FAQ");
+    expect(screen.getByText(/Public FAQ/).closest("tr")).toHaveTextContent("Drifted");
   });
 
   it("admin self-update policy pages render from live API data", async () => {
@@ -800,6 +807,9 @@ describe("NiyamGuard frontend", () => {
     expect(await screen.findByRole("heading", { name: "Policy Updates" })).toBeInTheDocument();
     expect(screen.getByText("Published Policy Updates")).toBeInTheDocument();
     expect(screen.getByText("Knowledge Updates")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Policy Lineage" })).toBeInTheDocument();
+    expect(screen.getByText("Lineage Integrity").closest("article")).toHaveTextContent("Intact");
+    expect(screen.getByText("rule_001 / v2").closest("tr")).toHaveTextContent("version_rule_001_1");
 
     await user.click(screen.getByRole("button", { name: "Propagation" }));
     expect(await screen.findByRole("heading", { name: "Propagation" })).toBeInTheDocument();

@@ -1,4 +1,4 @@
-# NiyamGuard recruiter walkthrough narration
+# NiyamGuard product walkthrough narration
 
 NiyamGuard is a synthetic policy-compliance and citizen-service sandbox. It is not an official government portal, and every identity, application, payment, connected system, and certificate in this walkthrough is demo data. The product explores one question: when a policy circular changes a rule, how can every dependent experience stay consistent and traceable?
 
@@ -12,8 +12,14 @@ Next, the self-updating policy simulation deliberately resets the mock MeeSeva a
 
 The citizen portal consumes the same verified knowledge boundary. A citizen asks for Income Certificate validity and receives the six-month answer with a visible source card. Voice support has a text fallback, location is optional, and the assistant does not auto-fill or submit an official application.
 
-The public verification step checks the generated demo certificate using the hash created by the simulation. This is useful for explaining end-to-end state and integrity, but it is not a government digital signature or certificate authority. The audit page then shows how important sandbox actions remain reviewable by actor and event.
+The public verification step checks the generated demo certificate using the hash created by the simulation. This is useful for explaining end-to-end state and integrity, but it is not a government digital signature or certificate authority.
 
-The completion build is verified by more than two hundred backend tests, sixty frontend tests, the frontend production build, dependency checks, and secret scans. Those checks support a strong local sandbox claim, not production or government readiness. Real deployment would still require authorized identity, payment, messaging, official APIs, managed secrets, privacy and accessibility reviews, monitoring, legal approval, and department sign-off.
+The authenticated operations view now derives its compliance score from assessed findings and its coverage score from checked connected systems. Department readiness shows the real numerator and denominator instead of an invented readiness percentage. Unassessed departments remain visibly unassessed.
+
+Policy lineage connects each immutable version to its source circular, previous version, knowledge refresh, propagation tasks, compliance runs, and rollback evidence. The searchable knowledge-relationship view then traces a verified rule into each connected system and its current drift status. These views expose existing evidence; they do not manufacture a knowledge graph from labels alone.
+
+The audit page shows how important sandbox actions remain reviewable by actor and event.
+
+The completion build is verified by two hundred forty-two backend tests, sixty frontend tests, the frontend production build, dependency checks, and secret scans. Those checks support a strong local sandbox claim, not production or government readiness. Real deployment would still require authorized identity, payment, messaging, official APIs, managed secrets, privacy and accessibility reviews, monitoring, legal approval, and department sign-off.
 
 NiyamGuard demonstrates an evidence-led rule-to-service architecture: human approval before publication, deterministic verified sources before model explanation, explicit sandbox mutations, citizen-facing provenance, and an audit trail. The value is in making policy drift visible and testable without pretending that the prototype already operates public infrastructure.

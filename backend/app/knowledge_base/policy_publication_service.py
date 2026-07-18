@@ -164,6 +164,55 @@ def versions_for_rule(rule_id: str) -> list[VerifiedPolicyRuleVersion]:
     return [item for item in read_store().verified_policy_rule_versions if item.rule_id == rule_id]
 
 
+def lineage_for_rule(rule_id: str) -> dict | None:
+    store = read_store()
+    versions = sorted(
+        [item for item in store.verified_policy_rule_versions if item.rule_id == rule_id],
+        key=lambda item: item.version_number,
+    )
+    if not versions:
+        return None
+    version_ids = {item.id for item in versions}
+    broken_previous_links = [
+        item.previous_version_id
+        for item in versions
+        if item.previous_version_id and item.previous_version_id not in version_ids
+    ]
+    nodes = []
+    for version in versions:
+        publication = next(
+            (item for item in store.policy_publication_events if item.rule_version_id == version.id),
+            None,
+        )
+        knowledge_updates = [
+            item.model_dump() for item in store.knowledge_update_events if item.rule_version_id == version.id
+        ]
+        plan = next((item for item in store.propagation_plans if item.rule_version_id == version.id), None)
+        tasks = [item.model_dump() for item in store.propagation_tasks if item.rule_version_id == version.id]
+        superseded_by = next((item.id for item in versions if item.previous_version_id == version.id), None)
+        nodes.append(
+            {
+                "version": version.model_dump(),
+                "publication_event": publication.model_dump() if publication else None,
+                "knowledge_updates": knowledge_updates,
+                "propagation_plan": plan.model_dump() if plan else None,
+                "propagation_tasks": tasks,
+                "superseded_by_version_id": superseded_by,
+            }
+        )
+    return {
+        "rule_id": rule_id,
+        "chain_status": "intact" if not broken_previous_links else "broken",
+        "broken_previous_version_ids": broken_previous_links,
+        "current_version_id": next((item.id for item in versions if item.is_current), None),
+        "nodes": nodes,
+        "compliance_runs": [
+            item.model_dump() for item in store.compliance_runs if item.affected_rule_id == rule_id
+        ],
+        "rollback_events": [item.model_dump() for item in store.rollback_events if item.rule_id == rule_id],
+    }
+
+
 def rollback_rule(rule_id: str, actor: str | None = None, reason: str | None = None) -> dict:
     if not settings.policy_rollback_enabled:
         return {"success": False, "message": "Rollback is disabled."}

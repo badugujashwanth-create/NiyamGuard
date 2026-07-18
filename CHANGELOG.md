@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 — 2026-07-19
+
+- Added evidence-derived compliance and coverage scores plus department readiness aggregation.
+- Added a policy-lineage API and admin view linking immutable versions to sources, knowledge updates, propagation tasks, compliance runs, and rollback evidence.
+- Added a searchable knowledge-relationship explorer grounded in verified rules, connected systems, and compliance findings.
+- Added a repository-grounded pilot-readiness gap matrix so existing capabilities are not rebuilt or overclaimed.
+
 ## 1.0.2 — 2026-07-19
 
 - Added a schema-validated Render Blueprint and same-origin full-stack container.
