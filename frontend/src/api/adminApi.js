@@ -24,6 +24,10 @@ export function getPriorityFindings() {
   return request("/api/dashboard/priority-findings");
 }
 
+export function getDepartmentReadiness() {
+  return request("/api/dashboard/departments");
+}
+
 export function getKnowledgeRules() {
   return request("/api/knowledge/rules");
 }
@@ -110,6 +114,10 @@ export function getPolicyUpdateHistory() {
 
 export function getPolicyRuleVersions() {
   return request("/api/policy-updates/versions");
+}
+
+export function getPolicyRuleLineage(ruleId) {
+  return request(`/api/policy-updates/rules/${encodeURIComponent(ruleId)}/lineage`);
 }
 
 export function getKnowledgeUpdateEvents() {

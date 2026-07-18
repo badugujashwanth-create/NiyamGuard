@@ -23,6 +23,7 @@ import {
   getConnectedSystems,
   getDatasetDemoFlow,
   getDatasetStatus,
+  getDepartmentReadiness,
   getConflicts,
   getKnowledgeUpdateEvents,
   getKnowledgeRules,
@@ -181,6 +182,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
   const [portalForms, setPortalForms] = useState([]);
   const [portalCertificates, setPortalCertificates] = useState([]);
   const [readiness, setReadiness] = useState(null);
+  const [departmentReadiness, setDepartmentReadiness] = useState([]);
   const [virtualGovResult, setVirtualGovResult] = useState(null);
 
   function applySelfUpdateData(data) {
@@ -238,6 +240,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           adminPortalForms,
           adminPortalCertificates,
           readinessReport,
+          departmentReadinessReport,
         ] = await Promise.all([
           getAdminSummary(),
           getModuleStatus(),
@@ -257,6 +260,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           getAdminPortalForms(),
           getAdminPortalCertificates(),
           getAdminReadiness(),
+          getDepartmentReadiness(),
         ]);
         if (!active) return;
         const nextFindings = compliance.findings || [];
@@ -278,6 +282,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
         setPortalForms(adminPortalForms.forms || []);
         setPortalCertificates(adminPortalCertificates.certificates || []);
         setReadiness(readinessReport);
+        setDepartmentReadiness(departmentReadinessReport.departments || []);
         if (currentUser?.role === "admin") {
           try {
             const userList = await getUsers();
@@ -330,6 +335,11 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
       ["Connected Systems", summary?.connected_systems, "Portals, SOPs, FAQs, and forms checked"],
       ["Compliance Findings", summary?.compliance_findings, "Total system checks in this demo"],
       ["Drifted Systems", summary?.drifted_findings, "Systems still showing old policy"],
+      [
+        "Compliance Score",
+        summary?.compliance_score == null ? "Not run" : `${summary.compliance_score}%`,
+        "Compliant findings divided by assessed findings",
+      ],
       ["Open Conflicts", summary?.open_conflicts, "Circular conflicts requiring officer action"],
     ],
     [summary],
@@ -390,6 +400,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
           <DashboardPage
             cards={cards}
             conflicts={conflicts}
+            departmentReadiness={departmentReadiness}
             findings={findings}
             moduleStatus={moduleStatus}
             onExport={async (type, format) => {
@@ -448,7 +459,12 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
         ) : null}
 
         {!loading && activePage === "/admin/knowledge-base" ? (
-          <KnowledgePage moduleStatus={moduleStatus} rules={rules} />
+          <KnowledgePage
+            findings={findings}
+            moduleStatus={moduleStatus}
+            rules={rules}
+            systemsById={systemsById}
+          />
         ) : null}
 
         {!loading && activePage === "/admin/sources" ? (
@@ -525,6 +541,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
               setReportStatus("Compliance rerun completed.");
             }}
             versions={ruleVersions}
+            propagationTasks={propagationTasks}
           />
         ) : null}
 
@@ -657,6 +674,7 @@ function DashboardPage({
   aiStatus,
   cards,
   conflicts,
+  departmentReadiness,
   findings,
   moduleStatus,
   onExport,
@@ -677,7 +695,7 @@ function DashboardPage({
         {cards.map(([label, value, caption]) => (
           <article className="admin-stat-card" key={label}>
             <span>{label}</span>
-            <strong>{numberOrZero(value)}</strong>
+            <strong>{value ?? 0}</strong>
             <p>{caption}</p>
           </article>
         ))}
@@ -691,8 +709,41 @@ function DashboardPage({
             found for the GO-138 income certificate demo.
           </p>
           <div className="admin-mini-metrics">
-            <StatusPill tone="red">3 drifted</StatusPill>
-            <StatusPill tone="green">1 compliant</StatusPill>
+            <StatusPill tone="red">{driftedCount} drifted</StatusPill>
+            <StatusPill tone="green">{compliantCount} compliant</StatusPill>
+          </div>
+        </section>
+
+        <section className="admin-panel admin-panel-wide">
+          <h3>Department Readiness</h3>
+          <p>Scores use current compliance findings and checked connected systems; unassessed departments are labelled explicitly.</p>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Compliance</th>
+                  <th>Coverage</th>
+                  <th>Drift</th>
+                  <th>Critical</th>
+                  <th>Readiness</th>
+                </tr>
+              </thead>
+              <tbody>
+                {departmentReadiness.length ? departmentReadiness.map((department) => (
+                  <tr key={department.department}>
+                    <td>{department.department}</td>
+                    <td>{department.compliance_score == null ? "Not assessed" : `${department.compliance_score}%`}</td>
+                    <td>{department.coverage_score == null ? "Not assessed" : `${department.coverage_score}%`}</td>
+                    <td>{department.drifted_findings}</td>
+                    <td>{department.critical_findings}</td>
+                    <td>{titleCase(department.readiness_status)}</td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan="6">No department readiness evidence is available yet.</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
 
@@ -1054,7 +1105,29 @@ function ImpactPage({ findings, priorityFindings, rulesById, systemsById }) {
   );
 }
 
-function KnowledgePage({ moduleStatus, rules }) {
+function KnowledgePage({ findings, moduleStatus, rules, systemsById }) {
+  const [query, setQuery] = useState("");
+  const rulesById = Object.fromEntries(rules.map((rule) => [rule.id, rule]));
+  const relationships = findings.map((finding) => {
+    const rule = rulesById[finding.verified_rule_id];
+    const system = systemsById[finding.connected_system_id];
+    return {
+      id: finding.id,
+      source: sourceCircular(rule),
+      rule: rule?.rule_name || finding.rule_key,
+      system: system?.name || finding.connected_system_id,
+      department: system?.department || "Unassigned",
+      expected: finding.expected_value,
+      observed: finding.actual_value || "Missing",
+      status: finding.status,
+    };
+  });
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleRelationships = normalizedQuery
+    ? relationships.filter((relationship) => Object.values(relationship).some(
+      (value) => String(value).toLowerCase().includes(normalizedQuery),
+    ))
+    : relationships;
   return (
     <section className="admin-section">
       <div className="admin-page-summary">
@@ -1073,6 +1146,53 @@ function KnowledgePage({ moduleStatus, rules }) {
           </article>
         ))}
       </div>
+      <section className="admin-panel admin-panel-wide">
+        <div className="admin-card-heading">
+          <div>
+            <span>Rule-to-system explorer</span>
+            <h3>Knowledge Relationships</h3>
+          </div>
+          <StatusPill tone="blue">{visibleRelationships.length} links</StatusPill>
+        </div>
+        <label className="admin-field" htmlFor="knowledge-relationship-search">
+          Search sources, rules, departments, systems, or status
+          <input
+            id="knowledge-relationship-search"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="For example: Public FAQ or drifted"
+            type="search"
+            value={query}
+          />
+        </label>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Verified rule</th>
+                <th>Department / system</th>
+                <th>Expected</th>
+                <th>Observed</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRelationships.length ? visibleRelationships.map((relationship) => (
+                <tr key={relationship.id}>
+                  <td>{relationship.source}</td>
+                  <td>{relationship.rule}</td>
+                  <td>{relationship.department} / {relationship.system}</td>
+                  <td>{relationship.expected}</td>
+                  <td>{relationship.observed}</td>
+                  <td>{titleCase(relationship.status)}</td>
+                </tr>
+              )) : (
+                <tr><td colSpan="6">No verified relationship matches this search.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
       <section className="admin-panel">
         <h3>Ready Modules</h3>
         <div className="admin-module-grid">
@@ -1228,8 +1348,21 @@ function RuleCandidatesPage({ candidates, onApprove, onPublish }) {
   );
 }
 
-function PolicyUpdatesPage({ complianceRuns, events, knowledgeEvents, onReindex, onRerunCompliance, versions }) {
+function PolicyUpdatesPage({
+  complianceRuns,
+  events,
+  knowledgeEvents,
+  onReindex,
+  onRerunCompliance,
+  propagationTasks,
+  versions,
+}) {
   const currentVersions = versions.filter((version) => version.is_current);
+  const versionIds = new Set(versions.map((version) => version.id));
+  const chainIntact = versions.every(
+    (version) => !version.previous_version_id || versionIds.has(version.previous_version_id),
+  );
+  const ruleCount = new Set(versions.map((version) => version.rule_id)).size;
   return (
     <section className="admin-section">
       <div className="admin-page-summary">
@@ -1248,9 +1381,54 @@ function PolicyUpdatesPage({ complianceRuns, events, knowledgeEvents, onReindex,
       </div>
       <div className="admin-card-grid">
         <article className="admin-stat-card"><span>Versions</span><strong>{versions.length}</strong><p>Immutable policy-rule version records.</p></article>
+        <article className="admin-stat-card"><span>Lineage Chains</span><strong>{ruleCount}</strong><p>Rule histories linked through previous-version identifiers.</p></article>
+        <article className="admin-stat-card"><span>Lineage Integrity</span><strong>{chainIntact ? "Intact" : "Review"}</strong><p>Every previous-version reference resolves in the current dataset.</p></article>
         <article className="admin-stat-card"><span>Publications</span><strong>{events.length}</strong><p>Approved rule updates published to the source of truth.</p></article>
         <article className="admin-stat-card"><span>Compliance Runs</span><strong>{complianceRuns.length}</strong><p>Verification jobs after updates or patches.</p></article>
       </div>
+      <section className="admin-panel admin-panel-wide">
+        <h3>Policy Lineage</h3>
+        <p>Immutable versions are tied to their source circular, prior version, knowledge refresh, propagation work, and compliance evidence.</p>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Source</th>
+                <th>Effective</th>
+                <th>Previous</th>
+                <th>Knowledge</th>
+                <th>Propagation</th>
+                <th>Compliance</th>
+                <th>State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {versions.length ? [...versions]
+                .sort((a, b) => b.version_number - a.version_number)
+                .map((version) => {
+                  const updates = knowledgeEvents.filter((event) => event.rule_version_id === version.id);
+                  const tasks = propagationTasks.filter((task) => task.rule_version_id === version.id);
+                  const runs = complianceRuns.filter((run) => run.affected_rule_id === version.rule_id);
+                  return (
+                    <tr key={version.id}>
+                      <td>{version.rule_id} / v{version.version_number}</td>
+                      <td>{version.source_circular_number}</td>
+                      <td>{version.effective_date}</td>
+                      <td>{version.previous_version_id || "Origin"}</td>
+                      <td>{updates.length ? updates.map((item) => item.status).join(", ") : "No event"}</td>
+                      <td>{tasks.length} task{tasks.length === 1 ? "" : "s"}</td>
+                      <td>{runs.length} run{runs.length === 1 ? "" : "s"}</td>
+                      <td>{version.is_current ? "Current" : "Superseded"}</td>
+                    </tr>
+                  );
+                }) : (
+                  <tr><td colSpan="8">No policy lineage is available yet.</td></tr>
+                )}
+            </tbody>
+          </table>
+        </div>
+      </section>
       <div className="admin-insight-grid">
         <section className="admin-panel">
           <h3>Current Rule Versions</h3>

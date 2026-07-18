@@ -157,7 +157,7 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
         raise RuntimeError("DEMO_MODE must be false in production.")
 
 APP_NAME = settings.app_name
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 PYTHON_REQUIREMENT = "3.12"
 SUPPORTED_LANGUAGES = {"english", "telugu", "hindi", "mixed"}
 

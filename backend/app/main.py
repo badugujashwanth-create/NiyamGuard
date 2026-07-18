@@ -155,7 +155,7 @@ def health_check() -> dict[str, str] | FileResponse:
     if _frontend_index.is_file():
         return FileResponse(_frontend_index)
     return {
-        "message": "NiyamGuard Call Assistant Backend is running",
+        "message": "NiyamGuard API is running",
         "version": APP_VERSION,
         "python": PYTHON_REQUIREMENT,
     }

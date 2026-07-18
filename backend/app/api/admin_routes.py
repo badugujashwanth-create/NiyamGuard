@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from app.compliance.analytics_service import compliance_metrics
 from app.security.rbac import require_roles
 from app.knowledge_base.platform_store import read_store
 
@@ -26,6 +27,7 @@ MODULES = [
 @router.get("/summary")
 def summary() -> dict:
     store = read_store()
+    metrics = compliance_metrics()
     return {
         "success": True,
         "summary": {
@@ -38,6 +40,7 @@ def summary() -> dict:
             "critical_findings": len([item for item in store.priority_scores if item.priority_level == "critical"]),
             "open_conflicts": len([item for item in store.conflicts if item.status == "open"]),
             "recent_audit_events": len(store.audit_events[-10:]),
+            **metrics,
         },
     }
 

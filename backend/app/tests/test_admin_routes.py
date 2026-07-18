@@ -3,6 +3,8 @@ def test_admin_summary_works(client, reviewer_headers, viewer_headers) -> None:
     response = client.get("/api/admin/summary", headers=viewer_headers)
     assert response.status_code == 200
     assert response.json()["summary"]["verified_rules"] >= 1
+    assert response.json()["summary"]["compliance_score"] == 25.0
+    assert response.json()["summary"]["coverage_score"] == 80.0
 
 
 def test_module_status_lists_all_built_modules(client, viewer_headers) -> None:

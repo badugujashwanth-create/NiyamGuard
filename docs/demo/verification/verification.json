@@ -1,21 +1,25 @@
 {
-    "generated_at_utc":  "2026-07-18T18:57:36.6717707Z",
-    "duration_seconds":  283.648,
+    "generated_at_utc":  "2026-07-18T20:03:28.7119634Z",
+    "duration_seconds":  337.408,
     "width":  1280,
     "height":  720,
     "video_codec":  "vp9",
     "audio_codec":  "opus",
     "captions":  "demo-captions.vtt",
-    "sha256":  "5802108062397c3e95d234d58832672589d1b027d908a82c680318e6e2e0c633",
-    "bytes":  11478446,
-    "verification_frames":  7,
+    "sha256":  "859c36d0571f9b18ec32edf2520d500617ef5f595bdeeec7c460edd052f3aff2",
+    "bytes":  13708739,
+    "verification_frames":  11,
     "frame_timestamps":  [
                              "00:00:10",
-                             "00:00:30",
-                             "00:01:00",
-                             "00:01:40",
-                             "00:02:40",
-                             "00:03:50",
-                             "00:04:10"
+                             "00:00:35",
+                             "00:01:10",
+                             "00:02:20",
+                             "00:03:15",
+                             "00:04:00",
+                             "00:04:10",
+                             "00:04:20",
+                             "00:04:28",
+                             "00:04:40",
+                             "00:05:05"
                          ]
 }

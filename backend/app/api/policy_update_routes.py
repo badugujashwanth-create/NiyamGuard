@@ -38,6 +38,14 @@ def versions_for_rule(rule_id: str) -> dict:
     }
 
 
+@router.get("/rules/{rule_id}/lineage", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+def rule_lineage(rule_id: str) -> dict:
+    lineage = policy_publication_service.lineage_for_rule(rule_id)
+    if lineage is None:
+        raise HTTPException(status_code=404, detail="Policy rule lineage not found.")
+    return {"success": True, "lineage": lineage}
+
+
 @router.post("/{candidate_id}/publish")
 def publish_candidate(
     candidate_id: str,

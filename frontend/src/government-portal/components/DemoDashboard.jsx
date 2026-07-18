@@ -352,7 +352,7 @@ export default function DemoDashboard() {
           <p className="eyebrow">Guided product simulation</p>
           <h1>NiyamGuard Product Overview</h1>
           <p>
-            One recruiter-friendly path through a policy change, human approval,
+            One guided path through a policy change, human approval,
             compliance drift, citizen impact, a synthetic service journey, and
             source-backed guidance.
           </p>
