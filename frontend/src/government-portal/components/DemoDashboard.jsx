@@ -146,7 +146,7 @@ const platformFlowCards = [
 ];
 
 const manualDemoLinks = [
-  ["Demo Dashboard", "/demo"],
+  ["Product Overview", "/demo"],
   ["Virtual Government", "/virtual-gov"],
   ["Services", "/services"],
   ["Citizen Applications", "/applications"],
@@ -345,19 +345,19 @@ export default function DemoDashboard() {
   return (
     <main className="demo-shell">
       <section className="unified-banner" role="note">
-        Recruiter walkthrough — synthetic data only. No official application, payment, or certificate is created.
+        Product walkthrough — synthetic data only. No official application, payment, or certificate is created.
       </section>
       <section className="demo-hero">
         <div>
           <p className="eyebrow">Guided product simulation</p>
-          <h1>NiyamGuard AI Demo</h1>
+          <h1>NiyamGuard Product Overview</h1>
           <p>
             One recruiter-friendly path through a policy change, human approval,
             compliance drift, citizen impact, a synthetic service journey, and
             source-backed guidance.
           </p>
         </div>
-        <div className="demo-hero-actions" aria-label="Demo quick links">
+        <div className="demo-hero-actions" aria-label="Product quick links">
           <a className="button button-primary" href="/">
             Open Citizen Portal
           </a>
@@ -365,7 +365,7 @@ export default function DemoDashboard() {
             Open Admin Portal
           </a>
           <button className="button button-primary" onClick={runComplianceDemo} type="button">
-            Run Compliance Demo
+            Run Compliance Check
           </button>
           <button
             className="button button-secondary"
@@ -381,7 +381,7 @@ export default function DemoDashboard() {
       </section>
 
       {error ? <div className="global-error" role="alert">{error}</div> : null}
-      {loading ? <p className="demo-loading">Loading demo status...</p> : null}
+      {loading ? <p className="demo-loading">Loading system status...</p> : null}
       {actionStatus ? <p className="demo-action-status">{actionStatus}</p> : null}
 
       <section className="demo-health" aria-label="Live health status">
@@ -396,9 +396,9 @@ export default function DemoDashboard() {
       <section className="demo-story demo-how-it-works" aria-labelledby="how-it-works-title">
         <div>
           <p className="eyebrow">How everything works</p>
-          <h2 id="how-it-works-title">Full virtual government flow</h2>
+          <h2 id="how-it-works-title">Synthetic policy-to-service flow</h2>
           <p>
-            Virtual Government Sandbox - for demonstration and pilot testing only.
+            Virtual Government Sandbox - for synthetic pilot testing only.
             Not an official government portal.
           </p>
           <button
@@ -407,7 +407,7 @@ export default function DemoDashboard() {
             onClick={runFullVirtualGovernmentDemo}
             type="button"
           >
-            {fullDemoStatus === "running" ? "Running Demo..." : "Run Full Virtual Government Demo"}
+            {fullDemoStatus === "running" ? "Running Simulation..." : "Run Full Policy-to-Service Simulation"}
           </button>
         </div>
         <div className="demo-flow-grid">

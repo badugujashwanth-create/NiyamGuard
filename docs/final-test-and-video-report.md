@@ -10,11 +10,12 @@ NiyamGuard is a portfolio-ready synthetic sandbox. It is not an official governm
 
 | Check | Result | Evidence |
 |---|---|---|
-| Backend suite | Pass | 235 tests; 2 known framework deprecation warnings |
+| Backend suite | Pass | 239 tests; 2 known framework deprecation warnings |
 | Frontend suite | Pass | 60 tests across 3 files |
 | Frontend build | Pass | Vite production bundle generated |
 | Recruiter simulation | Pass | Playwright completed the real browser flow in 4.9 minutes |
-| Final video | Pass | 284.888 seconds, 1280×720, VP9, Opus narration |
+| Final video | Pass | 283.648 seconds, 1280×720, VP9, Opus narration |
+| Full-stack container | Pass | Same-origin SPA/API runtime, health endpoint, deep route, and API 404 verified |
 | Captions | Pass | `docs/demo/demo-captions.vtt` |
 | Production npm audit | Pass | 0 known production dependency vulnerabilities |
 | Backend dependency audit | Pass | No known vulnerabilities in the installed environment |
@@ -28,8 +29,8 @@ The accepted walkthrough shows the synthetic boundary, policy circular publicati
 
 - Asset: `docs/demo/demo.webm`
 - Captions: `docs/demo/demo-captions.vtt`
-- Duration: 284.888 seconds
-- SHA-256: `aadd422b2dbe92c07d27be29b25a33a67fa242e6daf40297385a076a5873500b`
+- Duration: 283.648 seconds
+- SHA-256: `5802108062397c3e95d234d58832672589d1b027d908a82c680318e6e2e0c633`
 - Machine-readable evidence: `docs/demo/verification/verification.json`
 - Visual samples: `docs/demo/verification/01-frame.png` through `07-frame.png`
 

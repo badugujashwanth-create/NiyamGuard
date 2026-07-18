@@ -1,13 +1,13 @@
 {
-    "generated_at_utc":  "2026-07-18T18:16:57.0291108Z",
-    "duration_seconds":  284.888,
+    "generated_at_utc":  "2026-07-18T18:57:36.6717707Z",
+    "duration_seconds":  283.648,
     "width":  1280,
     "height":  720,
     "video_codec":  "vp9",
     "audio_codec":  "opus",
     "captions":  "demo-captions.vtt",
-    "sha256":  "aadd422b2dbe92c07d27be29b25a33a67fa242e6daf40297385a076a5873500b",
-    "bytes":  11793962,
+    "sha256":  "5802108062397c3e95d234d58832672589d1b027d908a82c680318e6e2e0c633",
+    "bytes":  11478446,
     "verification_frames":  7,
     "frame_timestamps":  [
                              "00:00:10",

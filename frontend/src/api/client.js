@@ -1,4 +1,7 @@
-const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const defaultBaseUrl = import.meta.env.PROD && typeof window !== "undefined"
+  ? window.location.origin
+  : "http://127.0.0.1:8000";
+const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL || defaultBaseUrl;
 export const API_BASE_URL = configuredBaseUrl.replace(/\/+$/, "");
 
 export const ACCESS_TOKEN_KEY = "niyamguard.access_token";

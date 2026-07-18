@@ -1,7 +1,10 @@
 import logging
+import os
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -141,10 +144,29 @@ app.include_router(government_router)
 app.include_router(chatbot_router)
 
 
-@app.get("/", tags=["health"])
-def health_check() -> dict[str, str]:
+_frontend_dist_dir = Path(
+    os.getenv("FRONTEND_DIST_DIR", Path(__file__).resolve().parents[1] / "static")
+).resolve()
+_frontend_index = _frontend_dist_dir / "index.html"
+
+
+@app.get("/", tags=["health"], response_model=None)
+def health_check() -> dict[str, str] | FileResponse:
+    if _frontend_index.is_file():
+        return FileResponse(_frontend_index)
     return {
         "message": "NiyamGuard Call Assistant Backend is running",
         "version": APP_VERSION,
         "python": PYTHON_REQUIREMENT,
     }
+
+
+if _frontend_index.is_file():
+    @app.get("/{requested_path:path}", include_in_schema=False, response_model=None)
+    def serve_frontend(requested_path: str) -> FileResponse:
+        if requested_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        requested_file = (_frontend_dist_dir / requested_path).resolve()
+        if requested_file.is_relative_to(_frontend_dist_dir) and requested_file.is_file():
+            return FileResponse(requested_file)
+        return FileResponse(_frontend_index)

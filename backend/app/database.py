@@ -18,10 +18,17 @@ def _engine_kwargs(database_url: str) -> dict:
     return {}
 
 
-def make_engine(database_url: str | None = None) -> Engine:
-    url = database_url or settings.database_url
+def normalize_database_url(database_url: str) -> str:
+    url = database_url
     if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
+        url = url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+
+def make_engine(database_url: str | None = None) -> Engine:
+    url = normalize_database_url(database_url or settings.database_url)
     return create_engine(url, pool_pre_ping=True, **_engine_kwargs(url))
 
 

@@ -9,6 +9,6 @@
 | 3:15–3:40 | Citizen experience | Source-backed citizen question and verified validity answer |
 | 3:40–4:05 | Public verification | Generated certificate hash resolves to a valid synthetic certificate |
 | 4:05–4:30 | Admin audit | Authenticated audit log with actor, request, entity, event, and chain metadata |
-| 4:30–4:44 | Close | Final feature map, sandbox boundary, and honest integration limitations |
+| 4:30–4:43 | Close | Final feature map, sandbox boundary, and honest integration limitations |
 
 The recording is 1280×720 with narrated Opus audio, captions, no desktop capture, synthetic accounts only, and browser rendering limited to the local product window.

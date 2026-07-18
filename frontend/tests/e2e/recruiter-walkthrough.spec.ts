@@ -18,21 +18,21 @@ test("record the complete recruiter simulation", async ({ page }) => {
   await scene(page, 12_000);
 
   await page.goto(`${baseUrl}/demo`, { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: "NiyamGuard AI Demo" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "NiyamGuard Product Overview" })).toBeVisible();
   await expect(page.getByText(/synthetic data only/i)).toBeVisible();
   await scene(page, 12_000);
-  await page.getByRole("heading", { name: "Full virtual government flow" }).scrollIntoViewIfNeeded();
+  await page.getByRole("heading", { name: "Synthetic policy-to-service flow" }).scrollIntoViewIfNeeded();
   await scene(page, 12_000);
 
   await page.goto(`${baseUrl}/government`, { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "NiyamGuard Government Portal" })).toBeVisible();
   await scene(page, 15_000);
-  await page.getByRole("button", { name: "Run Full End-to-End Demo" }).click();
+  await page.getByRole("button", { name: "Run Full End-to-End Simulation" }).click();
   await expect(page.getByTestId("demo-application-number")).toContainText("NGSP-", { timeout: 60_000 });
   await expect(page.getByTestId("demo-certificate-number")).toContainText("NGCERT-", { timeout: 60_000 });
   const verificationHash = (await page.getByTestId("demo-verification-hash").textContent())?.trim() || "";
   expect(verificationHash.length).toBeGreaterThan(12);
-  await page.getByRole("heading", { name: "Run Full End-to-End Demo" }).scrollIntoViewIfNeeded();
+  await page.getByRole("heading", { name: "Run Full End-to-End Simulation" }).scrollIntoViewIfNeeded();
   await scene(page, 30_000);
 
   await page.getByRole("button", { name: "Ask Hybrid Test Question" }).click();

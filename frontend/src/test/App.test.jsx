@@ -158,7 +158,7 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByRole("link", { name: "Open Citizen Portal" })).toHaveAttribute("href", "/citizen");
     expect(screen.getByRole("link", { name: "Open Government Portal" })).toHaveAttribute("href", "/government");
     expect(screen.queryByText(/old demo/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("Run Full End-to-End Demo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Run Full End-to-End Simulation")).not.toBeInTheDocument();
   });
 
   it("opens on the service catalog and hides technical selectors", async () => {
@@ -584,11 +584,11 @@ describe("NiyamGuard frontend", () => {
     window.history.pushState({}, "", "/demo");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard AI Demo" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "NiyamGuard Product Overview" })).toBeInTheDocument();
     expect(screen.getByText("Government Admin Portal")).toBeInTheDocument();
-    expect(screen.getByText("Run Compliance Demo")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Full virtual government flow" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Run Full Virtual Government Demo" }));
+    expect(screen.getByText("Run Compliance Check")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Synthetic policy-to-service flow" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Run Full Policy-to-Service Simulation" }));
     expect(await screen.findByText("Certificate Generated")).toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/virtual-gov/run"))).toBe(true);
   });
@@ -600,7 +600,7 @@ describe("NiyamGuard frontend", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "NiyamGuard Government Portal" })).toBeInTheDocument();
-    expect(screen.getByText(/Demo and pilot testing only/)).toBeInTheDocument();
+    expect(screen.getByText(/Synthetic pilot testing only/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Circulars & Policy Updates" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Self-Updating Policy Engine" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Compliance Drift" })).toBeInTheDocument();
@@ -613,7 +613,7 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByRole("heading", { name: "Hybrid Answer Engine / Ollama" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Readiness & Ops" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Run Full End-to-End Demo" }));
+    await user.click(screen.getByRole("button", { name: "Run Full End-to-End Simulation" }));
 
     expect(await screen.findByText("Circular Published")).toBeInTheDocument();
     expect(screen.getByTestId("demo-application-number")).toHaveTextContent("NGSP-2026-INC-000001");

@@ -15,7 +15,7 @@ test("full visible NiyamGuard demo flow", async ({ page }) => {
   await expect(page.getByText(/Demo and pilot testing only/)).toBeVisible();
   await screenshot(page, "e2e-step-01-portal.png");
 
-  await page.getByRole("button", { name: "Run Full End-to-End Demo" }).click();
+  await page.getByRole("button", { name: "Run Full End-to-End Simulation" }).click();
   await expect(page.getByText("Generated certificate")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("demo-application-number")).toContainText("NGSP-");
   await expect(page.getByTestId("demo-certificate-number")).toContainText("NGCERT-");

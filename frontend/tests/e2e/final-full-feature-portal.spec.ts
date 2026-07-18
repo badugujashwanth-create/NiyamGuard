@@ -14,7 +14,7 @@ test("restored full feature access through two portals", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "NiyamGuard" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Citizen Portal" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Government Portal" })).toBeVisible();
-  await expect(page.getByText("Run Full End-to-End Demo")).toHaveCount(0);
+  await expect(page.getByText("Run Full End-to-End Simulation")).toHaveCount(0);
   await screenshot(page, "restored-01-home.png");
 
   await page.goto("/citizen");
@@ -71,7 +71,7 @@ test("restored full feature access through two portals", async ({ page }) => {
   await screenshot(page, "restored-06-virtual-gov.png");
 
   await page.goto("/government");
-  await page.getByRole("button", { name: "Run Full End-to-End Demo" }).click();
+  await page.getByRole("button", { name: "Run Full End-to-End Simulation" }).click();
   await expect(page.getByTestId("demo-application-number")).toContainText("NGSP-", { timeout: 60_000 });
   await expect(page.getByTestId("demo-certificate-number")).toContainText("NGCERT-", { timeout: 60_000 });
   await expect(page.getByText("Ollama Explanation Generated or Fallback Active")).toBeVisible();
@@ -91,7 +91,7 @@ test("restored full feature access through two portals", async ({ page }) => {
   await screenshot(page, "restored-07-e2e-result.png");
 
   await page.goto("/demo");
-  await expect(page.getByRole("heading", { name: "NiyamGuard AI Demo" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "NiyamGuard Product Overview" })).toBeVisible();
 
   await page.goto("/mock/meeseva");
   await expect(page.getByText(/MeeSeva|Income Certificate/i).first()).toBeVisible();

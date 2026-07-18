@@ -371,7 +371,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
               <StatusPill tone="blue">{currentUser?.role || "user"}</StatusPill>
             </div>
             <a className="button button-secondary" href="/demo">
-              Demo dashboard
+              Product overview
             </a>
             <a className="button button-secondary" href="/">
               Citizen app

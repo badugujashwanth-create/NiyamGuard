@@ -2,7 +2,7 @@
 
 1. Open `http://127.0.0.1:5173/demo`.
 2. Explain the seeded scenario: GO-138 changes Income Certificate validity from 12 months to 6 months.
-3. Click `Run Compliance Demo`.
+3. Click `Run Compliance Check`.
 4. Open the admin portal and sign in with `admin@niyamguard.local / Admin@12345`.
 5. Show `/admin/compliance`: MeeSeva portal, officer SOP, and FAQ drift while the simplified form is compliant.
 6. Show `/admin/conflicts`: old GO-112 conflicts with GO-138.
