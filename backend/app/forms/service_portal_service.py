@@ -519,7 +519,7 @@ def submit_application(actor: CurrentUser, application_id: str) -> dict[str, Any
     form = _form(store, application.service_id)
     missing = _missing_submission_items(store, application, service, form)
     if missing["missing_fields"] or missing["missing_documents"]:
-        raise ServicePortalError(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Missing required items: {missing}")
+        raise ServicePortalError(status.HTTP_422_UNPROCESSABLE_CONTENT, f"Missing required items: {missing}")
     application.submitted_at = application.submitted_at or now_iso()
     application.due_date = application.due_date or _date_string(service.processing_days)
     application.status = "payment_pending" if service.fee_amount > 0 and application.fee_status != "paid" else "under_review"

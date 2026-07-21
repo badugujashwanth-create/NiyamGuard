@@ -1,10 +1,10 @@
 # Test report
 
-Audited on 2026-07-19 from the `pilot-readiness-2026` branch on Windows. This report covers the v1.1.0 release candidate; the full-stack container evidence was established on the v1.0.2 deployment baseline and remains applicable to the same packaging path.
+Release audit completed on 2026-07-19 from the `pilot-readiness-2026` branch on Windows. A fresh reconciliation rerun on 2026-07-21 from `phase5-niyamguard-reconciliation` preserved the same backend/frontend results and removed the application-owned deprecated HTTP 422 constant. The remaining TestClient warning is inside the installed FastAPI/Starlette compatibility layer. Full-stack container evidence was established on the v1.0.2 deployment baseline and remains applicable to the same packaging path.
 
 | Command | Result | Evidence / notes |
 |---|---|---|
-| `backend/.venv/Scripts/python -m pytest -q` | Pass | 243 tests passed; 2 known Starlette/FastAPI deprecation warnings |
+| `backend/.venv/Scripts/python -m pytest -q` | Pass | 243 tests passed; 1 dependency-owned FastAPI/Starlette TestClient deprecation warning |
 | `npm test` in `frontend` | Pass | 60 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |
 | Playwright product walkthrough | Pass | Real browser simulation completed and recorded end to end |

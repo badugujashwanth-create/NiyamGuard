@@ -69,7 +69,7 @@ The current focus is deterministic pilot behavior rather than scale benchmarks. 
 
 ## 14. Results demonstrated
 
-The repository demonstrates a working policy lifecycle, two role-oriented interfaces, evidence-derived compliance and department readiness, policy lineage, searchable rule-to-system relationships, source-aware citizen guidance, an audit trail, 303 passing tests, a production frontend build, a verified full-stack container, and a 5:37 narrated, captioned sandbox walkthrough.
+The repository demonstrates a working policy lifecycle, two role-oriented interfaces, evidence-derived compliance and department readiness, policy lineage, searchable rule-to-system relationships, source-aware citizen guidance, an audit trail, 243 backend plus 60 frontend tests (303 total), a production frontend build, a verified full-stack container, and a 5:37 narrated, captioned sandbox walkthrough.
 
 ## 15. What the developer learned
 

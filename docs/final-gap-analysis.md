@@ -1,19 +1,34 @@
-# Final Gap Analysis
+# NiyamGuard v1.1 final gap analysis
 
-| Feature | Exists in Jashwanth? | Exists in ybaddam? | Exists in chatbot repo? | Should add to Jashwanth? | Priority | Risk | Implementation plan | Tests needed |
-|---|---|---|---|---|---|---|---|---|
-| SQLite/Postgres persistence | Demo JSON only | Yes | Basic DB | Yes | P1 | Medium | SQLAlchemy primary store with JSON fallback | DB seed, compliance, public rule |
-| Alembic migrations | No | Yes | No | Yes | P1 | Low | Add initial migration scaffold | migration files present |
-| Auth/RBAC | No | Yes | No | Yes | P1 | Medium | Seed users, JWT access, refresh tokens, role deps | auth/RBAC tests |
-| Audit hash chain | No | Yes | No | Yes | P1 | Medium | Add hash fields and verify endpoint | audit verify |
-| Request IDs/security headers | Partial | Yes | No | Yes | P1 | Low | Middleware and error handlers | security tests |
-| Reports metadata/filters | Basic | Partial | No | Yes | P1 | Low | Upgrade report service | reports tests |
-| `/api/chat` | No | No | Yes | Yes | P2 | Medium | Deterministic local knowledge service | chat tests |
-| Scheme documents/eligibility/process | Limited catalog | No | Yes | Yes | P2 | Medium | Seeded knowledge with source metadata | chat tests |
-| Admin login UI | No | API only | No | Yes | P3 | Medium | Login page, auth context, protected admin shell | frontend tests |
-| Admin audit/users pages | No | Audit/user APIs | No | Yes | P3 | Medium | Add pages backed by protected APIs | frontend tests |
-| Docker compose | No full stack | Yes | No | Yes | P4 | Low | backend/frontend/postgres compose | config validation |
-| CI workflow | No | No | No | Yes | P4 | Low | GitHub Actions backend/frontend | workflow present |
-| Circular upload/review | No | Yes | Circular search | Defer if risky | P3 | Medium | Future admin workflow after core stable | future tests |
+This replaces the pre-implementation comparison table. Features are counted only when they are on the live FastAPI/React path and covered by repository evidence.
 
-Priority legend: P1 production backend/security, P2 citizen knowledge, P3 frontend/admin polish, P4 DevOps/docs.
+## Closed gaps
+
+| Area | Verified v1.1 state |
+|---|---|
+| Persistence | SQLAlchemy with SQLite sandbox and PostgreSQL configuration path; migrations and seeds versioned |
+| Auth/RBAC | Password hashing, JWT/refresh, role dependencies, seeded role fixtures, protected admin/officer APIs |
+| Audit | Append-only event model with hash-chain verification and policy/citizen/certificate evidence |
+| Policy lifecycle | Circular ingestion, extraction, approval, publication, versions, supersession, rollback, lineage |
+| Compliance | Drift findings, conflicts, cascade, priority, coverage, readiness, propagation, patch state |
+| Citizen workflow | Verified-rule guidance, service finder, application drafts, officer review, synthetic certificate/tracking/verification |
+| Admin UX | Login-protected policy, compliance, propagation, audit, reports, readiness, and relationship views |
+| Deployment | CI, Docker Compose, same-origin full-stack container, Render Blueprint, health/readiness documentation |
+| Demonstration | Real synthetic browser simulation, 5:37 narrated/captioned media, eleven inspected milestone frames |
+
+## Release-blocking external gaps
+
+| Gate | Why it remains open | Required evidence |
+|---|---|---|
+| Hosting provision | Blueprint is verified but no owner-authenticated production service is claimed | Provider URL, health/deep-route/API checks, logs, rollback owner |
+| Government integrations | No authorization, credentials, contracts, or official test environment | Written approval, data contract, sandbox credentials, threat-model update, contract tests |
+| Identity/payment/messaging | Current adapters are synthetic | Approved providers, privacy/legal review, secrets, failure/recovery/UAT evidence |
+| Security operations | Sandbox controls are not certification | Production MFA/device trust, key rotation, SIEM/alerts, incident and DR exercises |
+| Accessibility/responsiveness | Documentation exists but hosted device/assistive-tech matrix is incomplete | Keyboard, screen-reader, zoom, mobile, low-bandwidth evidence |
+| Performance/analytics | Current scores describe one synthetic snapshot | Time-stamped datasets, load profiles, retention, observability, honest budgets |
+
+## Product decision
+
+Do not add more named AI agents or predictive dashboards before the external pilot gates are owned. The next highest-value work is hosted UAT, adapter contracts, recovery evidence, and authorized integration discovery.
+
+NiyamGuard remains an MVP/pilot sandbox and must not be described as an official government system, legal authority, real identity/payment service, or production deployment.
