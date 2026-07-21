@@ -2,7 +2,9 @@
 
 > **Status: MVP / pilot sandbox** — automated backend and frontend checks pass, while government, identity, payment, and messaging integrations remain mocked or synthetic.
 
-[![Watch the NiyamGuard demo](docs/demo/demo-thumbnail.png)](docs/demo/demo.webm)
+[![Watch the NiyamGuard demo](docs/demo/demo-thumbnail.png)](https://jashwanth-portfolio-ten.vercel.app/work/niyamguard/)
+
+[Open MP4](https://jashwanth-portfolio-ten.vercel.app/media/niyamguard/demo.mp4) · [Download WebM](https://jashwanth-portfolio-ten.vercel.app/media/niyamguard/demo.webm) · [Captions](https://jashwanth-portfolio-ten.vercel.app/media/niyamguard/demo-captions.vtt)
 
 > Watch the **5:37 narrated product walkthrough**. It runs the real synthetic simulation from policy publication through drift remediation, citizen guidance, certificate verification, evidence-derived readiness, policy lineage, knowledge relationships, and audit review. It is a demo, not an official government portal. [Captions](docs/demo/demo-captions.vtt) · [verification evidence](docs/demo/verification/verification.json)
 
