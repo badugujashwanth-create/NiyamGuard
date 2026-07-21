@@ -1,82 +1,54 @@
-# Current Jashwanth Repo Audit
+# NiyamGuard v1.1 repository audit
 
-## Backend Folder Structure
+Audit baseline: v1.1.0, 2026-07-21.
+
+## Product boundary
+
+NiyamGuard is a synthetic government-policy and citizen-service pilot sandbox. It is not an official portal and does not connect to real government identity, Gazette, MeeSeva/UMANG, payment, messaging, document-vault, or certificate-signing infrastructure.
+
+## Current architecture
 
 - `backend/app/main.py`: FastAPI application bootstrap.
-- `backend/app/routes/`: route modules for forms, sessions, assistant, TTS/STT, location, knowledge, connected systems, compliance, cascade, dashboard, conflicts, reports, public APIs, admin, auth, audit, health, demo, and chat.
-- `backend/app/services/`: assistant, form, language, TTS/STT, knowledge, compliance, cascade, priority, conflict, reports, auth, audit, chat, and platform store services.
-- `backend/app/models/`: Pydantic domain models plus production SQLAlchemy records for auth, audit, and DB-backed policy records.
-- `backend/app/repositories/`: DB/storage isolation for auth, audit, policy store, knowledge, connected systems, compliance, cascade, priority, conflicts, reports.
-- `backend/app/security/`: password hashing, JWT, RBAC, and rate limiting.
-- `backend/app/middleware/`: request IDs, security headers, structured request logging, clean errors, and API v1 aliasing.
-- `backend/alembic/`: initial migration scaffold.
-- `backend/app/tests/`: backend regression and production-hardening tests.
+- `backend/app/routes/`: auth, circulars, review/publication, compliance, cascade, priority, policy lineage, relationships, citizen services, applications, officer review, certificates, audit, reports, readiness, demo, health, and integration boundaries.
+- `backend/app/services/`: deterministic policy/workflow, knowledge, citizen guidance, compliance, audit, auth, platform, sandbox provider, and optional AI services.
+- `backend/app/models/` and `backend/app/repositories/`: Pydantic/SQLAlchemy contracts and storage isolation.
+- `backend/app/security/` and `backend/app/middleware/`: password hashing, JWT/refresh, RBAC, rate limits, trusted-host/security-header, request-ID, structured-log, and clean-error boundaries.
+- `frontend/src/app/App.jsx`: React/Vite route shell for citizen, officer, government/admin, and synthetic service views.
+- `frontend/src/services/`: centralized API access and sandbox integrations.
 
-## Frontend Folder Structure
+## Storage and deployment
 
-- `frontend/src/App.jsx`: top-level path switch for citizen portal, demo, and admin.
-- `frontend/src/components/`: citizen form components, voice assistant, admin portal, and demo dashboard.
-- `frontend/src/hooks/`: speech recognition and synthesis hooks.
-- `frontend/src/services/api.js`: existing API wrapper, to be replaced/bridged by the production API client layer.
-- `frontend/src/test/`: frontend tests and API fixtures.
+SQLAlchemy is the primary application store with SQLite for the released local/single-container sandbox and PostgreSQL support through `DATABASE_URL`. JSON assets remain synthetic seed/fallback data, not a second production authority.
 
-## Current Storage Method
+The repository includes backend, frontend, and full-stack Dockerfiles, Docker Compose, a same-origin full-stack container, a Render Blueprint, health/readiness endpoints, migrations, seed commands, and deployment documentation. Provider provisioning and live operational monitoring remain owner/external checkpoints.
 
-- Baseline storage was JSON-backed under `backend/app/storage`.
-- Production work adds SQLAlchemy as the primary store with SQLite local fallback and PostgreSQL support through `DATABASE_URL`.
-- JSON demo data remains as a safe fallback and seed source.
+## Verified workflows
 
-## Current Routes
+- Circular ingestion, extraction, reviewer approval, publication, versioning, supersession, rollback, and policy lineage.
+- Compliance drift across mock connected systems, cascade tracing, citizen-impact priority, propagation, patch state, and audit evidence.
+- Evidence-derived compliance coverage and department readiness; no invented longitudinal/predictive claim.
+- Source-aware citizen guidance, scheme/service finder, guided application drafts, officer review, synthetic payment/certificate generation, tracking, and public verification.
+- Role-specific authentication and authorization for admin, reviewer, officer, viewer, and citizen fixtures.
 
-- Public/citizen: `/api/forms`, `/api/services`, `/api/sessions`, `/api/assistant/*`, `/api/tts/*`, `/api/stt/*`, `/api/location/*`, `/api/public/*`, `/api/chat`.
-- Health/public demo: `/api/health`, `/api/ready`, `/api/integration/health`, `/api/demo/*`.
-- Government/admin: `/api/admin/*`, `/api/connected-systems`, `/api/compliance/*`, `/api/cascade/*`, `/api/dashboard/*`, `/api/conflicts/*`, `/api/reports/*`, `/api/audit/*`, `/api/auth/*`.
-- Version alias: `/api/v1/...` maps to existing `/api/...` routes.
+## Verification baseline
 
-## Current Services
+| Gate | Result |
+|---|---|
+| Backend | 243 tests passed |
+| Frontend | 60 tests passed |
+| Frontend build | Passed |
+| Browser walkthrough | Passed end to end |
+| Full-stack container | Same-origin SPA/API and deep-route checks passed |
+| Dependency audit | npm production and installed backend audits passed |
+| Secret scan | Current tree and history passed |
+| Demo | 337.408 seconds, 1280×720 VP9/Opus, narrated/captioned, 11 inspected frames |
 
-- Citizen assistant and form guidance are preserved.
-- Government core services cover verified rules, connected systems, compliance drift, cascade tracing, priority scoring, conflict detection, reports, audit, auth, and citizen knowledge chat.
+## Genuine remaining gaps
 
-## Current Tests
+- No authorized real-government or production provider integration.
+- No production MFA/device trust, SIEM, managed secret rotation, certification, or completed disaster-recovery exercise.
+- No hosted responsive/keyboard/screen-reader/low-bandwidth UAT matrix.
+- No time-series production analytics, scale benchmark, or predictive compliance model.
+- No real certificate legal validity, official application submission, identity verification, or money movement.
 
-- Baseline: 140 backend tests, 34 frontend tests.
-- Production backend after hardening: 169 backend tests passing.
-- Frontend tests still need auth/login/API updates after frontend changes.
-
-## `/demo` Behavior
-
-- Public page for presentation flow.
-- Uses public health/rule/dashboard data and demo-safe run/export endpoints.
-- Must remain accessible without login.
-
-## `/admin` Behavior
-
-- Baseline admin was public.
-- Production behavior requires login and role-based API access.
-- Admin pages remain `/admin`, `/admin/compliance`, `/admin/conflicts`, `/admin/reports`; `/admin/audit` and `/admin/users` are being added.
-
-## Voice Assistant Flow
-
-- Citizen starts from the service catalog, selects a dynamic form, and receives form guidance.
-- Rule/current circular questions use the verified public rule API.
-- Scheme/document/eligibility questions are routed to `/api/chat`.
-- Assistant does not auto-submit government applications.
-
-## Public APIs
-
-- `/api/public/rules/latest`
-- `/api/public/services/{service_id}/documents`
-- `/api/public/services/{service_id}/eligibility`
-- `/api/public/search`
-- `/api/integration/health`
-- `/api/health`
-- `/api/ready`
-- `/api/chat`
-
-## Current Limitations and Production Gaps
-
-- Frontend still needs the central API client and login-protected admin shell.
-- Docker/CI/deployment documentation must be completed.
-- Circular upload/review workflow is not implemented yet; it is lower priority than auth, DB, audit, and citizen knowledge.
-- Live government integrations remain future work.
+The canonical current gap source is [PILOT_READINESS_GAP_MATRIX.md](PILOT_READINESS_GAP_MATRIX.md).
