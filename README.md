@@ -1,254 +1,102 @@
-# NiyamGuard AI
+# NiyamGuard — Policy Drift and Citizen Guidance Sandbox
 
-> **Status: MVP / pilot sandbox** — automated backend and frontend checks pass, while government, identity, payment, and messaging integrations remain mocked or synthetic.
+NiyamGuard explores one specific failure mode in public-service delivery: a policy circular changes, but the portals, forms, FAQs, and operating procedures used by citizens and officers do not change with it.
 
-[![Watch the NiyamGuard demo](docs/demo/demo-thumbnail.png)](https://jashwanth-portfolio-ten.vercel.app/work/niyamguard/)
+This repository is a **synthetic pilot sandbox**, not an official government system. It does not submit applications to a department, verify identity, collect real payments, or replace an officer's decision.
 
-[Open MP4](https://jashwanth-portfolio-ten.vercel.app/media/niyamguard/demo.mp4) · [Download WebM](https://jashwanth-portfolio-ten.vercel.app/media/niyamguard/demo.webm) · [Captions](https://jashwanth-portfolio-ten.vercel.app/media/niyamguard/demo-captions.vtt)
+[Watch the 5:37 narrated walkthrough](https://jashwanth-portfolio-ten.vercel.app/work/niyamguard/) · [MP4](https://jashwanth-portfolio-ten.vercel.app/media/niyamguard/demo.mp4) · [Captions](https://jashwanth-portfolio-ten.vercel.app/media/niyamguard/demo-captions.vtt) · [Tester guide](TESTER_GUIDE.md)
 
-> Watch the **5:37 narrated product walkthrough**. It runs the real synthetic simulation from policy publication through drift remediation, citizen guidance, certificate verification, evidence-derived readiness, policy lineage, knowledge relationships, and audit review. It is a demo, not an official government portal. [Captions](docs/demo/demo-captions.vtt) · [verification evidence](docs/demo/verification/verification.json)
+## The policy-drift problem
 
-[Case study](docs/CASE_STUDY.md) · [Architecture](docs/architecture.md) · [Pilot-readiness gaps](docs/PILOT_READINESS_GAP_MATRIX.md) · [Test evidence](docs/TEST_REPORT.md) · [Deployment](docs/deployment.md) · [Interview guide](docs/INTERVIEW_GUIDE.md)
+A circular is useful only when its effective rule reaches every dependent service surface. NiyamGuard models that lifecycle explicitly:
 
-> NiyamGuard AI is a government policy compliance and citizen assistance platform: officials upload a circular once, the system extracts exactly what changed, checks every connected system (portals, SOPs, forms, FAQs) against that change, flags and prioritizes anything out of sync, and gives citizens verified, up-to-date answers and guided help through the same knowledge base - all with a full audit trail.
+1. ingest a seeded or synthetic circular;
+2. extract candidate rules with source and confidence evidence;
+3. require a human reviewer to approve or reject each candidate;
+4. publish an immutable verified rule version with an effective date;
+5. compare connected mock systems against that version;
+6. prioritize conflicts and drift by citizen impact;
+7. remediate the mock surfaces and retain an audit trail; and
+8. answer citizen questions only from the verified knowledge boundary.
 
-NiyamGuard AI is a sandbox/pilot prototype. It does not submit real government applications, does not connect to real MeeSeva or department systems, and does not replace official government verification.
+### Worked synthetic example
 
-## Problem
+The bundled GO-138 scenario changes Income Certificate validity from **12 months to 6 months**. A prior circular and several mock surfaces still contain the 12-month value. The sandbox shows the reviewer approving the new candidate, publishing a version, detecting the conflict, tracing affected systems, updating the mock configuration, and returning a citizen answer that cites GO-138.
 
-Government departments issue circulars and GOs that change rules, such as `Income Certificate validity: 12 months -> 6 months`. The dependent systems that citizens and officers use often lag behind: public portals, SOPs, forms, FAQs, and chatbots may keep showing the old rule. NiyamGuard AI demonstrates how one verified knowledge base can detect that drift before citizens are affected.
+The example is fictional training data. It demonstrates rule propagation; it is not legal guidance or evidence of a Telangana government integration.
 
-## Architecture
+## Two users, one evidence boundary
 
-```text
-                    Central Verified Knowledge Base
-                    circulars, extracted rules, versions,
-                    confidence scores, audit trail
-                              |
-              +---------------+---------------+
-              |                               |
-      Government Portal                Citizen Portal
- upload, review, compliance      ask, apply, guided help
-```
+### Officer and reviewer workflow
 
-The implementation uses one FastAPI backend and one React/Vite frontend:
+- inspect the circular and extracted rule candidate;
+- compare source text, confidence, effective date, and prior versions;
+- approve before publication;
+- run compliance checks across mock portals, SOPs, forms, and FAQs;
+- inspect conflicts, priority, lineage, propagation, and audit evidence.
 
-- Backend: `backend/app/main.py`
-- Frontend: `frontend/src/app/App.jsx`
-- Detailed architecture: `docs/architecture.md`
-- Demo script: `DEMO.md`
+### Citizen workflow
 
-## Product Modules
+- find a synthetic service;
+- ask a question against verified rules;
+- see the circular and method used for the answer;
+- exercise a mock application, payment, officer-review, and certificate flow;
+- verify a synthetic certificate without implying an official transaction.
 
-### Government Portal
+## Why the assistant cannot publish policy
 
-- Circular/document management for GO-138-style uploads and seeded circulars.
-- Rule extraction with confidence scores and pending review state.
-- Mandatory officer/reviewer approval before a rule becomes verified.
-- Verified rule publication and version history.
-- Compliance drift detection across mock portal config, SOP, FAQ, and form schema.
-- Impact/cascade tracing from circular change to citizen impact.
-- Priority dashboard for citizen-impact ranking.
-- Connected-system propagation and demo patching.
-- Audit trail for uploads, extraction, approval, publication, compliance, citizen answers, and certificates.
-- Ollama/local AI explanation of verified context only.
+Deterministic rule evaluation is authoritative. Optional Ollama output can explain verified context, but it cannot approve a candidate, change an effective date, or publish a rule. When Ollama is unavailable, a labeled deterministic fallback remains active. Human review is required before a candidate enters the verified knowledge set.
 
-### Citizen Portal
+## Run the sandbox locally
 
-- Government Knowledge Assistant that answers from verified rules and cites source circulars.
-- Scheme/Service Finder questionnaire.
-- Guided application assistance using the existing voice/form assistant.
-- Voice access with safe browser/backend fallback.
-- Synthetic service portal with mock application, payment, officer review, certificate generation, tracking, and verification.
-
-## Demo Accounts
-
-```text
-admin@niyamguard.local / Admin@12345 / admin
-reviewer@niyamguard.local / Reviewer@12345 / reviewer
-officer@niyamguard.local / Officer@12345 / officer
-viewer@niyamguard.local / Viewer@12345 / viewer
-citizen@niyamguard.local / Citizen@12345 / citizen
-```
-
-## Local Setup
-
-### Backend: Windows PowerShell
+Python 3.12 and Node.js are required. No government or paid-provider credentials are needed.
 
 ```powershell
 cd backend
 py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python -m app.seed_demo
-uvicorn app.main:app --reload --port 8010
+.\.venv\Scripts\python -m pip install -r requirements.txt
+.\.venv\Scripts\python -m app.seed_demo
+.\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8010
 ```
 
-### Backend: macOS/Linux
+In a second terminal:
 
-```bash
-cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m app.seed_demo
-uvicorn app.main:app --reload --port 8010
-```
-
-### Frontend: Windows/macOS/Linux
-
-```bash
+```powershell
 cd frontend
 npm install
 npm run dev -- --host 127.0.0.1 --port 5180
 ```
 
-Open:
+Open `http://127.0.0.1:5180`. Demo identities are listed in [TESTER_GUIDE.md](TESTER_GUIDE.md).
 
-```text
-http://127.0.0.1:5180
-```
-
-## Main Routes
-
-```text
-/                       two-portal landing
-/citizen                citizen portal
-/government             government portal
-/demo                   legacy demo dashboard
-/services               citizen services
-/apply/income_certificate
-/applications
-/track
-/verify-certificate
-/officer
-/admin
-/admin/policy-updates
-/admin/compliance
-/admin/propagation
-/admin/audit
-/admin/reports
-/admin/readiness
-/virtual-gov
-/mock/meeseva
-/mock/public-faq
-```
-
-## Reproduce the Full Demo
-
-Start the isolated synthetic services, then record the same browser-driven journey used for the published video:
+## Verification
 
 ```powershell
-.\scripts\start-recording-services.ps1
-.\scripts\record-demo.ps1 -BaseUrl http://127.0.0.1:5180
+backend\.venv\Scripts\python -m pytest backend/app/tests -q
+npm test --prefix frontend -- --run
+npm run build --prefix frontend
 ```
 
-The recorder fails if the simulation fails or the final video is shorter than three minutes, is not 1280×720, or has no audio stream. It also writes sampled frames and machine-readable media evidence under `docs/demo/verification/`.
+Current release evidence records **243 backend tests**, **60 frontend tests**, a Vite production build, and a same-origin container check. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
 
-## Key APIs
+## Current limits
 
-```text
-POST /api/auth/login
-GET  /api/integration/health
-GET  /api/dashboard/summary
-GET  /api/dashboard/departments
-POST /api/demo/run-full-end-to-end
-GET  /api/circulars
-POST /api/circulars/{circular_id}/extract-rules
-GET  /api/rule-candidates
-POST /api/rule-candidates/{candidate_id}/approve
-POST /api/policy-updates/{candidate_id}/publish
-GET  /api/policy-updates/rules/{rule_id}/lineage
-POST /api/compliance/run
-GET  /api/compliance/findings
-GET  /api/cascade/finding/{finding_id}
-GET  /api/dashboard/priority-findings
-GET  /api/audit/events
-POST /api/hybrid/answer
-GET  /api/public/rules/latest?service_id=income_certificate&rule_key=validity
-GET  /api/portal/services
-POST /api/applications
-GET  /api/officer/pending
-POST /api/officer/applications/{application_id}/approve
-GET  /api/certificates/verify/{verification_hash}
-GET  /api/ai/status
-POST /api/ai/verified-explanation
-```
+- Circulars, people, connected systems, applications, payments, and certificates are synthetic.
+- No real government identity, Gazette, MeeSeva, DigiLocker, eSign, payment, or messaging integration is verified.
+- The current score is descriptive for one synthetic snapshot; it is not a forecast or policy-performance metric.
+- Cross-jurisdiction comparison, expiry detection, a formal hallucination benchmark, and manual assistive-technology testing remain open work.
+- A deployment blueprint exists, but no owner-verified public backend is currently claimed.
 
-## Ollama
+## Evidence and orientation
 
-Ollama is optional. It is used only to explain verified context; it does not make official policy or compliance decisions.
+- [Architecture](docs/architecture.md)
+- [Engineering decisions](docs/ENGINEERING_DECISIONS.md)
+- [Policy-readiness gaps](docs/PILOT_READINESS_GAP_MATRIX.md)
+- [Test report](docs/TEST_REPORT.md)
+- [Deployment boundary](docs/deployment.md)
+- [Case study](docs/CASE_STUDY.md)
+- [Contributing](CONTRIBUTING.md)
 
-```bash
-ollama pull qwen2.5:7b-instruct
-```
+## License status
 
-Recommended environment:
-
-```env
-AI_ENABLED=true
-AI_PROVIDER=ollama
-OLLAMA_BASE_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=qwen2.5:7b-instruct
-OLLAMA_FALLBACK_MODEL=llama3.2:3b
-RAG_ENABLED=true
-```
-
-If Ollama is unavailable, deterministic fallback remains active.
-
-## Tests
-
-Backend:
-
-```bash
-python -m pytest backend/app/tests -q
-```
-
-Frontend:
-
-```bash
-cd frontend
-npm test -- --run
-npm run build
-```
-
-Smoke test with a running backend:
-
-```bash
-python scripts/final_api_smoke_test.py --base-url http://127.0.0.1:8010
-```
-
-Browser E2E with running backend and frontend:
-
-```bash
-cd frontend
-npx playwright test tests/e2e/final-full-feature-portal.spec.ts --headed
-```
-
-## Docker
-
-```bash
-docker compose up --build
-docker compose exec backend python -m app.seed_demo
-```
-
-Docker runs PostgreSQL, FastAPI, and frontend services using the compose file.
-
-## Seed Data
-
-The default seed includes:
-
-- GO-138: Income Certificate validity `12 months -> 6 months`.
-- Mock connected systems that can drift from the verified rule.
-- Demo service definitions and forms.
-- Demo users and officer/reviewer roles.
-- Synthetic dataset pack under `data/niyamguard_dataset_pack_v1`.
-
-The dataset is synthetic. It is useful for demos, RAG/search, tests, and model-prep only.
-
-## Limitations
-
-- This is a sandbox/pilot prototype with mock connected systems and demo data.
-- It is not a production integration with real government portals.
-- Production would need real APIs, security audit, accessibility audit, legal review, department sign-off, secrets management, real digital signatures, and real operational monitoring.
-- The app guides citizens but never submits an official application, handles real OTP/CAPTCHA/payment, or replaces official verification.
+No license file is present. All rights remain with the copyright holders until ownership and contributor approval are reviewed.
