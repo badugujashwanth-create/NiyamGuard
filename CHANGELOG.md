@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-07-23
+
+- Connected one synthetic circular to a complete evidence trail: bounded intake, effective/expiry extraction, version comparison, conflict and impact analysis, human review, publication, explanation, eligibility regression, and audit history.
+- Added explicit approve, reject, and request-revision decisions plus linked immutable publication evidence.
+- Added deterministic officer/citizen views and before/after eligibility fixtures grounded in the same source excerpt and content hash.
+- Added validated synthetic PDF/text upload boundaries and raised the verified suite to 250 backend and 60 frontend tests.
+
 ## 1.1.0 — 2026-07-19
 
 - Added evidence-derived compliance and coverage scores plus department readiness aggregation.
