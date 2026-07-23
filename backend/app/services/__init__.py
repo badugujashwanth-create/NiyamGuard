@@ -32,6 +32,7 @@ _ALIASES = {
     "validator": "app.citizen_assistant.validator",
     "dataset_service": "app.demo.dataset_service",
     "full_demo_service": "app.demo.full_demo_service",
+    "policy_lifecycle_service": "app.demo.policy_lifecycle_service",
     "government_inbox_service": "app.demo.government_inbox_service",
     "pdf_generator": "app.demo.pdf_generator",
     "readiness_service": "app.demo.readiness_service",

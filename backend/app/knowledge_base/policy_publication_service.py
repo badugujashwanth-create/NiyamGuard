@@ -83,6 +83,7 @@ def publish_rule_candidate(candidate_id: str, reviewer_user_id: str | None = Non
         source_circular_id=candidate.circular_id,
         source_circular_number=circular.circular_number if circular else candidate.circular_id,
         effective_date=candidate.effective_date,
+        expiry_date=candidate.expiry_date,
         published_by=reviewer_user_id,
         published_at=timestamp,
         is_current=True,

@@ -39,10 +39,12 @@ import {
   getSources,
   getUsers,
   publishRuleCandidate,
+  rejectRuleCandidate,
   recalculatePriority,
   reindexKnowledge,
   resetMockSystems,
   rerunComplianceForRule,
+  requestRuleCandidateRevision,
   runCompliance,
   runSchedulerNow,
   runSelfUpdateScenario,
@@ -513,6 +515,21 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
               await approveRuleCandidate(candidateId, "Approved from admin console.");
               await refreshSelfUpdateData();
               setReportStatus("Candidate approved.");
+            }}
+            onReject={async (candidateId) => {
+              setReportStatus(`Rejecting ${candidateId}...`);
+              await rejectRuleCandidate(candidateId, "Rejected from admin review queue.");
+              await refreshSelfUpdateData();
+              setReportStatus("Candidate rejected.");
+            }}
+            onRequestRevision={async (candidateId) => {
+              setReportStatus(`Requesting revision for ${candidateId}...`);
+              await requestRuleCandidateRevision(
+                candidateId,
+                "Clarify the source clause and expiry evidence before publication.",
+              );
+              await refreshSelfUpdateData();
+              setReportStatus("Revision requested.");
             }}
             onPublish={async (candidateId) => {
               setReportStatus(`Publishing ${candidateId}...`);
@@ -1302,7 +1319,7 @@ function CircularsPage({ circulars, onExtract, onSyncAll }) {
   );
 }
 
-function RuleCandidatesPage({ candidates, onApprove, onPublish }) {
+function RuleCandidatesPage({ candidates, onApprove, onReject, onRequestRevision, onPublish }) {
   return (
     <section className="admin-section">
       <div className="admin-page-summary">
@@ -1326,6 +1343,7 @@ function RuleCandidatesPage({ candidates, onApprove, onPublish }) {
               <div><dt>Old value</dt><dd>{candidate.old_value || "New rule"}</dd></div>
               <div><dt>New value</dt><dd>{candidate.new_value} {candidate.unit}</dd></div>
               <div><dt>Effective</dt><dd>{candidate.effective_date}</dd></div>
+              <div><dt>Expiry</dt><dd>{candidate.expiry_date || "No expiry stated"}</dd></div>
               <div><dt>Confidence</dt><dd>{Math.round(candidate.confidence_score * 100)}%</dd></div>
               <div><dt>Delta</dt><dd>{candidate.delta?.change_type || "Not calculated"}</dd></div>
               <div><dt>Impact</dt><dd>{candidate.delta?.impact_level || "Not calculated"}</dd></div>
@@ -1334,6 +1352,12 @@ function RuleCandidatesPage({ candidates, onApprove, onPublish }) {
             <div className="admin-report-actions">
               <button className="button button-secondary" onClick={() => void onApprove(candidate.id)} type="button">
                 Approve
+              </button>
+              <button className="button button-secondary" onClick={() => void onReject(candidate.id)} type="button">
+                Reject
+              </button>
+              <button className="button button-secondary" onClick={() => void onRequestRevision(candidate.id)} type="button">
+                Request revision
               </button>
               <button className="button button-primary" onClick={() => void onPublish(candidate.id)} type="button">
                 Publish
@@ -1396,6 +1420,7 @@ function PolicyUpdatesPage({
                 <th>Version</th>
                 <th>Source</th>
                 <th>Effective</th>
+                <th>Expiry</th>
                 <th>Previous</th>
                 <th>Knowledge</th>
                 <th>Propagation</th>
@@ -1415,6 +1440,7 @@ function PolicyUpdatesPage({
                       <td>{version.rule_id} / v{version.version_number}</td>
                       <td>{version.source_circular_number}</td>
                       <td>{version.effective_date}</td>
+                      <td>{version.expiry_date || "Not stated"}</td>
                       <td>{version.previous_version_id || "Origin"}</td>
                       <td>{updates.length ? updates.map((item) => item.status).join(", ") : "No event"}</td>
                       <td>{tasks.length} task{tasks.length === 1 ? "" : "s"}</td>
@@ -1423,7 +1449,7 @@ function PolicyUpdatesPage({
                     </tr>
                   );
                 }) : (
-                  <tr><td colSpan="8">No policy lineage is available yet.</td></tr>
+                  <tr><td colSpan="9">No policy lineage is available yet.</td></tr>
                 )}
             </tbody>
           </table>
