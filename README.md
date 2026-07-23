@@ -10,14 +10,16 @@ This repository is a **synthetic pilot sandbox**, not an official government sys
 
 A circular is useful only when its effective rule reaches every dependent service surface. NiyamGuard models that lifecycle explicitly:
 
-1. ingest a seeded or synthetic circular;
-2. extract candidate rules with source and confidence evidence;
-3. require a human reviewer to approve or reject each candidate;
-4. publish an immutable verified rule version with an effective date;
-5. compare connected mock systems against that version;
-6. prioritize conflicts and drift by citizen impact;
-7. remediate the mock surfaces and retain an audit trail; and
-8. answer citizen questions only from the verified knowledge boundary.
+1. ingest a validated synthetic PDF or UTF-8 text circular;
+2. extract effective/expiry dates and candidate clauses with exact source evidence;
+3. compare the candidate with its linked earlier version;
+4. detect conflicting active rules and assign severity;
+5. trace impacted schemes, forms, department workflows, and mock systems;
+6. require a human reviewer to approve, reject, or request revision;
+7. publish an immutable verified rule version and propagation plan only after approval;
+8. generate officer and citizen views from the same evidence boundary;
+9. rerun deterministic eligibility fixtures against the old and new versions; and
+10. preserve the complete lifecycle in the audit history.
 
 ### Worked synthetic example
 
@@ -77,14 +79,14 @@ npm test --prefix frontend -- --run
 npm run build --prefix frontend
 ```
 
-Current release evidence records **243 backend tests**, **60 frontend tests**, a Vite production build, and a same-origin container check. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
+Current verification records **250 backend tests**, **60 frontend tests**, a Vite production build, and a same-origin container check. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
 
 ## Current limits
 
 - Circulars, people, connected systems, applications, payments, and certificates are synthetic.
 - No real government identity, Gazette, MeeSeva, DigiLocker, eSign, payment, or messaging integration is verified.
 - The current score is descriptive for one synthetic snapshot; it is not a forecast or policy-performance metric.
-- Cross-jurisdiction comparison, expiry detection, a formal hallucination benchmark, and manual assistive-technology testing remain open work.
+- Cross-jurisdiction comparison, complex non-ISO expiry language, a formal hallucination benchmark, and manual assistive-technology testing remain open work.
 - A deployment blueprint exists, but no owner-verified public backend is currently claimed.
 
 ## Evidence and orientation

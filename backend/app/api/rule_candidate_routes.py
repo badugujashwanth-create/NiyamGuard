@@ -66,3 +66,19 @@ def reject_candidate(
     if not result.get("success"):
         raise HTTPException(status_code=404, detail=result.get("message", "Candidate not found."))
     return result
+
+
+@router.post("/{candidate_id}/request-revision")
+def request_revision(
+    candidate_id: str,
+    payload: ReviewPayload,
+    actor: CurrentUser = Depends(require_roles("admin", "reviewer")),
+) -> dict:
+    result = rule_extraction_service.request_candidate_revision(
+        candidate_id,
+        reviewer_user_id=actor.id,
+        notes=payload.notes,
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "Revision request failed."))
+    return result

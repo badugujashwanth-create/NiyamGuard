@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 SourceType = Literal["url", "rss", "api", "manual_upload", "local_demo"]
 SyncStatus = Literal["pending", "running", "success", "failed"]
 CircularDocumentStatus = Literal["ingested", "extracted", "pending_review", "published", "rejected"]
-CandidateStatus = Literal["candidate", "pending_review", "approved", "rejected"]
+CandidateStatus = Literal["candidate", "pending_review", "needs_revision", "approved", "rejected"]
 ExtractionMethod = Literal["deterministic", "ollama", "manual"]
 ChangeType = Literal["new_rule", "changed_value", "superseded", "no_change"]
 ImpactLevel = Literal["low", "medium", "high", "critical"]
@@ -51,6 +51,7 @@ class CircularDocument(BaseModel):
     department: str
     published_date: str
     effective_date: str
+    expiry_date: str | None = None
     document_url: str | None = None
     storage_path: str | None = None
     raw_text: str
@@ -79,6 +80,7 @@ class PolicyRuleCandidate(BaseModel):
     new_value: str
     unit: str | None = None
     effective_date: str
+    expiry_date: str | None = None
     confidence_score: float
     extraction_method: ExtractionMethod
     source_excerpt: str
@@ -120,6 +122,7 @@ class VerifiedPolicyRuleVersion(BaseModel):
     source_circular_id: str
     source_circular_number: str
     effective_date: str
+    expiry_date: str | None = None
     published_by: str | None = None
     published_at: str
     is_current: bool

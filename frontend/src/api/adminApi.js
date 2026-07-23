@@ -101,6 +101,20 @@ export function approveRuleCandidate(candidateId, notes = "") {
   });
 }
 
+export function rejectRuleCandidate(candidateId, notes = "") {
+  return request(`/api/rule-candidates/${encodeURIComponent(candidateId)}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ notes }),
+  });
+}
+
+export function requestRuleCandidateRevision(candidateId, notes) {
+  return request(`/api/rule-candidates/${encodeURIComponent(candidateId)}/request-revision`, {
+    method: "POST",
+    body: JSON.stringify({ notes }),
+  });
+}
+
 export function publishRuleCandidate(candidateId, notes = "") {
   return request(`/api/policy-updates/${encodeURIComponent(candidateId)}/publish`, {
     method: "POST",

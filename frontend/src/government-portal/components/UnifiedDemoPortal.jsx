@@ -10,7 +10,7 @@ import {
   getVirtualGovStatus,
   askHybridDemoQuestion,
   runCompliance,
-  runFullEndToEndDemo,
+  runPolicyLifecycleDemo,
 } from "../../services/api";
 
 const portalCards = [
@@ -136,45 +136,31 @@ const portalCards = [
 ];
 
 const orderedStepKeys = [
-  "reset_sandbox",
-  "publish_circular",
-  "ingest_circular",
-  "update_verified_rule",
-  "update_service_portal",
-  "create_citizen_identity",
-  "submit_application",
-  "verify_otp",
-  "complete_payment",
-  "officer_approval",
-  "generate_certificate",
-  "sign_certificate",
-  "verify_certificate",
-  "patch_connected_systems",
-  "rerun_compliance",
-  "write_audit_trail",
-  "ask_hybrid_answer",
-  "generate_ollama_explanation",
+  "reset",
+  "ingest",
+  "extract",
+  "compare",
+  "conflicts",
+  "impact",
+  "review",
+  "publish",
+  "explain",
+  "eligibility",
+  "audit",
 ];
 
 const pendingSteps = [
-  "Reset Sandbox",
-  "Circular Published",
-  "Circular Ingested",
-  "Policy Rule Updated",
-  "Service Portal Updated",
-  "Citizen Identity Created",
-  "Application Submitted",
-  "OTP Verified",
-  "Payment Completed",
-  "Officer Approved",
-  "Certificate Generated",
-  "Certificate Signed",
-  "Certificate Verified",
-  "Connected Systems Patched",
-  "Compliance Rerun",
-  "Audit Trail Written",
-  "Hybrid Answer Generated",
-  "Ollama Explanation Generated or Fallback Active",
+  "Reset Synthetic Sandbox",
+  "Ingest Synthetic Circular",
+  "Extract Metadata and Clauses",
+  "Compare Policy Versions",
+  "Detect Conflicts",
+  "Trace Downstream Impact",
+  "Send to Officer Review",
+  "Approve and Publish",
+  "Generate Officer and Citizen Views",
+  "Rerun Eligibility Scenarios",
+  "Preserve Audit History",
 ].map((label, index) => ({
   key: orderedStepKeys[index],
   label,
@@ -183,23 +169,17 @@ const pendingSteps = [
 }));
 
 const stepDisplayLabels = {
-  publish_circular: "Circular Published",
-  ingest_circular: "Circular Ingested",
-  update_verified_rule: "Policy Rule Updated",
-  update_service_portal: "Service Portal Updated",
-  create_citizen_identity: "Citizen Identity Created",
-  submit_application: "Application Submitted",
-  verify_otp: "OTP Verified",
-  complete_payment: "Payment Completed",
-  officer_approval: "Officer Approved",
-  generate_certificate: "Certificate Generated",
-  sign_certificate: "Certificate Signed",
-  verify_certificate: "Certificate Verified",
-  patch_connected_systems: "Connected Systems Patched",
-  rerun_compliance: "Compliance Rerun",
-  write_audit_trail: "Audit Trail Written",
-  ask_hybrid_answer: "Hybrid Answer Generated",
-  generate_ollama_explanation: "Ollama Explanation Generated or Fallback Active",
+  reset: "Reset Synthetic Sandbox",
+  ingest: "Ingest Synthetic Circular",
+  extract: "Extract Metadata and Clauses",
+  compare: "Compare Policy Versions",
+  conflicts: "Detect Conflicts",
+  impact: "Trace Downstream Impact",
+  review: "Send to Officer Review",
+  publish: "Approve and Publish",
+  explain: "Generate Officer and Citizen Views",
+  eligibility: "Rerun Eligibility Scenarios",
+  audit: "Preserve Audit History",
 };
 
 function statusTone(status) {
@@ -214,7 +194,7 @@ function StatusBadge({ children }) {
 }
 
 function stepStatusLabel(status, step) {
-  if (step?.key === "generate_ollama_explanation" && step?.payload?.fallback) return "Fallback";
+  if (step?.key === "explain" && step?.payload?.citizen_explanation?.fallback) return "Fallback";
   if (status === "success") return "Success";
   if (status === "failed") return "Failed";
   if (status === "running") return "Running";
@@ -261,6 +241,7 @@ export default function UnifiedDemoPortal() {
   const [runStatus, setRunStatus] = useState("idle");
   const [steps, setSteps] = useState(pendingSteps);
   const [entities, setEntities] = useState({});
+  const [lifecycleResult, setLifecycleResult] = useState(null);
   const [aiExplanation, setAiExplanation] = useState(null);
   const [hybridAnswer, setHybridAnswer] = useState(null);
   const [testStatus, setTestStatus] = useState("");
@@ -303,20 +284,29 @@ export default function UnifiedDemoPortal() {
     setRunStatus("running");
     setError("");
     setAiExplanation(null);
+    setLifecycleResult(null);
     setEntities({});
     setSteps(pendingSteps.map((step) => ({ ...step, status: "running", details: "Queued." })));
     try {
-      const result = await runFullEndToEndDemo();
+      const result = await runPolicyLifecycleDemo();
       const resultSteps = result.steps?.length ? result.steps : [];
       setSteps(resultSteps);
-      setEntities(result.entities || {});
-      const ollamaStep = resultSteps.find((step) => step.key === "generate_ollama_explanation");
-      if (ollamaStep?.payload) {
+      setLifecycleResult(result);
+      setEntities({
+        circular_number: result.circular?.circular_number,
+        effective_date: result.circular?.effective_date,
+        expiry_date: result.circular?.expiry_date,
+        previous_version: result.comparison?.previous_version?.id,
+        current_version: result.publication?.rule_version?.id,
+        conflict_count: result.conflicts?.length || 0,
+        changed_scenarios: result.eligibility?.changed_count || 0,
+      });
+      if (result.citizen_explanation) {
         setAiExplanation({
-          provider: ollamaStep.payload.provider,
-          model: ollamaStep.payload.model,
-          fallback: ollamaStep.payload.fallback,
-          answer: ollamaStep.payload.text,
+          provider: result.citizen_explanation.provider,
+          model: result.citizen_explanation.model,
+          fallback: result.citizen_explanation.fallback,
+          answer: result.citizen_explanation.text,
         });
       }
       setRunStatus(result.success ? "success" : "failed");
@@ -385,14 +375,14 @@ async function handleAskHybrid() {
           <p className="eyebrow">Government Portal</p>
           <h1>NiyamGuard Government Portal</h1>
           <p>
-            Government users can publish sandbox circulars, update verified rules, run
-            compliance checks, review applications, issue certificates, verify integrations,
-            monitor audit trails, and test local AI explanation.
+            Follow one synthetic circular from validated intake through extraction, version
+            comparison, conflict and impact analysis, human review, citizen guidance,
+            eligibility reruns, and an auditable publication result.
           </p>
         </div>
         <div className="unified-actions">
           <button className="button button-primary" disabled={runStatus === "running"} onClick={handleRunFullDemo} type="button">
-            {runStatus === "running" ? "Running Full Simulation..." : "Run Full End-to-End Simulation"}
+            {runStatus === "running" ? "Running Policy Lifecycle..." : "Run Connected Policy Lifecycle"}
           </button>
           <button className="button button-secondary" disabled={loading} onClick={() => void loadStatus()} type="button">
             Refresh Status
@@ -479,7 +469,7 @@ async function handleAskHybrid() {
         <div className="unified-section-heading">
           <div>
             <p className="eyebrow">Guided workflow</p>
-            <h2 id="portal-stepper-title">Run Full End-to-End Simulation</h2>
+            <h2 id="portal-stepper-title">One circular, one connected evidence trail</h2>
           </div>
           <StatusBadge>{runStatus === "success" ? "success" : runStatus === "failed" ? "failed" : runStatus === "running" ? "running" : "pending"}</StatusBadge>
         </div>
@@ -499,72 +489,104 @@ async function handleAskHybrid() {
 
       <section className="unified-result-grid" aria-label="Generated demo entities">
         <article className="unified-result-panel">
-          <p className="eyebrow">Generated entities</p>
-          <h2>Scenario output</h2>
+          <p className="eyebrow">Policy result</p>
+          <h2>Verified lifecycle output</h2>
           <dl>
             <div>
-              <dt>Application number</dt>
-              <dd data-testid="demo-application-number">{formatValue(entities.application_number)}</dd>
+              <dt>Circular</dt>
+              <dd data-testid="lifecycle-circular">{formatValue(entities.circular_number)}</dd>
             </div>
             <div>
-              <dt>Certificate number</dt>
-              <dd data-testid="demo-certificate-number">{formatValue(entities.certificate_number)}</dd>
+              <dt>Effective date</dt>
+              <dd>{formatValue(entities.effective_date)}</dd>
             </div>
             <div>
-              <dt>Verification hash</dt>
-              <dd data-testid="demo-verification-hash">{formatValue(entities.verification_hash)}</dd>
+              <dt>Expiry date</dt>
+              <dd>{formatValue(entities.expiry_date)}</dd>
             </div>
             <div>
-              <dt>Rule ID</dt>
-              <dd>{formatValue(entities.rule_id)}</dd>
+              <dt>Version link</dt>
+              <dd>{formatValue(entities.previous_version)} → {formatValue(entities.current_version)}</dd>
+            </div>
+            <div>
+              <dt>Open conflicts</dt>
+              <dd>{formatValue(entities.conflict_count)}</dd>
+            </div>
+            <div>
+              <dt>Eligibility outcomes changed</dt>
+              <dd>{formatValue(entities.changed_scenarios)}</dd>
             </div>
           </dl>
         </article>
 
         <article className="unified-result-panel">
-          <p className="eyebrow">Hybrid Answer Engine</p>
-          <h2>Source-backed answer</h2>
-          <button className="button button-primary" onClick={handleAskHybrid} type="button">
-            Ask Hybrid Test Question
-          </button>
-          {hybridAnswer ? (
-            <div className="unified-ai-output" data-testid="hybrid-output">
+          <p className="eyebrow">Source evidence</p>
+          <h2>Clause and review boundary</h2>
+          {lifecycleResult?.source_evidence ? (
+            <div className="unified-ai-output" data-testid="lifecycle-evidence">
               <div className="source-badges">
-                <span>{hybridAnswer.method || "answer"}</span>
-                <span>{hybridAnswer.provider || "deterministic"}</span>
-                {hybridAnswer.verified ? <span>Verified Source</span> : null}
+                <span>{lifecycleResult.source_evidence.circular_number}</span>
+                <span>Synthetic source</span>
+                <span>Hash verified</span>
               </div>
-              <p>{hybridAnswer.answer}</p>
+              <p>{lifecycleResult.source_evidence.excerpt}</p>
+              <p>
+                Character range {lifecycleResult.source_evidence.character_range?.join("–")}.
+                Review actions: {lifecycleResult.review_queue?.available_decisions?.join(", ")}.
+              </p>
             </div>
           ) : null}
         </article>
 
         <article className="unified-result-panel">
-          <p className="eyebrow">Local AI / Ollama</p>
-          <h2>Ollama Status: {aiStatus?.status === "online" ? "Online" : "Fallback active"}</h2>
-          <p>
-            Model: {aiStatus?.model || "qwen2.5:7b-instruct"}.
-            {aiStatus?.status === "online"
-              ? " Local Ollama is available for verified explanations."
-              : " Ollama unavailable. Deterministic fallback is active."}
-          </p>
-          <p>
-            Official policy answers and compliance decisions come from deterministic verified rules.
-            Ollama only explains verified context.
-          </p>
-          <button className="button button-primary" onClick={handleTestOllama} type="button">
-            Explain GO-138 using Local AI
-          </button>
-          {testStatus ? <p className="support-message">{testStatus}</p> : null}
+          <p className="eyebrow">Two audiences</p>
+          <h2>Officer and citizen guidance</h2>
+          {lifecycleResult?.officer_summary ? (
+            <div className="unified-ai-output">
+              <div className="source-badges"><span>Officer summary</span></div>
+              <p>{lifecycleResult.officer_summary}</p>
+            </div>
+          ) : null}
           {aiExplanation ? (
             <div className="unified-ai-output" data-testid="ollama-output">
               <div className="source-badges">
-                <span>{aiExplanation.fallback ? "Fallback" : "Ollama"}</span>
+                <span>Citizen explanation</span>
+                <span>{aiExplanation.fallback ? "Deterministic fallback" : "Local Ollama"}</span>
                 <span>{aiExplanation.provider || "provider unknown"}</span>
               </div>
               <p>{aiExplanation.answer || aiExplanation.summary || "No explanation returned."}</p>
             </div>
           ) : null}
+        </article>
+
+        <article className="unified-result-panel">
+          <p className="eyebrow">Impact chain</p>
+          <h2>Connected services and systems</h2>
+          {lifecycleResult?.impact ? (
+            <dl>
+              <div><dt>Schemes</dt><dd>{lifecycleResult.impact.schemes?.map((item) => item.name).join(", ") || "None"}</dd></div>
+              <div><dt>Forms</dt><dd>{lifecycleResult.impact.forms?.map((item) => item.name).join(", ") || "None"}</dd></div>
+              <div><dt>Department</dt><dd>{lifecycleResult.impact.departments?.map((item) => item.name).join(", ") || "None"}</dd></div>
+              <div><dt>Connected systems</dt><dd>{lifecycleResult.impact.connected_systems?.length || 0}</dd></div>
+            </dl>
+          ) : <p>Run the lifecycle to resolve downstream impact.</p>}
+        </article>
+
+        <article className="unified-result-panel">
+          <p className="eyebrow">Eligibility regression</p>
+          <h2>Before and after rule evaluation</h2>
+          {lifecycleResult?.eligibility?.results?.length ? (
+            <ul className="unified-card-facts" data-testid="eligibility-results">
+              {lifecycleResult.eligibility.results.map((scenario) => (
+                <li key={scenario.id}>
+                  <strong>{scenario.certificate_age_months} months:</strong>{" "}
+                  {scenario.eligible_before ? "eligible" : "not eligible"} →{" "}
+                  {scenario.eligible_after ? "eligible" : "not eligible"}
+                  {scenario.changed ? " (changed)" : ""}
+                </li>
+              ))}
+            </ul>
+          ) : <p>Run the lifecycle to evaluate deterministic fixtures.</p>}
         </article>
       </section>
     </main>

@@ -966,6 +966,62 @@ export const fullDemoResult = {
   audit_event_count: 7,
 };
 
+export const policyLifecycleResult = {
+  success: true,
+  synthetic_only: true,
+  circular: {
+    circular_number: "GO-138",
+    effective_date: "2026-07-01",
+    expiry_date: "2027-06-30",
+  },
+  steps: [
+    ["reset", "Reset synthetic sandbox"],
+    ["ingest", "Ingest synthetic circular"],
+    ["extract", "Extract metadata and clauses"],
+    ["compare", "Compare policy versions"],
+    ["conflicts", "Detect conflicts"],
+    ["impact", "Trace downstream impact"],
+    ["review", "Send to officer review"],
+    ["publish", "Approve and publish"],
+    ["explain", "Generate officer and citizen views"],
+    ["eligibility", "Rerun eligibility scenarios"],
+    ["audit", "Preserve audit history"],
+  ].map(([key, label]) => ({ key, label, status: "success", details: `${label} completed.`, payload: {} })),
+  source_evidence: {
+    circular_number: "GO-138",
+    excerpt: "Income Certificate validity is changed from 12 months to 6 months.",
+    character_range: [36, 102],
+    content_hash: "synthetic-hash",
+  },
+  comparison: {
+    previous_version: { id: "version_rule_001_2" },
+    supersedes_version_id: "version_rule_001_2",
+  },
+  conflicts: [{ id: "conflict_1", severity: "high" }],
+  impact: {
+    schemes: [{ id: "post_matric_scholarship", name: "Post-Matric Scholarship" }],
+    forms: [{ id: "income_form", name: "income_certificate form v1" }],
+    departments: [{ id: "revenue", name: "Revenue" }],
+    connected_systems: [{ id: "portal", name: "Mock portal" }],
+  },
+  review_queue: { available_decisions: ["approve", "reject", "request_revision"] },
+  publication: { rule_version: { id: "version_rule_001_3" } },
+  officer_summary: "GO-138 changes validity and one connected system requires review.",
+  citizen_explanation: {
+    text: "The synthetic Income Certificate validity is now 6 months.",
+    provider: "fallback",
+    model: "deterministic-template",
+    fallback: true,
+  },
+  eligibility: {
+    changed_count: 1,
+    results: [
+      { id: "fresh", certificate_age_months: 2, eligible_before: true, eligible_after: true, changed: false },
+      { id: "stale", certificate_age_months: 7, eligible_before: true, eligible_after: false, changed: true },
+    ],
+  },
+};
+
 export const verifiedAIExplanation = {
   success: true,
   question: "Explain GO-138 in simple words",
@@ -1216,6 +1272,9 @@ export function installApiMock(overrides = {}) {
     }
     if (url.endsWith("/api/demo/run-full-end-to-end")) {
       return jsonResponse(overrides.fullDemoResult || fullDemoResult);
+    }
+    if (url.endsWith("/api/demo/run-policy-lifecycle")) {
+      return jsonResponse(overrides.policyLifecycleResult || policyLifecycleResult);
     }
     if (url.endsWith("/api/scheme-finder/recommend")) {
       return jsonResponse(overrides.schemeFinderResponse || schemeFinderResponse);

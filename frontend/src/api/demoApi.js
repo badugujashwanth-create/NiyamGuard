@@ -4,6 +4,10 @@ export function runFullEndToEndDemo() {
   return request("/api/demo/run-full-end-to-end", { method: "POST" }, { auth: false });
 }
 
+export function runPolicyLifecycleDemo() {
+  return request("/api/demo/run-policy-lifecycle", { method: "POST" }, { auth: false });
+}
+
 export function getVerifiedAIExplanation(question = "Explain GO-138 in simple words") {
   return request(
     "/api/ai/verified-explanation",

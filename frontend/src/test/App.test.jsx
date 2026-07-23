@@ -593,7 +593,7 @@ describe("NiyamGuard frontend", () => {
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/virtual-gov/run"))).toBe(true);
   });
 
-  it("government portal runs the backend full demo flow", async () => {
+  it("government portal runs the connected policy lifecycle", async () => {
     const { fetchMock } = installApiMock();
     const user = userEvent.setup();
     window.history.pushState({}, "", "/government");
@@ -613,16 +613,15 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByRole("heading", { name: "Hybrid Answer Engine / Ollama" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Readiness & Ops" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Run Full End-to-End Simulation" }));
+    await user.click(screen.getByRole("button", { name: "Run Connected Policy Lifecycle" }));
 
-    expect(await screen.findByText("Circular Published")).toBeInTheDocument();
-    expect(screen.getByTestId("demo-application-number")).toHaveTextContent("NGSP-2026-INC-000001");
-    expect(screen.getByTestId("demo-certificate-number")).toHaveTextContent("NGCERT-2026-INC-000001");
-    expect(screen.getByTestId("demo-verification-hash")).toHaveTextContent("hash_demo");
-    expect(screen.getByTestId("ollama-output")).toHaveTextContent("GO-138 means");
-    expect(screen.getByText("Ollama Explanation Generated or Fallback Active")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Explain GO-138 using Local AI" }).length).toBeGreaterThan(0);
-    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/demo/run-full-end-to-end"))).toBe(true);
+    expect(await screen.findByText("Extract Metadata and Clauses")).toBeInTheDocument();
+    expect(screen.getByTestId("lifecycle-circular")).toHaveTextContent("GO-138");
+    expect(screen.getByTestId("lifecycle-evidence")).toHaveTextContent("Income Certificate validity");
+    expect(screen.getByTestId("ollama-output")).toHaveTextContent("6 months");
+    expect(screen.getByTestId("eligibility-results")).toHaveTextContent("7 months");
+    expect(screen.getByText("Preserve Audit History")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/demo/run-policy-lifecycle"))).toBe(true);
   });
 
   it("login page renders", async () => {
