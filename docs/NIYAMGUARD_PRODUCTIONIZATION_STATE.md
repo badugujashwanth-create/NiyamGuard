@@ -2,7 +2,7 @@
 
 **State date:** 2026-08-07
 **Canonical branch:** `main`
-**Latest local change:** database-authority boundary hardening after cookie-session productionization
+**Latest local change:** standards-based PDF parsing and database-backed rate limiting after cookie-session productionization
 **Public release:** `v1.1.0` (a new release is not claimed until the changes are committed and published)
 **Classification:** synthetic policy-drift MVP; production-boundary work in progress
 
@@ -37,7 +37,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 272 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 273 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 60 tests in default bearer-demo mode and 60 tests with `VITE_AUTH_COOKIE_MODE=true` |
 | Frontend production build | Pass: Vite build |

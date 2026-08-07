@@ -166,6 +166,22 @@ def test_circular_upload_rejects_mime_mismatch_and_oversized_file(client, review
     assert oversized.status_code == 413
 
 
+def test_circular_upload_rejects_malformed_pdf_after_signature_check(client, reviewer_headers) -> None:
+    response = client.post(
+        "/api/circulars/upload-file",
+        headers=reviewer_headers,
+        data={
+            "circular_number": "SYN-MALFORMED-PDF",
+            "title": "Malformed synthetic circular",
+            "department": "Revenue",
+            "published_date": "2026-07-21",
+        },
+        files={"file": ("malformed.pdf", b"%PDF-1.7 not a real document", "application/pdf")},
+    )
+    assert response.status_code == 400
+    assert "parsed safely" in response.json()["error"]["message"]
+
+
 def test_synthetic_upload_reports_explicit_scanner_boundary(client, reviewer_headers) -> None:
     response = client.post(
         "/api/circulars/upload-file",

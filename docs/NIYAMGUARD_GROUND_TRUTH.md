@@ -4,7 +4,7 @@
 **Repository:** `https://github.com/badugujashwanth-create/NiyamGuard`
 **Audited branch:** `main`
 **HEAD / origin/main:** `a40fffcb20035fc7caf7e4b473abc11ac5f79fe1`
-**Current local HEAD:** `d66c57a` (not yet pushed; verify the remote before publishing claims)
+**Current local HEAD:** `26eed8e` (not yet pushed; verify the remote before publishing claims)
 **Public release:** `v1.1.0`
 **Audit scope:** Baseline audit captured before the 2026-08-07 productionization pass. The delta below is the current implementation evidence; older findings remain useful historical context but are not current-state claims.
 
@@ -27,7 +27,7 @@
 - CI now defines a fresh PostgreSQL migration job with production-style cookie, database-authority, CORS, trusted-host, and malware-scan settings; the job still requires a remote GitHub Actions run for evidence.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 272 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 273 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
@@ -115,7 +115,7 @@ Evidence: `test_application_upload_payment_review_certificate_flow` now passes a
 
 `/api/security/otp/request` and `/api/security/otp/verify` are demo-gated; the deterministic verifier is unreachable when `DEMO_MODE=false`.
 
-STT temporary files are removed in a `finally` block and the TTS cache has configured file/byte eviction limits. A distributed rate-limit and external speech-provider policy remain pilot work.
+STT temporary files are removed in a `finally` block and the TTS cache has configured file/byte eviction limits. Production uses database-backed fixed-window limiting; provider-level abuse controls and external speech-provider policy remain pilot work.
 
 ### P1 — deployment does not execute migrations
 
@@ -145,7 +145,7 @@ Refresh tokens now rotate atomically and JWT issuer/audience claims are validate
 
 ### P2 — claims and documentation drift
 
-README and test-report claims now reflect 272 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
+README and test-report claims now reflect 273 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
 
 The changelog describes a 1.2.0 candidate, but the public default branch currently has release/tag `v1.1.0`; a v1.2.0 public release is not verified. `docs/access-control.md` also labels the seeded officer account as a reviewer, while the code assigns the `officer` role.
 
@@ -163,7 +163,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 |---|---|
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
-| 272 backend tests | 272 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
+| 273 backend tests | 273 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
 | 60 frontend tests | Current `npm test -- --run` passed 60 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |

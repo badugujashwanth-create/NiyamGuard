@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-import re
+from io import BytesIO
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 from pydantic import BaseModel, Field
 
 from app.security.rbac import CurrentUser, require_roles
@@ -29,6 +31,7 @@ class CircularUploadPayload(BaseModel):
 
 
 MAX_CIRCULAR_BYTES = 2 * 1024 * 1024
+MAX_CIRCULAR_PAGES = 100
 ALLOWED_CIRCULAR_UPLOADS = {
     ".pdf": {"application/pdf"},
     ".txt": {"text/plain"},
@@ -51,12 +54,20 @@ def _extract_uploaded_text(filename: str, content_type: str, content: bytes) -> 
     else:
         if not content.startswith(b"%PDF"):
             raise HTTPException(status_code=400, detail="PDF signature is invalid.")
-        source = content.decode("latin-1", errors="ignore")
-        fragments = [
-            value.replace(r"\(", "(").replace(r"\)", ")").replace(r"\\", "\\")
-            for value in re.findall(r"\((.*?)(?<!\\)\)", source)
-        ]
-        text = "\n".join(fragment.strip() for fragment in fragments if fragment.strip())
+        try:
+            reader = PdfReader(BytesIO(content), strict=True)
+            if reader.is_encrypted:
+                raise HTTPException(status_code=422, detail="Encrypted PDFs are not accepted.")
+            if len(reader.pages) > MAX_CIRCULAR_PAGES:
+                raise HTTPException(status_code=413, detail="PDF contains too many pages.")
+            text = "\n".join(
+                (page.extract_text() or "").strip()
+                for page in reader.pages
+            ).strip()
+        except HTTPException:
+            raise
+        except (PdfReadError, ValueError, OSError) as exc:
+            raise HTTPException(status_code=400, detail="PDF could not be parsed safely.") from exc
     if len(text.strip()) < 20:
         raise HTTPException(
             status_code=422,
