@@ -12,6 +12,7 @@ def test_ready_checks_database_and_demo_data(client) -> None:
     assert response.status_code == 200
     assert body["database"]["reachable"] is True
     assert body["demo_data"]["available"] is True
+    assert body["core_tables"]["missing"] == []
 
 
 def test_integration_health_lists_modules(client) -> None:

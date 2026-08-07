@@ -8,6 +8,9 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from app.config import settings
 
 
+REQUIRED_RUNTIME_TABLES = frozenset({"users", "refresh_tokens", "audit_events", "policy_records"})
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -82,6 +85,7 @@ def database_ready() -> bool:
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
-        return True
+            tables = set(inspect(connection).get_table_names())
+        return REQUIRED_RUNTIME_TABLES.issubset(tables)
     except Exception:
         return False
