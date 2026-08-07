@@ -140,6 +140,60 @@ class ComplianceRunRecordModel(Base):
     finding_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 
+class PropagationPlanRecord(Base):
+    __tablename__ = "propagation_plans"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    rule_version_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_versions.id"), index=True)
+    service_id: Mapped[str] = mapped_column(String(120), index=True)
+    rule_key: Mapped[str] = mapped_column(String(120), index=True)
+    task_ids: Mapped[list[str]] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class PropagationTaskRecord(Base):
+    __tablename__ = "propagation_tasks"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    rule_version_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_versions.id"), index=True)
+    connected_system_id: Mapped[str] = mapped_column(String(160), index=True)
+    task_type: Mapped[str] = mapped_column(String(40), index=True)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    old_value: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    new_value: Mapped[str] = mapped_column(String(200))
+    patch_payload_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    assigned_to: Mapped[str | None] = mapped_column(String(160), nullable=True, index=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+    completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class ConnectedSystemPatchRecord(Base):
+    __tablename__ = "connected_system_patches"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    propagation_task_id: Mapped[str] = mapped_column(ForeignKey("propagation_tasks.id"), index=True)
+    connected_system_id: Mapped[str] = mapped_column(String(160), index=True)
+    patch_type: Mapped[str] = mapped_column(String(80), index=True)
+    before_snapshot_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    after_snapshot_json: Mapped[dict[str, Any]] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+    applied_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class RollbackEventRecord(Base):
+    __tablename__ = "rollback_events"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    rule_id: Mapped[str] = mapped_column(String(160), index=True)
+    from_version_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_versions.id"), index=True)
+    to_version_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_versions.id"), index=True)
+    rolled_back_by: Mapped[str | None] = mapped_column(String(160), nullable=True, index=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
 class PolicyRuleVersionRecord(Base):
     __tablename__ = "policy_rule_versions"
     __table_args__ = (UniqueConstraint("rule_id", "version_number", name="uq_policy_rule_version_number"),)

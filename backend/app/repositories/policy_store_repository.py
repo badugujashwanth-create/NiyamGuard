@@ -21,7 +21,11 @@ from app.models.database_models import (
     PolicyPublicationEventRecord,
     PolicyRuleVersionRecord,
     PolicyStoreRevision,
+    PropagationPlanRecord,
+    PropagationTaskRecord,
     RuleApprovalWorkflowRecord,
+    ConnectedSystemPatchRecord,
+    RollbackEventRecord,
 )
 from app.models.knowledge_models import Circular
 from app.models.platform_store_models import PolicyDataStore
@@ -132,6 +136,10 @@ def _replace_normalized_records(session, store: PolicyDataStore) -> None:
     session.execute(delete(ComplianceRunRecordModel))
     session.execute(delete(KnowledgeUpdateEventRecord))
     session.execute(delete(PolicyPublicationEventRecord))
+    session.execute(delete(RollbackEventRecord))
+    session.execute(delete(ConnectedSystemPatchRecord))
+    session.execute(delete(PropagationTaskRecord))
+    session.execute(delete(PropagationPlanRecord))
     session.execute(delete(ConnectedSystemSnapshotRecord))
     session.execute(delete(PolicyRuleVersionRecord))
     session.execute(delete(RuleApprovalWorkflowRecord))
@@ -183,6 +191,28 @@ def _replace_normalized_records(session, store: PolicyDataStore) -> None:
     for item in store.compliance_runs:
         session.add(ComplianceRunRecordModel(**item.model_dump()))
 
+    for item in store.propagation_plans:
+        data = item.model_dump()
+        if data["rule_version_id"] in version_ids:
+            session.add(PropagationPlanRecord(**data))
+
+    task_ids: set[str] = set()
+    for item in store.propagation_tasks:
+        data = item.model_dump()
+        if data["rule_version_id"] in version_ids:
+            session.add(PropagationTaskRecord(**data))
+            task_ids.add(data["id"])
+
+    for item in store.connected_system_patches:
+        data = item.model_dump()
+        if data["propagation_task_id"] in task_ids:
+            session.add(ConnectedSystemPatchRecord(**data))
+
+    for item in store.rollback_events:
+        data = item.model_dump()
+        if data["from_version_id"] in version_ids and data["to_version_id"] in version_ids:
+            session.add(RollbackEventRecord(**data))
+
     for item in store.snapshots:
         session.add(ConnectedSystemSnapshotRecord(**item.model_dump()))
 
@@ -204,6 +234,10 @@ def _apply_normalized_payload(session, payload: dict[str, list[Any]]) -> None:
     publications = session.scalars(select(PolicyPublicationEventRecord)).all()
     knowledge_events = session.scalars(select(KnowledgeUpdateEventRecord)).all()
     compliance_runs = session.scalars(select(ComplianceRunRecordModel)).all()
+    propagation_plans = session.scalars(select(PropagationPlanRecord)).all()
+    propagation_tasks = session.scalars(select(PropagationTaskRecord)).all()
+    patches = session.scalars(select(ConnectedSystemPatchRecord)).all()
+    rollbacks = session.scalars(select(RollbackEventRecord)).all()
     versions = session.scalars(select(PolicyRuleVersionRecord)).all()
     snapshots = session.scalars(select(ConnectedSystemSnapshotRecord)).all()
     findings = session.scalars(select(ComplianceFindingRecord)).all()
@@ -221,6 +255,14 @@ def _apply_normalized_payload(session, payload: dict[str, list[Any]]) -> None:
         payload["knowledge_update_events"] = [row_payload(item) for item in knowledge_events]
     if compliance_runs:
         payload["compliance_runs"] = [row_payload(item) for item in compliance_runs]
+    if propagation_plans:
+        payload["propagation_plans"] = [row_payload(item) for item in propagation_plans]
+    if propagation_tasks:
+        payload["propagation_tasks"] = [row_payload(item) for item in propagation_tasks]
+    if patches:
+        payload["connected_system_patches"] = [row_payload(item) for item in patches]
+    if rollbacks:
+        payload["rollback_events"] = [row_payload(item) for item in rollbacks]
     if versions:
         payload["verified_policy_rule_versions"] = [row_payload(item) for item in versions]
     if snapshots:
@@ -252,6 +294,10 @@ class PolicyStoreRepository:
                         "policy_publication_events",
                         "knowledge_update_events",
                         "compliance_runs",
+                        "propagation_plans",
+                        "propagation_tasks",
+                        "connected_system_patches",
+                        "rollback_events",
                         "verified_policy_rule_versions",
                         "snapshots",
                         "compliance_findings",
@@ -313,6 +359,10 @@ class PolicyStoreRepository:
                         PolicyPublicationEventRecord,
                         KnowledgeUpdateEventRecord,
                         ComplianceRunRecordModel,
+                        PropagationPlanRecord,
+                        PropagationTaskRecord,
+                        ConnectedSystemPatchRecord,
+                        RollbackEventRecord,
                         PolicyRuleVersionRecord,
                         ConnectedSystemSnapshotRecord,
                         ComplianceFindingRecord,
