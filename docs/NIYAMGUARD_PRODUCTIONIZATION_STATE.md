@@ -53,7 +53,7 @@
 4. Provision and verify ClamAV signatures/quarantine plus robust PDF/OCR processing before accepting real government documents.
 5. Complete keyboard/screen-reader/contrast/reduced-motion testing with assistive technology; screenshots alone do not establish WCAG conformance.
 6. Review owner/legal approval for licensing and credential policy; no license is intentionally published.
-7. Configure the frontend with `VITE_AUTH_COOKIE_MODE=true` when the backend cookie mode is enabled; verify same-origin HTTPS playback and session renewal in the hosted environment.
+7. Verify same-origin HTTPS cookie playback and session renewal in the hosted environment; container defaults now enable cookie mode, while local/demo overrides remain explicit.
 
 ## Honest public boundary
 
