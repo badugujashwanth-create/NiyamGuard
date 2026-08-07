@@ -129,7 +129,7 @@ Both container entrypoints now run `alembic upgrade head` before starting Uvicor
 
 ### P1 — domain model is mostly serialized JSON
 
-Most policy, rule, conflict, impact, review, and eligibility records are serialized into generic JSON payload rows. This preserves the demo but does not yet provide the relational foreign keys, constraints, indexes, optimistic locking, and transaction boundaries required for a production-grade multi-user policy system.
+Most policy, rule, conflict, impact, review, and eligibility records are serialized into generic JSON payload rows. This preserves the demo but does not yet provide normalized relational foreign keys, per-record constraints/indexes, and domain-level transaction boundaries required for a production-grade multi-user policy system; the outer serialized store now has optimistic revision protection.
 
 Audit appends now read and write in one session under a process lock; PostgreSQL workers also take a transaction-scoped advisory lock, and verification orders by timestamp plus event id. A durable external archival/retention policy remains a pilot gate.
 
