@@ -91,6 +91,12 @@ def _ensure_runtime_columns() -> None:
         session_columns = {column["name"] for column in inspector.get_columns("user_sessions")}
         if "revoked_at" not in session_columns:
             additions.append("ALTER TABLE user_sessions ADD COLUMN revoked_at VARCHAR(40)")
+    if "policy_rule_candidates" in inspector.get_table_names():
+        candidate_columns = {column["name"] for column in inspector.get_columns("policy_rule_candidates")}
+        if "source_start_offset" not in candidate_columns:
+            additions.append("ALTER TABLE policy_rule_candidates ADD COLUMN source_start_offset INTEGER")
+        if "source_end_offset" not in candidate_columns:
+            additions.append("ALTER TABLE policy_rule_candidates ADD COLUMN source_end_offset INTEGER")
     if additions:
         with engine.begin() as connection:
             for statement in additions:

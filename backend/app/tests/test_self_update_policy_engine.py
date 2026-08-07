@@ -44,6 +44,12 @@ def test_rule_extraction_creates_candidate_and_delta(client, reviewer_headers) -
     assert candidate["id"] == candidate_id
     assert candidate["service_id"] == "income_certificate"
     assert candidate["new_value"] == "6"
+    assert candidate["source_start_offset"] is not None
+    assert candidate["source_end_offset"] > candidate["source_start_offset"]
+    document = client.get("/api/circulars/cirdoc_go_138", headers=reviewer_headers).json()["circular"]
+    assert document["raw_text"][candidate["source_start_offset"] : candidate["source_end_offset"]] == candidate[
+        "source_excerpt"
+    ]
     assert candidate["delta"]["change_type"] == "no_change"
     assert candidate["delta"]["impact_level"] == "high"
 

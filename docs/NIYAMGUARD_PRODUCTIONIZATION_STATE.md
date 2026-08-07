@@ -25,6 +25,7 @@
 - Added a database-backed fixed-window rate limiter for cross-worker deployments; local/demo environments retain the in-memory path, while production validation requires `RATE_LIMIT_BACKEND=database`.
 - Added a database-backed policy-store revision and optimistic write check; stale full-store replacements now fail with a retryable conflict instead of silently overwriting another reviewer.
 - Added typed relational tables and foreign keys for circular documents, rule candidates, verified rule versions, connected-system snapshots, and compliance findings. The serialized store remains a compatibility mirror, while these five core policy-drift collections are preferred on reads.
+- Added deterministic evidence offsets to rule candidates so reviewers can locate the exact source-text span that produced a candidate; offsets remain nullable for legacy records and page coordinates are not claimed for OCR-free text.
 - Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
 - Added Alembic execution to both container entrypoints and switched containers to a non-root runtime user.
 - Made migration ownership explicit: deployed containers set `AUTO_CREATE_TABLES=false`, while local/test environments may opt into the compatibility fallback.
@@ -52,7 +53,7 @@
 | Docker image build | Not verified: Docker daemon unavailable in the current environment |
 | Hosted Render deployment | Not verified: previous public hostname returned 404 |
 | PostgreSQL migration CI gate | Configured: fresh PostgreSQL service runs Alembic, readiness, and production-style app import in GitHub Actions; not executed locally |
-| Fresh SQLite Alembic migration and normalized seed/load round trip | Pass: migrations through `20260807_0006`, readiness, and normalized row counts verified locally |
+| Fresh SQLite Alembic migration and normalized seed/load round trip | Pass: migrations through `20260807_0007`, readiness, normalized row counts, and candidate evidence columns verified locally |
 
 ## Remaining blockers
 

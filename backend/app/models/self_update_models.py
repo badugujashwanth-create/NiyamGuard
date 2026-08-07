@@ -89,6 +89,8 @@ class PolicyRuleCandidate(BaseModel):
     confidence_score: float
     extraction_method: ExtractionMethod
     source_excerpt: str
+    source_start_offset: int | None = None
+    source_end_offset: int | None = None
     status: CandidateStatus
     requires_review: bool = True
     created_at: str

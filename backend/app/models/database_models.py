@@ -68,6 +68,8 @@ class PolicyRuleCandidateRecord(Base):
     confidence_score: Mapped[float] = mapped_column(Float)
     extraction_method: Mapped[str] = mapped_column(String(40))
     source_excerpt: Mapped[str] = mapped_column(Text)
+    source_start_offset: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_end_offset: Mapped[int | None] = mapped_column(Integer, nullable=True)
     status: Mapped[str] = mapped_column(String(40), index=True)
     requires_review: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[str] = mapped_column(String(40))

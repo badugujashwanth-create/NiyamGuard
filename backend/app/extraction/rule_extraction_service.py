@@ -47,6 +47,8 @@ def _deterministic_candidates(
             confidence_score=0.91,
             extraction_method="deterministic",
             source_excerpt=excerpt,
+            source_start_offset=match.start(),
+            source_end_offset=match.end(),
             status="pending_review",
             requires_review=True,
             created_at=now_iso(),

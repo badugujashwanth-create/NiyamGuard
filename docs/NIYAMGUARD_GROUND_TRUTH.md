@@ -13,6 +13,7 @@
 - The policy-drift routers are mounted on the canonical `main` runtime and the GO-138 lifecycle is exercised end to end by the backend/frontend test suites.
 - The confirmed service-portal 422 defect is fixed; the focused regression now passes.
 - Deterministic extraction now rejects ambiguous or unsupported circular wording instead of inventing a fallback source excerpt.
+- Deterministic candidates now retain start/end offsets into the verified source text; page-level coordinates remain intentionally unclaimed when OCR/page mapping is unavailable.
 - Demo mode defaults to false and demo users are seeded only when both `DEMO_MODE=true` and `SEED_DEMO_ON_STARTUP=true` are explicitly set.
 - `/api/ops/status` and dataset mutation endpoints now require authenticated roles; OTP endpoints are demo-gated; ops output no longer exposes host paths.
 - STT/TTS requests are bounded and rate-limited; STT temporary files are removed; TTS cache eviction is bounded.
@@ -47,7 +48,7 @@ The repository is not yet authorized for an unrestricted public or government de
 | File validation | Extension/MIME/size checks, PDF parsing, `malware_scan.py`, atomic source and service-document persistence | Upload forms | Upload and scanner-boundary tests | **Partial** — ClamAV signatures/quarantine, object-storage durability, and robust OCR remain unverified |
 | Date extraction | `circular_ingestion_service.extract_temporal_metadata` | Circular metadata and evidence views | lifecycle/date tests | **Complete for ISO dates** |
 | Rule extraction | `backend/app/extraction/rule_extraction_service.py` | `/api/circulars/{id}/extract-rules`, candidate review UI | extraction/lifecycle tests | **Partial** — deterministic patterns are narrow; generic structured extraction is not implemented |
-| Source evidence | `source_excerpt`, circular hash, source metadata | Candidate/evidence cards | lifecycle tests | **Complete for seeded/synthetic path** |
+| Source evidence | `source_excerpt`, deterministic start/end offsets, circular hash, source metadata | Candidate/evidence cards | lifecycle and migration tests | **Complete for seeded/synthetic text path**; PDF page coordinates/OCR remain unverified |
 | Version comparison | `rule_delta_service.py`, policy models | `/api/policy-updates/*`, version/lineage UI | policy lifecycle tests | **Complete for supported rule values** |
 | Supersession/version lineage | `policy_publication_service.py`, `VerifiedPolicyRuleVersion` | lineage/history routes | self-update/policy tests | **Complete for demo path** |
 | Conflict detection | `backend/app/compliance/conflict_detector.py` | `/api/conflicts/*`, conflict UI | conflict tests | **Partial** — active same-service/rule value conflicts; broader semantic/date/document conflict classes are not implemented |
