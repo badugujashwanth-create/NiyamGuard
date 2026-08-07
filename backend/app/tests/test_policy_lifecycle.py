@@ -166,6 +166,58 @@ def test_circular_upload_rejects_mime_mismatch_and_oversized_file(client, review
     assert oversized.status_code == 413
 
 
+def test_synthetic_upload_reports_explicit_scanner_boundary(client, reviewer_headers) -> None:
+    response = client.post(
+        "/api/circulars/upload-file",
+        headers=reviewer_headers,
+        data={
+            "circular_number": "SYN-SCAN-1",
+            "title": "Scanner boundary circular",
+            "department": "Revenue",
+            "published_date": "2026-07-21",
+        },
+        files={
+            "file": (
+                "synthetic.txt",
+                b"Income Certificate validity changed from 12 months to 6 months. Effective 2026-08-01.",
+                "text/plain",
+            )
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["malware_scan"]["status"] == "skipped"
+
+
+def test_upload_fails_closed_when_required_scanner_is_unavailable(
+    client, reviewer_headers, monkeypatch
+) -> None:
+    from app.api import circular_routes
+    from app.security.malware_scan import MalwareScanUnavailable
+
+    def unavailable(*_args, **_kwargs):
+        raise MalwareScanUnavailable("Configured ClamAV executable is unavailable.")
+
+    monkeypatch.setattr(circular_routes, "scan_bytes", unavailable)
+    response = client.post(
+        "/api/circulars/upload-file",
+        headers=reviewer_headers,
+        data={
+            "circular_number": "SYN-SCAN-2",
+            "title": "Unavailable scanner circular",
+            "department": "Revenue",
+            "published_date": "2026-07-21",
+        },
+        files={
+            "file": (
+                "synthetic.txt",
+                b"Income Certificate validity changed from 12 months to 6 months. Effective 2026-08-01.",
+                "text/plain",
+            )
+        },
+    )
+    assert response.status_code == 503
+
+
 def test_circular_upload_requires_reviewer_or_admin_role(client, viewer_headers) -> None:
     response = client.post(
         "/api/circulars/upload-file",

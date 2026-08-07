@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from app.security.rbac import CurrentUser, require_roles
+from app.security.malware_scan import MalwareDetected, MalwareScanUnavailable, scan_bytes
 from app.services import circular_ingestion_service, circular_sync_service, rule_extraction_service
 from app.services.ollama_client import AIClientFactory
 
@@ -89,6 +90,12 @@ async def upload_circular_file(
     expiry_date: str | None = Form(None),
 ) -> dict:
     content = await file.read(MAX_CIRCULAR_BYTES + 1)
+    try:
+        scan = scan_bytes(content, file.filename or "")
+    except MalwareDetected as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except MalwareScanUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     raw_text = _extract_uploaded_text(
         file.filename or "",
         (file.content_type or "").casefold(),
@@ -113,6 +120,7 @@ async def upload_circular_file(
         "success": True,
         "created": created,
         "synthetic_only": True,
+        "malware_scan": scan,
         "document": document.model_dump(),
     }
 

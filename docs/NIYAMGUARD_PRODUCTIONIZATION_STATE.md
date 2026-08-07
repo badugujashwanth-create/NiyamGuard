@@ -15,6 +15,7 @@
 - Protected operational status and dataset import/RAG-build mutations with JWT role checks.
 - Gated deterministic OTP endpoints behind explicit demo mode and removed absolute filesystem paths from ops status.
 - Added STT upload size/format/MIME bounds and guaranteed temporary-file cleanup.
+- Added a ClamAV upload-scanning boundary: local synthetic mode is explicit, while production requires ClamAV and fails closed on scanner unavailability or indeterminate results.
 - Added TTS text limits, rate limiting, and bounded cache eviction.
 - Added JWT issuer/audience checks and atomic refresh-token rotation.
 - Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
@@ -29,7 +30,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 261 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 264 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 60 tests |
 | Frontend production build | Pass: Vite build |
@@ -45,7 +46,7 @@
 1. Run the updated containers against a fresh PostgreSQL database and verify `alembic upgrade head`, health, readiness, and the full policy lifecycle.
 2. Confirm the Render service owner, database, CORS/trusted-host values, and public synthetic-sandbox intent before publishing a new release.
 3. Replace generic JSON policy storage with normalized relational records and foreign-key/optimistic-lock constraints for a true pilot.
-4. Add quarantine/malware scanning and robust PDF/OCR processing before accepting real government documents.
+4. Provision and verify ClamAV signatures/quarantine plus robust PDF/OCR processing before accepting real government documents.
 5. Complete keyboard/screen-reader/contrast/reduced-motion testing with assistive technology; screenshots alone do not establish WCAG conformance.
 6. Review owner/legal approval for licensing and credential policy; no license is intentionally published.
 

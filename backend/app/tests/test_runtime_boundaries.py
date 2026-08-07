@@ -35,6 +35,7 @@ def test_production_accepts_hardened_runtime_settings() -> None:
             demo_mode=False,
             cors_origins=["https://example.gov"],
             trusted_hosts=["api.example.gov"],
+            malware_scan_mode="clamav",
         )
     )
 
@@ -59,6 +60,20 @@ def test_production_rejects_wildcard_or_empty_network_boundaries(overrides: dict
     values.update(overrides)
     candidate = SimpleNamespace(**values)
     with pytest.raises(RuntimeError):
+        validate_runtime_settings(candidate)
+
+
+def test_production_requires_malware_scanning() -> None:
+    candidate = SimpleNamespace(
+        app_env="production",
+        secret_key="a-secure-production-secret-with-32-plus-chars",
+        debug=False,
+        demo_mode=False,
+        cors_origins=["https://example.gov"],
+        trusted_hosts=["api.example.gov"],
+        malware_scan_mode="disabled",
+    )
+    with pytest.raises(RuntimeError, match="MALWARE_SCAN_MODE"):
         validate_runtime_settings(candidate)
 
 

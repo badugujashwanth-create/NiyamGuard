@@ -87,6 +87,9 @@ class Settings:
     tts_max_characters: int = _int_env("TTS_MAX_CHARACTERS", 2_000)
     tts_cache_max_files: int = _int_env("TTS_CACHE_MAX_FILES", 256)
     tts_cache_max_bytes: int = _int_env("TTS_CACHE_MAX_BYTES", 64 * 1024 * 1024)
+    malware_scan_mode: str = os.getenv("MALWARE_SCAN_MODE", "disabled").strip().lower() or "disabled"
+    malware_scan_command: str = os.getenv("MALWARE_SCAN_COMMAND", "clamscan").strip() or "clamscan"
+    malware_scan_timeout_seconds: int = _int_env("MALWARE_SCAN_TIMEOUT_SECONDS", 30)
 
     ai_provider: str = os.getenv("AI_PROVIDER", "ollama").strip().lower() or "ollama"
     ai_enabled: bool = _bool_env("AI_ENABLED", False)
@@ -162,6 +165,9 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
 
     if candidate.app_env.strip().lower() not in {"production", "prod"}:
         return
+    malware_scan_mode = getattr(candidate, "malware_scan_mode", "disabled")
+    if malware_scan_mode != "clamav":
+        raise RuntimeError("Production requires MALWARE_SCAN_MODE=clamav for untrusted document uploads.")
     secret = candidate.secret_key.strip()
     if len(secret) < 32 or secret.lower() in _PLACEHOLDER_SECRETS:
         raise RuntimeError("Production requires a non-placeholder SECRET_KEY of at least 32 characters.")
