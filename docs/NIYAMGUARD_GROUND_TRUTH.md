@@ -4,6 +4,7 @@
 **Repository:** `https://github.com/badugujashwanth-create/NiyamGuard`
 **Audited branch:** `main`
 **HEAD / origin/main:** `a40fffcb20035fc7caf7e4b473abc11ac5f79fe1`
+**Current local HEAD:** `d66c57a` (not yet pushed; verify the remote before publishing claims)
 **Public release:** `v1.1.0`
 **Audit scope:** Baseline audit captured before the 2026-08-07 productionization pass. The delta below is the current implementation evidence; older findings remain useful historical context but are not current-state claims.
 
@@ -171,7 +172,7 @@ The existing architecture and demo path are worth preserving. The 2026-08-07 pas
 
 ## Public evidence checked
 
-- GitHub repository: public, default branch `main`, HEAD `a40fffcb`; latest public release `v1.1.0`.
+- GitHub repository: the public snapshot audited here is historical (`main` at `a40fffcb`); current local `main` is `d66c57a` and has not been pushed. Latest verified public release remains `v1.1.0`.
 - Portfolio case page: `https://jashwanth-portfolio-ten.vercel.app/work/niyamguard/` returned HTTP 200.
 - Portfolio media: `/media/niyamguard/demo.mp4` (200, `video/mp4`), `/media/niyamguard/demo.webm` (200, `video/webm`), `/media/niyamguard/demo-captions.vtt` (200, `text/vtt`), and `/media/niyamguard/poster.png` (200, `image/png`).
 - Render Blueprint hostname and health routes returned HTTP 404; no live NiyamGuard deployment was verified.
