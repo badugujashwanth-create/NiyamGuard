@@ -25,6 +25,7 @@
 - Disabled legacy JSON-store fallback for non-demo deployments; production state now comes only from the configured database and returns an empty store when no authoritative records exist.
 - Tightened `/api/ready` so a database is not considered ready until the migrated users, refresh-token, audit, and policy-record tables are present.
 - Made containerized production frontends default to HttpOnly-cookie mode; local Docker Compose explicitly opts into bearer mode for the synthetic HTTP demo.
+- Updated every protected frontend route guard to recognize the non-sensitive stored user record when cookie mode is enabled; cookie-authenticated admin and citizen workflows no longer redirect to login because tokens are intentionally invisible to JavaScript.
 - Added production fail-closed checks for credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - Refocused the landing screen on the GO-138 policy-drift incident, source evidence, impact chain, and reviewer/citizen workflow choices.
 - Added visible focus treatment and reduced-motion handling; captured desktop/mobile Product Design evidence.

@@ -1,15 +1,14 @@
-import { getAccessToken, getStoredUser } from "../../services/api";
+import { getStoredUser, hasAuthSession } from "../../services/api";
 import { canAccessRoute, isPublicRoute, roleHomePath } from "../utils/authUtils";
 
 export default function AuthGuard({ path, children, onRedirect }) {
   const user = getStoredUser();
-  const token = getAccessToken();
 
   if (isPublicRoute(path)) {
     return children;
   }
 
-  if (!token || !user) {
+  if (!hasAuthSession() || !user) {
     const next = encodeURIComponent(path);
     onRedirect(`/login?next=${next}`);
     return null;

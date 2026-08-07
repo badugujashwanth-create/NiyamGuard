@@ -4,7 +4,7 @@ import {
   approvePortalApplication,
   createPortalApplication,
   createPortalPayment,
-  getAccessToken,
+  hasAuthSession,
   getCitizenDocuments,
   getCitizenProfile,
   getOfficerApplications,
@@ -227,7 +227,7 @@ function ApplyPage({ serviceId, path }) {
     };
   }, [serviceId]);
 
-  if (!getAccessToken()) return <RequiresLogin path={path} />;
+  if (!hasAuthSession()) return <RequiresLogin path={path} />;
   if (error) return <div className="global-error" role="alert">{error}</div>;
   if (!service) return <p className="portal-loading">Loading application form...</p>;
 
@@ -348,7 +348,7 @@ function ApplicationsPage({ path }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!getAccessToken()) return;
+    if (!hasAuthSession()) return;
     let active = true;
     Promise.all([getPortalApplications(), getPortalNotifications()])
       .then(([applicationResponse, notificationResponse]) => {
@@ -364,7 +364,7 @@ function ApplicationsPage({ path }) {
     };
   }, []);
 
-  if (!getAccessToken()) return <RequiresLogin path={path} />;
+  if (!hasAuthSession()) return <RequiresLogin path={path} />;
   return (
     <section className="portal-section">
       <div className="portal-summary">
@@ -442,7 +442,7 @@ function ApplicationDetailPage({ applicationId, path }) {
   }
 
   useEffect(() => {
-    if (!getAccessToken()) return;
+    if (!hasAuthSession()) return;
     let active = true;
     getPortalApplication(applicationId)
       .then((response) => {
@@ -456,7 +456,7 @@ function ApplicationDetailPage({ applicationId, path }) {
     };
   }, [applicationId]);
 
-  if (!getAccessToken()) return <RequiresLogin path={path} />;
+  if (!hasAuthSession()) return <RequiresLogin path={path} />;
   if (error) return <div className="global-error" role="alert">{error}</div>;
   if (!application) return <p className="portal-loading">Loading application...</p>;
 
@@ -533,7 +533,7 @@ function PaymentPage({ applicationId, path }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!getAccessToken()) return;
+    if (!hasAuthSession()) return;
     let active = true;
     getPortalApplication(applicationId)
       .then((response) => {
@@ -547,7 +547,7 @@ function PaymentPage({ applicationId, path }) {
     };
   }, [applicationId]);
 
-  if (!getAccessToken()) return <RequiresLogin path={path} />;
+  if (!hasAuthSession()) return <RequiresLogin path={path} />;
   if (error) return <div className="global-error" role="alert">{error}</div>;
   if (!application) return <p className="portal-loading">Loading payment...</p>;
 
@@ -721,13 +721,13 @@ function ProfilePage({ path }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!getAccessToken()) return;
+    if (!hasAuthSession()) return;
     getCitizenProfile()
       .then((response) => setProfile(response.profile))
       .catch((loadError) => setError(loadError.message));
   }, []);
 
-  if (!getAccessToken()) return <RequiresLogin path={path} />;
+  if (!hasAuthSession()) return <RequiresLogin path={path} />;
   if (error) return <div className="global-error" role="alert">{error}</div>;
   if (!profile) return <p className="portal-loading">Loading profile...</p>;
 
@@ -772,13 +772,13 @@ function DocumentsPage({ path }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!getAccessToken()) return;
+    if (!hasAuthSession()) return;
     getCitizenDocuments()
       .then((response) => setDocuments(response.documents || []))
       .catch((loadError) => setError(loadError.message));
   }, []);
 
-  if (!getAccessToken()) return <RequiresLogin path={path} />;
+  if (!hasAuthSession()) return <RequiresLogin path={path} />;
   return (
     <section className="portal-section">
       <div className="portal-summary">
@@ -830,7 +830,7 @@ function OfficerPage({ path, applicationId }) {
   }
 
   useEffect(() => {
-    if (!getAccessToken()) return;
+    if (!hasAuthSession()) return;
     let active = true;
     load()
       .catch((loadError) => {
@@ -841,7 +841,7 @@ function OfficerPage({ path, applicationId }) {
     };
   }, [path, applicationId, statusFilter]);
 
-  if (!getAccessToken()) return <RequiresLogin path={path} />;
+  if (!hasAuthSession()) return <RequiresLogin path={path} />;
   return (
     <section className="portal-section">
       <div className="portal-summary">

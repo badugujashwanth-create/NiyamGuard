@@ -17,7 +17,7 @@ import {
   askChat,
   createSession,
   generateSummary,
-  getAccessToken,
+  hasAuthSession,
   getForm,
   getForms,
   getLatestPublicRule,
@@ -695,7 +695,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (path.startsWith("/admin") && !getAccessToken()) {
+    if (path.startsWith("/admin") && !hasAuthSession()) {
       window.history.replaceState({}, "", "/login");
       setPath("/login");
     }

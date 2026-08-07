@@ -38,6 +38,10 @@ export function getStoredUser() {
   }
 }
 
+export function hasAuthSession() {
+  return AUTH_COOKIE_MODE ? Boolean(getStoredUser()) : Boolean(getAccessToken());
+}
+
 export function setAuthSession({ accessToken, refreshToken, user }) {
   if (AUTH_COOKIE_MODE) {
     window.localStorage?.removeItem(ACCESS_TOKEN_KEY);
