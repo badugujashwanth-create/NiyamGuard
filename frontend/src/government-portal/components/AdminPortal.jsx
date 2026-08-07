@@ -90,6 +90,7 @@ const productionPages = [
   { path: "/admin/policy-updates", label: "Verified Rules", roles: ["admin", "reviewer", "officer", "viewer"] },
   { path: "/admin/systems", label: "Connected Systems", roles: ["admin", "reviewer", "officer", "viewer"] },
   { path: "/admin/compliance", label: "Drift Findings", roles: ["admin", "reviewer", "officer", "viewer"] },
+  { path: "/admin/impact", label: "Impact", roles: ["admin", "reviewer", "officer", "viewer"] },
   { path: "/admin/propagation", label: "Remediation", roles: ["admin", "reviewer", "officer", "viewer"] },
   { path: "/admin/audit", label: "Audit", roles: ["admin", "reviewer", "officer", "viewer"] },
   { path: "/admin/reports", label: "Reports", roles: ["admin", "reviewer", "officer", "viewer"] },
@@ -109,6 +110,21 @@ function titleCase(value = "") {
   return value
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatTimestamp(value) {
+  if (!value) return "Not recorded";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  }).format(date)} UTC`;
 }
 
 function StatusPill({ children, tone = "neutral" }) {
@@ -173,6 +189,7 @@ async function loadSelfUpdateData({ includeSyntheticControls = false } = {}) {
 
 export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
   const [path, setPath] = useState(window.location.pathname);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reportStatus, setReportStatus] = useState("");
@@ -343,6 +360,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
   function navigate(nextPath) {
     window.history.pushState({}, "", nextPath);
     setPath(nextPath);
+    setMobileNavOpen(false);
   }
 
   const activePage = path === "/admin/dashboard" || path === "/dashboard" ? "/admin" : path;
@@ -385,14 +403,25 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
   return (
     <div className="admin-shell">
       <aside aria-label="NiyamGuard navigation" className="admin-sidebar">
-        <div className="admin-brand">
-          <span>NG</span>
-          <div>
-            <p>{isProductionExperience ? "Policy operations" : "Government Core"}</p>
-            <h1>NiyamGuard</h1>
+        <div className="admin-sidebar-header">
+          <div className="admin-brand">
+            <span>NG</span>
+            <div>
+              <p>{isProductionExperience ? "Policy operations" : "Government Core"}</p>
+              <h1>NiyamGuard</h1>
+            </div>
           </div>
+          <button
+            aria-controls="admin-navigation"
+            aria-expanded={mobileNavOpen}
+            className="admin-nav-toggle"
+            onClick={() => setMobileNavOpen((open) => !open)}
+            type="button"
+          >
+            {mobileNavOpen ? "Close menu" : "Menu"}
+          </button>
         </div>
-        <nav aria-label="Admin pages">
+        <nav aria-label="Admin pages" className={mobileNavOpen ? "admin-nav-list admin-nav-list-open" : "admin-nav-list"} id="admin-navigation">
           {pages.map((page) => (
             <button
               className={activePage === page.path ? "admin-nav-active" : ""}
@@ -451,6 +480,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
             rules={rules}
             aiStatus={aiStatus}
             policyHistory={policyHistory}
+            ruleVersions={ruleVersions}
             production={isProductionExperience}
             propagationTasks={propagationTasks}
             systemsById={systemsById}
@@ -761,6 +791,7 @@ function DashboardPage({
   production,
   propagationTasks,
   reports,
+  ruleVersions,
   rules,
   systemsById,
 }) {
@@ -769,6 +800,10 @@ function DashboardPage({
 
   if (production) {
     const priorityByFinding = Object.fromEntries(priorityFindings.map((item) => [item.finding_id, item]));
+    const versionsById = Object.fromEntries(ruleVersions.map((version) => [version.id, version]));
+    const recentPolicyChanges = ruleVersions.length
+      ? [...ruleVersions].sort((a, b) => b.version_number - a.version_number)
+      : policyHistory;
     const remediation = {
       open: propagationTasks.filter((task) => task.status === "pending").length,
       inProgress: propagationTasks.filter((task) => ["assigned", "in_progress", "needs_manual_update"].includes(task.status)).length,
@@ -786,7 +821,12 @@ function DashboardPage({
         <section className="admin-panel admin-panel-wide">
           <h3>Recent Policy Changes</h3>
           <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Circular</th><th>Rule</th><th>Previous</th><th>Current</th><th>Effective Date</th><th>Status</th></tr></thead><tbody>
-            {policyHistory.length ? policyHistory.slice(-6).reverse().map((event, index) => <tr key={event.id || `${event.rule_id}-${index}`}><td>{event.circular_number || event.source_circular_number || "—"}</td><td>{titleCase(event.rule_key || event.rule_id || "policy update")}</td><td>{event.previous_value || "—"}</td><td>{event.current_value || event.value || "Published"}</td><td>{event.effective_date || "—"}</td><td>{titleCase(event.status || "published")}</td></tr>) : <tr><td colSpan="6">No policy changes have been published yet.</td></tr>}
+            {recentPolicyChanges.length ? recentPolicyChanges.slice(0, 6).map((event, index) => {
+              const previous = event.previous_version_id ? versionsById[event.previous_version_id] : null;
+              const currentValue = event.current_value || event.value;
+              const previousValue = event.previous_value || (previous ? `${previous.value} ${previous.unit || ""}`.trim() : "—");
+              return <tr key={event.id || `${event.rule_id}-${index}`}><td>{event.circular_number || event.source_circular_number || "—"}</td><td>{titleCase(event.rule_key || event.rule_id || "policy update")}</td><td>{previousValue}</td><td>{currentValue ? `${currentValue}${event.unit ? ` ${event.unit}` : ""}` : "Published"}</td><td>{event.effective_date || "—"}</td><td>{event.is_current === false ? "Superseded" : titleCase(event.status || "published")}</td></tr>;
+            }) : <tr><td colSpan="6">No policy changes have been published yet.</td></tr>}
           </tbody></table></div>
         </section>
         <div className="admin-insight-grid">
@@ -1378,7 +1418,7 @@ function ConnectedSystemsPage({ findings, systems }) {
     <section className="admin-section">
       <div className="admin-page-summary"><div><h3>Connected Systems</h3><p>Operational systems are assessed against the latest verified rules. Changes remain the responsibility of each system owner.</p></div><StatusPill tone="blue">{systems.length} monitored</StatusPill></div>
       <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>System</th><th>Type</th><th>Owner</th><th>Last Snapshot</th><th>Compliance</th><th>Open Findings</th></tr></thead><tbody>
-        {systems.length ? systems.map((system) => { const systemFindings = findingsBySystem[system.id] || []; const open = systemFindings.filter((finding) => finding.status === "drifted"); return <tr key={system.id}><td>{system.name}</td><td>{titleCase(system.system_type || "connected system")}</td><td>{system.owner || system.department || "Unassigned"}</td><td>{system.last_snapshot_at || system.updated_at || "Not recorded"}</td><td><StatusPill tone={open.length ? "red" : "green"}>{open.length ? "Drifted" : "Compliant"}</StatusPill></td><td>{open.length}</td></tr>; }) : <tr><td colSpan="6">No systems are connected yet. Add an authorized integration to begin monitoring.</td></tr>}
+        {systems.length ? systems.map((system) => { const systemFindings = findingsBySystem[system.id] || []; const open = systemFindings.filter((finding) => finding.status === "drifted"); return <tr key={system.id}><td>{system.name}</td><td>{titleCase(system.system_type || "connected system")}</td><td>{system.owner || system.department || "Unassigned"}</td><td>{formatTimestamp(system.last_snapshot_at || system.updated_at)}</td><td><StatusPill tone={open.length ? "red" : "green"}>{open.length ? "Drifted" : "Compliant"}</StatusPill></td><td>{open.length}</td></tr>; }) : <tr><td colSpan="6">No systems are connected yet. Add an authorized integration to begin monitoring.</td></tr>}
       </tbody></table></div>
     </section>
   );
@@ -1467,7 +1507,7 @@ function CircularsPage({ circulars, onExtract, onSyncAll, onUpload }) {
                 <td>{circular.department}</td>
                 <td>{circular.published_date || "—"}</td>
                 <td>{circular.effective_date}</td>
-                <td>{circular.status}</td>
+                <td>{titleCase(circular.status || "uploaded")}</td>
                 <td>{circular.reviewer_email || "—"}</td>
                 <td>
                   <button className="button button-secondary" onClick={() => void onExtract(circular.id)} type="button">
@@ -1503,7 +1543,7 @@ function RuleCandidatesPage({ candidates, onApprove, onReject, onRequestRevision
                 <span>{candidate.service_id}</span>
                 <h3>{titleCase(candidate.rule_key)}</h3>
               </div>
-              <StatusPill tone={candidate.status === "approved" ? "green" : "blue"}>{candidate.status}</StatusPill>
+              <StatusPill tone={candidate.status === "approved" ? "green" : "blue"}>{titleCase(candidate.status || "pending review")}</StatusPill>
             </div>
             <dl>
               <div><dt>Old value</dt><dd>{candidate.old_value || "New rule"}</dd></div>
@@ -1511,8 +1551,8 @@ function RuleCandidatesPage({ candidates, onApprove, onReject, onRequestRevision
               <div><dt>Effective</dt><dd>{candidate.effective_date}</dd></div>
               <div><dt>Expiry</dt><dd>{candidate.expiry_date || "No expiry stated"}</dd></div>
               <div><dt>Extraction confidence</dt><dd>{candidate.confidence_score >= 0.9 ? "High" : candidate.confidence_score >= 0.7 ? "Medium" : "Review required"}</dd></div>
-              <div><dt>Delta</dt><dd>{candidate.delta?.change_type || "Not calculated"}</dd></div>
-              <div><dt>Impact</dt><dd>{candidate.delta?.impact_level || "Not calculated"}</dd></div>
+              <div><dt>Delta</dt><dd>{titleCase(candidate.delta?.change_type || "Not calculated")}</dd></div>
+              <div><dt>Impact</dt><dd>{titleCase(candidate.delta?.impact_level || "Not calculated")}</dd></div>
             </dl>
             <section className="admin-panel"><h4>Source Evidence</h4><p>Page {candidate.source_page || "—"}</p><p>{candidate.source_excerpt || "Source context is not available for this candidate."}</p></section>
             <div className="admin-report-actions">

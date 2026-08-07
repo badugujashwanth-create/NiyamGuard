@@ -2797,6 +2797,17 @@ footer {
   margin-bottom: 1.4rem;
 }
 
+.admin-sidebar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-nav-toggle {
+  display: none;
+}
+
 .admin-brand span {
   display: grid;
   width: 2.8rem;
@@ -3336,6 +3347,51 @@ footer {
 }
 
 @media (max-width: 640px) {
+  .admin-sidebar {
+    padding: 0.8rem;
+  }
+
+  .admin-brand {
+    margin-bottom: 0;
+  }
+
+  .admin-nav-toggle {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.7rem;
+    color: #e9f3ee;
+    background: transparent;
+    border: 1px solid #529278;
+    border-radius: 0.45rem;
+    font: inherit;
+    font-weight: 750;
+  }
+
+  .admin-sidebar .admin-nav-list {
+    display: none;
+    margin-top: 0.8rem;
+  }
+
+  .admin-sidebar .admin-nav-list-open {
+    display: grid;
+  }
+
+  .admin-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .admin-main {
+    padding: 1rem;
+  }
+
   .site-header {
     align-items: flex-start;
     flex-direction: column;

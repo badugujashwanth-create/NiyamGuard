@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param(
   [int]$BackendPort = 8010,
-  [int]$FrontendPort = 5180
+  [int]$FrontendPort = 5180,
+  [ValidateSet("demo", "production")]
+  [string]$FrontendAppEnv = "demo"
 )
 
 $ErrorActionPreference = "Stop"
@@ -25,6 +27,7 @@ $env:DATABASE_URL = "sqlite:///./niyamguard.db"
 $env:SECRET_KEY = "local-demo-secret-key-not-for-production"
 $env:RATE_LIMIT_ENABLED = "false"
 $env:SEED_DEMO_ON_STARTUP = "false"
+$env:CORS_ORIGINS = "http://localhost:$FrontendPort,http://127.0.0.1:$FrontendPort"
 
 Push-Location $backend
 try {
@@ -39,10 +42,10 @@ $backendProcess = Start-Process -FilePath $python `
   -RedirectStandardOutput $backendOut -RedirectStandardError $backendErr
 
 $env:VITE_API_BASE_URL = "http://127.0.0.1:$BackendPort"
-$env:VITE_APP_ENV = "demo"
-$env:VITE_DEMO_MODE = "true"
-$env:VITE_SHOW_DEMO_CREDENTIALS = "true"
-$env:VITE_ENABLE_SYNTHETIC_CONTROLS = "true"
+$env:VITE_APP_ENV = $FrontendAppEnv
+$env:VITE_DEMO_MODE = if ($FrontendAppEnv -eq "demo") { "true" } else { "false" }
+$env:VITE_SHOW_DEMO_CREDENTIALS = if ($FrontendAppEnv -eq "demo") { "true" } else { "false" }
+$env:VITE_ENABLE_SYNTHETIC_CONTROLS = if ($FrontendAppEnv -eq "demo") { "true" } else { "false" }
 $frontendProcess = Start-Process -FilePath "npm.cmd" `
   -ArgumentList @("run", "dev", "--", "--host", "127.0.0.1", "--port", [string]$FrontendPort) `
   -WorkingDirectory $frontend -WindowStyle Hidden -PassThru `
