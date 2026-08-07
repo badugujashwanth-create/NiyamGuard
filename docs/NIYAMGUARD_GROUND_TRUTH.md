@@ -4,7 +4,7 @@
 **Repository:** `https://github.com/badugujashwanth-create/NiyamGuard`
 **Audited branch:** `main`
 **HEAD / origin/main:** `a40fffcb20035fc7caf7e4b473abc11ac5f79fe1`
-**Current local HEAD:** `8941fe0` (not yet pushed; verify the remote before publishing claims)
+**Current local HEAD:** `d78c73e` (not yet pushed; verify the remote before publishing claims)
 **Public release:** `v1.1.0`
 **Audit scope:** Baseline audit captured before the 2026-08-07 productionization pass. The delta below is the current implementation evidence; older findings remain useful historical context but are not current-state claims.
 
