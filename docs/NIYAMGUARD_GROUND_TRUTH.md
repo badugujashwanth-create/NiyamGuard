@@ -181,7 +181,7 @@ The existing architecture and demo path are worth preserving. The 2026-08-07 pas
 
 ## Public evidence checked
 
-- GitHub repository: the public snapshot audited here is historical (`main` at `a40fffcb`); current local `main` is `d66c57a` and has not been pushed. Latest verified public release remains `v1.1.0`.
+- GitHub repository: the public snapshot audited here is historical (`main` at `a40fffcb`); current local `main` is `3ce71c1` and remains unpushed. Latest verified public release remains `v1.1.0`.
 - Portfolio case page: `https://jashwanth-portfolio-ten.vercel.app/work/niyamguard/` returned HTTP 200.
 - Portfolio media: `/media/niyamguard/demo.mp4` (200, `video/mp4`), `/media/niyamguard/demo.webm` (200, `video/webm`), `/media/niyamguard/demo-captions.vtt` (200, `text/vtt`), and `/media/niyamguard/poster.png` (200, `image/png`).
 - Render Blueprint hostname and health routes returned HTTP 404; no live NiyamGuard deployment was verified.
