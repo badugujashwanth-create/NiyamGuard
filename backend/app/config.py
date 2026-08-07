@@ -55,6 +55,10 @@ class Settings:
         "AUTO_CREATE_TABLES",
         app_env.strip().lower() not in {"production", "prod", "staging"},
     )
+    legacy_file_store_enabled: bool = _bool_env(
+        "LEGACY_FILE_STORE_ENABLED",
+        app_env.strip().lower() not in {"production", "prod", "staging"},
+    )
 
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./niyamguard.db")
 
@@ -193,6 +197,8 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
         raise RuntimeError("Production requires AUTH_COOKIE_SECURE=true.")
     if getattr(candidate, "auth_cookie_samesite", "strict") not in {"strict", "lax"}:
         raise RuntimeError("AUTH_COOKIE_SAMESITE must be strict or lax in production.")
+    if getattr(candidate, "legacy_file_store_enabled", True):
+        raise RuntimeError("Production requires LEGACY_FILE_STORE_ENABLED=false; authoritative state must come from the database.")
 
 APP_NAME = settings.app_name
 APP_VERSION = "1.1.0"

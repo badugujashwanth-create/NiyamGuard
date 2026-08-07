@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from app.models.platform_store_models import PolicyDataStore
+from app.config import settings
 from app.repositories.audit_repository import audit_repository
 from app.repositories.policy_store_repository import PolicyStoreRepository
 from app.services.time import now_iso
@@ -24,6 +25,10 @@ def read_store() -> PolicyDataStore:
     if db_store is not None:
         db_store.audit_events = audit_repository.list(limit=500) or db_store.audit_events
         return db_store
+    if not getattr(settings, "legacy_file_store_enabled", True):
+        # Non-demo deployments must never silently serve stale state from a
+        # developer's JSON mirror when the authoritative database is empty.
+        return PolicyDataStore()
     if not DATA_PATH.exists():
         return PolicyDataStore(**deepcopy(DEMO_DATA))
     with DATA_PATH.open("r", encoding="utf-8") as handle:

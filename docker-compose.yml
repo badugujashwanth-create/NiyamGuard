@@ -23,6 +23,7 @@ services:
       APP_ENV: development
       DEBUG: "false"
       DEMO_MODE: "true"
+      LEGACY_FILE_STORE_ENABLED: "true"
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/niyamguard
       SECRET_KEY: local-compose-demo-only
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173

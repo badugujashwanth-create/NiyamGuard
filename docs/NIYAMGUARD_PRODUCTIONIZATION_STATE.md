@@ -2,7 +2,7 @@
 
 **State date:** 2026-08-07
 **Canonical branch:** `main`
-**Latest local change:** production boundary hardening and evidence-led landing update
+**Latest local change:** database-authority boundary hardening after cookie-session productionization
 **Public release:** `v1.1.0` (a new release is not claimed until the changes are committed and published)
 **Classification:** synthetic policy-drift MVP; production-boundary work in progress
 
@@ -22,6 +22,7 @@
 - Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
 - Added Alembic execution to both container entrypoints and switched containers to a non-root runtime user.
 - Made migration ownership explicit: deployed containers set `AUTO_CREATE_TABLES=false`, while local/test environments may opt into the compatibility fallback.
+- Disabled legacy JSON-store fallback for non-demo deployments; production state now comes only from the configured database and returns an empty store when no authoritative records exist.
 - Added production fail-closed checks for credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - Refocused the landing screen on the GO-138 policy-drift incident, source evidence, impact chain, and reviewer/citizen workflow choices.
 - Added visible focus treatment and reduced-motion handling; captured desktop/mobile Product Design evidence.
@@ -31,7 +32,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 266 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 268 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 60 tests |
 | Frontend production build | Pass: Vite build |
@@ -46,7 +47,7 @@
 
 1. Run the updated containers against a fresh PostgreSQL database and verify `alembic upgrade head`, health, readiness, and the full policy lifecycle.
 2. Confirm the Render service owner, database, CORS/trusted-host values, and public synthetic-sandbox intent before publishing a new release.
-3. Replace generic JSON policy storage with normalized relational records and foreign-key/optimistic-lock constraints for a true pilot.
+3. Replace the remaining generic JSON payload rows with normalized relational records and foreign-key/optimistic-lock constraints for a true pilot; the legacy file fallback is now disabled outside local/demo mode.
 4. Provision and verify ClamAV signatures/quarantine plus robust PDF/OCR processing before accepting real government documents.
 5. Complete keyboard/screen-reader/contrast/reduced-motion testing with assistive technology; screenshots alone do not establish WCAG conformance.
 6. Review owner/legal approval for licensing and credential policy; no license is intentionally published.

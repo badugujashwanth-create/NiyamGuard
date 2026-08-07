@@ -13,6 +13,7 @@ ENV PYTHONUNBUFFERED=1
 ENV FRONTEND_DIST_DIR=/app/static
 ENV HOME=/home/niyamguard
 ENV AUTO_CREATE_TABLES=false
+ENV LEGACY_FILE_STORE_ENABLED=false
 
 WORKDIR /app
 RUN groupadd --system niyamguard && useradd --system --gid niyamguard --create-home niyamguard
