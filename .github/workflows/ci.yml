@@ -39,6 +39,50 @@ jobs:
       - run: python -m app.evaluation.extraction_benchmark
       - run: python -m pytest
 
+  postgres-migration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: niyamguard
+          POSTGRES_USER: niyamguard
+          POSTGRES_PASSWORD: niyamguard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U niyamguard -d niyamguard"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: production
+      DEBUG: "false"
+      DEMO_MODE: "false"
+      AUTO_CREATE_TABLES: "false"
+      LEGACY_FILE_STORE_ENABLED: "false"
+      AUTH_COOKIE_MODE: "true"
+      AUTH_COOKIE_SECURE: "true"
+      AUTH_COOKIE_SAMESITE: strict
+      MALWARE_SCAN_MODE: clamav
+      SECRET_KEY: ci-production-secret-key-with-more-than-32-characters
+      DATABASE_URL: postgresql+psycopg://niyamguard:niyamguard@127.0.0.1:5432/niyamguard
+      CORS_ORIGINS: https://example.gov
+      TRUSTED_HOSTS: api.example.gov
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: alembic upgrade head
+      - run: python -c "from app.database import database_ready; assert database_ready(), 'database schema is not ready'"
+      - run: python -c "from app.main import app; assert app.title == 'NiyamGuard AI'"
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

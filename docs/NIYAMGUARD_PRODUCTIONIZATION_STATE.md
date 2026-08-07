@@ -44,10 +44,11 @@
 | Product Design capture | Pass: landing and reviewer workflow captured at desktop and 390px mobile; no horizontal overflow |
 | Docker image build | Not verified: Docker daemon unavailable in the current environment |
 | Hosted Render deployment | Not verified: previous public hostname returned 404 |
+| PostgreSQL migration CI gate | Configured: fresh PostgreSQL service runs Alembic, readiness, and production-style app import in GitHub Actions; not executed locally |
 
 ## Remaining blockers
 
-1. Run the updated containers against a fresh PostgreSQL database and verify `alembic upgrade head`, health, readiness, and the full policy lifecycle.
+1. Execute the PostgreSQL CI/deployment gate against a fresh database and verify `alembic upgrade head`, health, readiness, and the full policy lifecycle.
 2. Confirm the Render service owner, database, CORS/trusted-host values, and public synthetic-sandbox intent before publishing a new release.
 3. Replace the remaining generic JSON payload rows with normalized relational records and foreign-key/optimistic-lock constraints for a true pilot; the legacy file fallback is now disabled outside local/demo mode.
 4. Provision and verify ClamAV signatures/quarantine plus robust PDF/OCR processing before accepting real government documents.
