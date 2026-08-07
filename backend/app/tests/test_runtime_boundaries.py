@@ -42,8 +42,53 @@ def test_production_accepts_hardened_runtime_settings() -> None:
             legacy_file_store_enabled=False,
             session_records_required=True,
             rate_limit_backend="database",
+            database_url="postgresql+psycopg://user:pass@db:5432/niyamguard",
         )
     )
+
+
+def test_staging_is_hardened_and_rejects_demo_mode() -> None:
+    with pytest.raises(RuntimeError, match="DEMO_MODE"):
+        validate_runtime_settings(
+            SimpleNamespace(
+                app_env="staging",
+                secret_key="a-secure-production-secret-with-32-plus-chars",
+                debug=False,
+                demo_mode=True,
+                cors_origins=["https://example.gov"],
+                trusted_hosts=["api.example.gov"],
+                malware_scan_mode="clamav",
+                auth_cookie_mode=True,
+                auth_cookie_secure=True,
+                auth_cookie_samesite="strict",
+                legacy_file_store_enabled=False,
+                session_records_required=True,
+                rate_limit_backend="database",
+                database_url="postgresql+psycopg://user:pass@db:5432/niyamguard",
+            )
+        )
+
+
+def test_hardened_environment_rejects_sqlite_database() -> None:
+    with pytest.raises(RuntimeError, match="PostgreSQL"):
+        validate_runtime_settings(
+            SimpleNamespace(
+                app_env="production",
+                secret_key="a-secure-production-secret-with-32-plus-chars",
+                debug=False,
+                demo_mode=False,
+                cors_origins=["https://example.gov"],
+                trusted_hosts=["api.example.gov"],
+                malware_scan_mode="clamav",
+                auth_cookie_mode=True,
+                auth_cookie_secure=True,
+                auth_cookie_samesite="strict",
+                legacy_file_store_enabled=False,
+                session_records_required=True,
+                rate_limit_backend="database",
+                database_url="sqlite:///./niyamguard.db",
+            )
+        )
 
 
 @pytest.mark.parametrize(

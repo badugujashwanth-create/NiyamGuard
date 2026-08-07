@@ -32,7 +32,7 @@
 - CI now defines a fresh PostgreSQL migration job with production-style cookie, database-authority, CORS, trusted-host, and malware-scan settings; the job still requires a remote GitHub Actions run for evidence.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 277 backend tests pass with third-party pytest plugin autoload disabled; 61 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 279 backend tests pass with third-party pytest plugin autoload disabled; 61 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
@@ -108,11 +108,11 @@ Evidence: `test_application_upload_payment_review_certificate_flow` now passes a
 
 ### P1 — known demo credentials require explicit demo mode
 
-`auth_service.DEFAULT_USERS` still contains known passwords for the synthetic walkthrough, but `backend/app/main.py` now seeds them only when both `DEMO_MODE=true` and `SEED_DEMO_ON_STARTUP=true`. Render remains intentionally configured as a staging sandbox and must not be treated as a pilot or production deployment.
+`auth_service.DEFAULT_USERS` still contains known passwords for the synthetic walkthrough, but `backend/app/main.py` now seeds them only when both `DEMO_MODE=true` and `SEED_DEMO_ON_STARTUP=true`. Render remains intentionally configured as an `APP_ENV=demo` sandbox and must not be treated as a pilot or production deployment.
 
 `demo_mode` now defaults to `false`; demo, virtual-government, mock-system, and sandbox routers require explicit opt-in. Their mutating behavior is synthetic and must remain isolated.
 
-`app_env` defaults to `development` and `debug` defaults to `true`; fail-closed validation only runs for `APP_ENV=production`. A misconfigured hosted service using `staging` or no environment value can therefore retain development controls and verbose error behavior. This remains an operational deployment gate.
+`app_env` defaults to `development` and `debug` defaults to `true`. `APP_ENV=staging` is now treated as a hardened environment and requires the same non-demo, PostgreSQL, cookie, scanner, and rate-limit controls as production; the synthetic Render/local container shape is explicitly named `APP_ENV=demo`. An omitted environment value still remains a development configuration and must never be used for hosting.
 
 ### P1 — unauthenticated expensive/mutating endpoints
 
@@ -150,7 +150,7 @@ Refresh tokens now rotate atomically and JWT issuer/audience claims are validate
 
 ### P2 — claims and documentation drift
 
-README and test-report claims now reflect 277 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
+README and test-report claims now reflect 279 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
 
 The changelog describes a 1.2.0 candidate, but the public default branch currently has release/tag `v1.1.0`; a v1.2.0 public release is not verified. `docs/access-control.md` also labels the seeded officer account as a reviewer, while the code assigns the `officer` role.
 
@@ -168,7 +168,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 |---|---|
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
-| 277 backend tests | 277 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
+| 279 backend tests | 279 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
 | 61 frontend tests | Current `npm test -- --run` passed 61 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |

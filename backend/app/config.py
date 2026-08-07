@@ -35,6 +35,7 @@ def _csv_env(name: str, default: str) -> list[str]:
 
 
 PROJECT_ROOT = BACKEND_DIR.parent
+HARDENED_ENVIRONMENTS = frozenset({"production", "prod", "staging"})
 
 
 def _path_env(name: str, default: Path) -> Path:
@@ -53,11 +54,11 @@ class Settings:
     debug: bool = _bool_env("DEBUG", True)
     auto_create_tables: bool = _bool_env(
         "AUTO_CREATE_TABLES",
-        app_env.strip().lower() not in {"production", "prod", "staging"},
+        app_env.strip().lower() not in HARDENED_ENVIRONMENTS,
     )
     legacy_file_store_enabled: bool = _bool_env(
         "LEGACY_FILE_STORE_ENABLED",
-        app_env.strip().lower() not in {"production", "prod", "staging"},
+        app_env.strip().lower() not in HARDENED_ENVIRONMENTS,
     )
 
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./niyamguard.db")
@@ -76,7 +77,7 @@ class Settings:
     auth_cookie_samesite: str = os.getenv("AUTH_COOKIE_SAMESITE", "strict").strip().lower() or "strict"
     session_records_required: bool = _bool_env(
         "SESSION_RECORDS_REQUIRED",
-        app_env.strip().lower() in {"production", "prod"},
+        app_env.strip().lower() in HARDENED_ENVIRONMENTS,
     )
 
     cors_origins: list[str] = _csv_env(
@@ -181,9 +182,10 @@ _PLACEHOLDER_SECRETS = {
 
 
 def validate_runtime_settings(candidate: Settings = settings) -> None:
-    """Fail closed when production is configured with demo/development controls."""
+    """Fail closed when a hosted/hardened environment uses demo controls."""
 
-    if candidate.app_env.strip().lower() not in {"production", "prod"}:
+    environment = candidate.app_env.strip().lower()
+    if environment not in HARDENED_ENVIRONMENTS:
         return
     malware_scan_mode = getattr(candidate, "malware_scan_mode", "disabled")
     if malware_scan_mode != "clamav":
@@ -215,6 +217,9 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
         raise RuntimeError("Production requires SESSION_RECORDS_REQUIRED=true for revocable access sessions.")
     if getattr(candidate, "rate_limit_backend", "memory") != "database":
         raise RuntimeError("Production requires RATE_LIMIT_BACKEND=database for cross-worker request limiting.")
+    database_url = str(getattr(candidate, "database_url", "")).strip().lower()
+    if not database_url or database_url.startswith("sqlite:"):
+        raise RuntimeError("Hardened environments require a PostgreSQL DATABASE_URL; SQLite is local/demo only.")
 
 APP_NAME = settings.app_name
 APP_VERSION = "1.1.0"

@@ -35,7 +35,7 @@ Render authentication and confirmation of the free resources are required in the
 ```powershell
 docker build -f Dockerfile.fullstack -t niyamguard:local .
 docker run --rm -p 8000:8000 `
-  -e APP_ENV=staging `
+  -e APP_ENV=demo `
   -e DEBUG=false `
   -e DEMO_MODE=true `
   -e SECRET_KEY=a-local-container-secret-with-32-characters `

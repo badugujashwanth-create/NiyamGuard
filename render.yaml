@@ -10,7 +10,7 @@ services:
     healthCheckPath: /api/integration/health
     envVars:
       - key: APP_ENV
-        value: staging
+        value: demo
       - key: DEBUG
         value: "false"
       - key: DEMO_MODE
