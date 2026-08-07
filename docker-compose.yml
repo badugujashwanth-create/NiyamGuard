@@ -24,6 +24,7 @@ services:
       DEBUG: "false"
       DEMO_MODE: "true"
       LEGACY_FILE_STORE_ENABLED: "true"
+      AUTH_COOKIE_MODE: "false"
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/niyamguard
       SECRET_KEY: local-compose-demo-only
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
@@ -41,6 +42,7 @@ services:
       dockerfile: Dockerfile.frontend
       args:
         VITE_API_BASE_URL: http://127.0.0.1:8000
+        VITE_AUTH_COOKIE_MODE: "false"
     ports:
       - "5173:5173"
     depends_on:
