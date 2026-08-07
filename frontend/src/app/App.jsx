@@ -180,8 +180,27 @@ function sourceCardFromChat(chatResponse) {
 }
 
 function LoginPage({ onLoginSuccess }) {
-  const [email, setEmail] = useState("admin@niyamguard.local");
-  const [password, setPassword] = useState("Admin@12345");
+  const showDemoCredentials = import.meta.env.VITE_DEMO_MODE === "true" || import.meta.env.MODE === "test";
+  const demoAdminEmail = import.meta.env.MODE === "test"
+    ? "admin@niyamguard.local"
+    : (import.meta.env.VITE_DEMO_ADMIN_EMAIL || "");
+  const demoAdminPassword = import.meta.env.MODE === "test"
+    ? "Admin@12345"
+    : (import.meta.env.VITE_DEMO_ADMIN_PASSWORD || "");
+  const demoCitizenEmail = import.meta.env.MODE === "test"
+    ? "citizen@niyamguard.local"
+    : (import.meta.env.VITE_DEMO_CITIZEN_EMAIL || "");
+  const demoCitizenPassword = import.meta.env.MODE === "test"
+    ? "Citizen@12345"
+    : (import.meta.env.VITE_DEMO_CITIZEN_PASSWORD || "");
+  const demoOfficerEmail = import.meta.env.MODE === "test"
+    ? "officer@niyamguard.local"
+    : (import.meta.env.VITE_DEMO_OFFICER_EMAIL || "");
+  const demoOfficerPassword = import.meta.env.MODE === "test"
+    ? "Officer@12345"
+    : (import.meta.env.VITE_DEMO_OFFICER_PASSWORD || "");
+  const [email, setEmail] = useState(demoAdminEmail);
+  const [password, setPassword] = useState(demoAdminPassword);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -231,11 +250,13 @@ function LoginPage({ onLoginSuccess }) {
             {submitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-        <p className="login-hint">
-          Demo admin: admin@niyamguard.local / Admin@12345<br />
-          Citizen: citizen@niyamguard.local / Citizen@12345<br />
-          Officer: officer@niyamguard.local / Officer@12345
-        </p>
+        {showDemoCredentials ? (
+          <p className="login-hint">
+            Demo admin: {demoAdminEmail} / {demoAdminPassword}<br />
+            Citizen: {demoCitizenEmail} / {demoCitizenPassword}<br />
+            Officer: {demoOfficerEmail} / {demoOfficerPassword}
+          </p>
+        ) : null}
         <div className="login-links">
           <a href="/demo">Open public demo</a>
           <a href="/">Open citizen portal</a>

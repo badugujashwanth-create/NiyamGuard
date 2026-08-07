@@ -10,7 +10,7 @@ NiyamGuard is a portfolio-ready synthetic sandbox. It is not an official governm
 
 | Check | Result | Evidence |
 |---|---|---|
-| Backend suite | Pass | 276 tests in the clean local gate with third-party plugin autoload disabled |
+| Backend suite | Pass | 277 tests in the clean local gate with third-party plugin autoload disabled |
 | Frontend suite | Pass | 61 tests across 3 files |
 | Frontend build | Pass | Vite production bundle generated |
 | Product simulation | Pass | Playwright completed the real browser flow locally; the checked-in recording predates this code-only refresh |

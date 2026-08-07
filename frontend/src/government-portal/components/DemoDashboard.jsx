@@ -158,10 +158,12 @@ const manualDemoLinks = [
 ];
 
 const demoAccounts = [
-  ["Admin", "admin@niyamguard.local", "Admin@12345"],
-  ["Officer", "officer@niyamguard.local", "Officer@12345"],
-  ["Citizen", "citizen@niyamguard.local", "Citizen@12345"],
+  ["Admin", import.meta.env.VITE_DEMO_ADMIN_EMAIL || "", import.meta.env.VITE_DEMO_ADMIN_PASSWORD || ""],
+  ["Officer", import.meta.env.VITE_DEMO_OFFICER_EMAIL || "", import.meta.env.VITE_DEMO_OFFICER_PASSWORD || ""],
+  ["Citizen", import.meta.env.VITE_DEMO_CITIZEN_EMAIL || "", import.meta.env.VITE_DEMO_CITIZEN_PASSWORD || ""],
 ];
+
+const showDemoCredentials = import.meta.env.VITE_DEMO_MODE === "true" || import.meta.env.MODE === "test";
 
 function statusText(isOnline) {
   return isOnline ? "Online" : "Offline";
@@ -617,19 +619,21 @@ export default function DemoDashboard() {
             ))}
           </div>
         </article>
-        <article className="demo-source-panel">
-          <p className="eyebrow">Demo accounts</p>
-          <h2>Use these logins</h2>
-          <div className="demo-account-table" role="table" aria-label="Demo accounts">
-            {demoAccounts.map(([role, email, password]) => (
-              <div role="row" key={role}>
-                <strong role="cell">{role}</strong>
-                <code role="cell">{email}</code>
-                <code role="cell">{password}</code>
-              </div>
-            ))}
-          </div>
-        </article>
+        {showDemoCredentials ? (
+          <article className="demo-source-panel">
+            <p className="eyebrow">Demo accounts</p>
+            <h2>Use these logins</h2>
+            <div className="demo-account-table" role="table" aria-label="Demo accounts">
+              {demoAccounts.map(([role, email, password]) => (
+                <div role="row" key={role}>
+                  <strong role="cell">{role}</strong>
+                  <code role="cell">{email}</code>
+                  <code role="cell">{password}</code>
+                </div>
+              ))}
+            </div>
+          </article>
+        ) : null}
       </section>
     </main>
   );

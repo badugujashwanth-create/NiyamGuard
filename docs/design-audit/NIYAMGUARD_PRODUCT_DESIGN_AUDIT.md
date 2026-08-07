@@ -38,3 +38,14 @@ The landing now communicates the policy-drift thesis before asking the visitor t
 - With both local origins explicitly allowed, the reviewer workspace reported `Backend online`, 10 services, and completed all 11 lifecycle steps. The citizen explanation correctly displayed deterministic fallback rather than implying a live model.
 - The 390 × 844 reviewer capture reported zero horizontal overflow.
 - A controlled backend-failure test now surfaces an actionable alert and marks dependent status cards `Unavailable`; it no longer presents zero counts as a working system.
+
+## Verification rerun (2026-08-08)
+
+- Fresh Chromium captures were taken from the isolated local demo build after the production-boundary changes. Accepted evidence is in the ignored `frontend/docs/design-audit/current/` folder: `2026-08-08-landing-desktop.png`, `2026-08-08-landing-mobile.png`, `2026-08-08-government-entry.png`, `2026-08-08-government-after-lifecycle.png`, and `2026-08-08-government-mobile.png`.
+- The landing still leads with the GO-138 incident, the 12-month → 6-month change, the impact count, and the reviewer/citizen workflow split. No redesign was needed.
+- The reviewer entry state clearly labels the synthetic boundary, shows the 11-step workflow as pending, and keeps the fallback AI state explicit rather than presenting it as a failed policy run.
+- The reviewer lifecycle completed all 11 steps in the current isolated run. The evidence card showed GO-138, the exact changed clause, character offsets, hash verification, human review decisions, four connected systems, and one changed eligibility fixture.
+- The 390 × 844 capture reported `scrollWidth === clientWidth === 390`; no horizontal overflow was observed.
+- Synthetic demo credentials are now supplied only to the explicit demo build. The default production frontend bundle contains no demo credential literals.
+
+Screenshots do not establish keyboard order, screen-reader announcements, contrast ratios, reduced-motion behavior, or assistive-technology support; those remain manual QA gates.

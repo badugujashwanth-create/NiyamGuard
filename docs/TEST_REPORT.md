@@ -1,10 +1,10 @@
 # Test report
 
-Release audit refreshed on 2026-08-07 from the canonical `main` branch on Windows. The service-portal 422 failure was fixed, demo seeding is now opt-in, and the operational/dataset mutation boundaries are authenticated.
+Release audit refreshed on 2026-08-08 from the canonical `main` branch on Windows. The service-portal 422 failure was fixed, demo seeding is now opt-in, and the operational/dataset mutation boundaries are authenticated.
 
 | Command | Result | Evidence / notes |
 |---|---|---|
-| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 276 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
+| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 277 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
 | Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
 | Upload malware boundary | Pass | Circular and citizen service-document uploads scan before persistence and retain SHA-256/scanner provenance; synthetic mode reports an explicit skipped scan, while production configuration requires ClamAV and returns 503 when it cannot produce a trustworthy result. |
 | `python -m app.evaluation.extraction_benchmark` | Pass | 20/20 frozen synthetic cases; exact candidate/evidence threshold 1.0. This is not a model-quality or legal-authority benchmark. |
@@ -17,6 +17,8 @@ Release audit refreshed on 2026-08-07 from the canonical `main` branch on Window
 | `npm audit --omit=dev` | Pass | 0 production dependency vulnerabilities |
 | installed backend `pip-audit` | Pass | No known vulnerabilities after the Edge TTS migration |
 | Fresh Alembic migration and normalized seed/load round trip | Pass | SQLite migrations through `20260807_0010`, readiness, review/publication/propagation audit row counts, and candidate evidence columns verified locally; PostgreSQL remains a CI/deployment gate |
+| Production frontend credential boundary | Pass | Default Vite production bundle contains no synthetic demo credential literals; the local Compose demo receives them only through explicit demo build arguments |
+| Isolated policy-drift lifecycle | Pass | 11/11 steps completed; exact GO-138 evidence, 4 propagation tasks, 1 changed eligibility fixture, and typed publication/knowledge/compliance/propagation rows verified in SQLite |
 | Gitleaks current tree and history | Not run locally | The Gitleaks CI job is configured; the binary was unavailable in this environment, so no local scan result is claimed. |
 
 External identity, payment, government, messaging, and Ollama services were not treated as verified production integrations. The automated tests use local, mocked, sandboxed, or synthetic boundaries.

@@ -129,7 +129,7 @@ def _replace_normalized_records(session, store: PolicyDataStore) -> None:
 
     The serialized PolicyRecord rows remain as a compatibility mirror until
     every non-flagship collection has a typed schema, but normalized rows are
-    the preferred read source for these ten core policy-review collections.
+    the preferred read source for these fourteen core policy-review collections.
     """
 
     session.execute(delete(ComplianceFindingRecord))

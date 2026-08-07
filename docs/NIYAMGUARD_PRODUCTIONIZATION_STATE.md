@@ -1,8 +1,8 @@
 # NiyamGuard productionization state
 
-**State date:** 2026-08-07
+**State date:** 2026-08-08
 **Canonical branch:** `main`
-**Latest local change:** normalized propagation and rollback persistence with a compatibility mirror
+**Latest local change:** production-only database writes and demo-credential build boundaries
 **Public release:** `v1.1.0` (a new release is not claimed until the changes are committed and published)
 **Classification:** synthetic policy-drift MVP; production-boundary work in progress
 
@@ -24,6 +24,7 @@
 - Added database-backed session records, session-linked refresh tokens, JWT session IDs, logout revocation, and production enforcement of revocable sessions.
 - Added a database-backed fixed-window rate limiter for cross-worker deployments; local/demo environments retain the in-memory path, while production validation requires `RATE_LIMIT_BACKEND=database`.
 - Added a database-backed policy-store revision and optimistic write check; stale full-store replacements now fail with a retryable conflict instead of silently overwriting another reviewer.
+- Stopped writing the compatibility JSON mirror when `LEGACY_FILE_STORE_ENABLED=false`; production writes now remain database-only while local/demo mode retains the mirror.
 - Added typed relational tables and foreign keys for circular documents, rule candidates, rule deltas, approval workflows, verified rule versions, publication events, knowledge updates, compliance runs, propagation plans, propagation tasks, connected-system patches, rollback events, connected-system snapshots, and compliance findings. The serialized store remains a compatibility mirror, while these fourteen core policy-review collections are preferred on reads.
 - Added deterministic evidence offsets to rule candidates so reviewers can locate the exact source-text span that produced a candidate; offsets remain nullable for legacy records and page coordinates are not claimed for OCR-free text.
 - Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
@@ -32,6 +33,7 @@
 - Disabled legacy JSON-store fallback for non-demo deployments; production state now comes only from the configured database and returns an empty store when no authoritative records exist.
 - Tightened `/api/ready` so a database is not considered ready until the migrated users, refresh-token, audit, and policy-record tables are present.
 - Made containerized production frontends default to HttpOnly-cookie mode; local Docker Compose explicitly opts into bearer mode for the synthetic HTTP demo.
+- Removed synthetic demo credential literals from the default production frontend bundle; only the explicit local Compose demo build receives those values.
 - Updated every protected frontend route guard to recognize the non-sensitive stored user record when cookie mode is enabled; cookie-authenticated admin and citizen workflows no longer redirect to login because tokens are intentionally invisible to JavaScript.
 - Added production fail-closed checks for credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - Refocused the landing screen on the GO-138 policy-drift incident, source evidence, impact chain, and reviewer/citizen workflow choices.
@@ -42,7 +44,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 276 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 277 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 61 tests in default bearer-demo mode and 61 tests with `VITE_AUTH_COOKIE_MODE=true` |
 | Frontend production build | Pass: Vite build |
@@ -54,6 +56,8 @@
 | Hosted Render deployment | Not verified: previous public hostname returned 404 |
 | PostgreSQL migration CI gate | Configured: fresh PostgreSQL service runs Alembic, readiness, and production-style app import in GitHub Actions; not executed locally |
 | Fresh SQLite Alembic migration and normalized seed/load round trip | Pass: migrations through `20260807_0010`, readiness, review/publication/propagation row counts, and candidate evidence columns verified locally |
+| Isolated policy-drift lifecycle | Pass: 11/11 steps, exact GO-138 evidence, four propagation tasks, one changed eligibility fixture, and typed publication/knowledge/compliance/propagation rows |
+| Production frontend credential boundary | Pass: default Vite production bundle contains no synthetic demo credential literals |
 
 ## Remaining blockers
 

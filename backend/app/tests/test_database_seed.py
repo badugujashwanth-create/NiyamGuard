@@ -37,6 +37,17 @@ def test_non_demo_runtime_does_not_fall_back_to_legacy_file_store(monkeypatch) -
     assert store.verified_rules == []
 
 
+def test_non_demo_runtime_does_not_write_legacy_file_mirror(monkeypatch, tmp_path) -> None:
+    legacy_path = tmp_path / "platform_demo.json"
+    monkeypatch.setattr(settings, "legacy_file_store_enabled", False)
+    monkeypatch.setattr(platform_store, "DATA_PATH", legacy_path)
+    monkeypatch.setattr(platform_store._repository, "replace", lambda store: None)
+
+    write_store(platform_store.PolicyDataStore())
+
+    assert not legacy_path.exists()
+
+
 def test_stale_policy_store_write_is_rejected() -> None:
     current = read_store()
     stale = read_store()

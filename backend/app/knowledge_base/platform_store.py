@@ -38,10 +38,11 @@ def read_store() -> PolicyDataStore:
 
 
 def write_store(store: PolicyDataStore) -> PolicyDataStore:
-    STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     _repository.replace(store)
-    with DATA_PATH.open("w", encoding="utf-8") as handle:
-        json.dump(store.model_dump(), handle, indent=2, ensure_ascii=False)
+    if getattr(settings, "legacy_file_store_enabled", True):
+        STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+        with DATA_PATH.open("w", encoding="utf-8") as handle:
+            json.dump(store.model_dump(), handle, indent=2, ensure_ascii=False)
     return store
 
 
