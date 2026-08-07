@@ -22,6 +22,13 @@ def test_reviewer_can_run_compliance(client, reviewer_headers) -> None:
     assert response.json()["findings"]
 
 
+def test_compliance_officer_can_read_findings_and_manage_remediation(client, officer_headers) -> None:
+    findings = client.get("/api/compliance/findings", headers=officer_headers)
+    assert findings.status_code == 200
+    tasks = client.get("/api/propagation/tasks", headers=officer_headers)
+    assert tasks.status_code == 200
+
+
 def test_public_rule_api_stays_open(client) -> None:
     response = client.get(
         "/api/public/rules/latest?service_id=income_certificate&rule_key=validity"

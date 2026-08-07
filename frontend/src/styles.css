@@ -3116,6 +3116,34 @@ footer {
   border-radius: 0.45rem;
 }
 
+.login-password-field {
+  position: relative;
+}
+
+.login-password-field input {
+  padding-right: 4.5rem;
+}
+
+.login-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  padding: 0.35rem 0.55rem;
+  color: #135c46;
+  background: transparent;
+  border: 0;
+  border-radius: 0.3rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  transform: translateY(-50%);
+}
+
+.login-password-toggle:focus-visible {
+  outline: 3px solid #d8a429;
+  outline-offset: 1px;
+}
+
 .admin-form-grid input[type="file"] {
   padding: 0.55rem;
 }

@@ -17,7 +17,7 @@ class RollbackPayload(BaseModel):
     reason: str | None = None
 
 
-@router.get("/history", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/history", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def publication_history() -> dict:
     return {
         "success": True,
@@ -25,12 +25,12 @@ def publication_history() -> dict:
     }
 
 
-@router.get("/versions", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/versions", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def list_versions() -> dict:
     return {"success": True, "versions": [item.model_dump() for item in policy_publication_service.list_versions()]}
 
 
-@router.get("/rules/{rule_id}/versions", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/rules/{rule_id}/versions", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def versions_for_rule(rule_id: str) -> dict:
     return {
         "success": True,
@@ -38,7 +38,7 @@ def versions_for_rule(rule_id: str) -> dict:
     }
 
 
-@router.get("/rules/{rule_id}/lineage", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/rules/{rule_id}/lineage", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def rule_lineage(rule_id: str) -> dict:
     lineage = policy_publication_service.lineage_for_rule(rule_id)
     if lineage is None:

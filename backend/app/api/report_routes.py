@@ -7,12 +7,12 @@ from app.security.rbac import CurrentUser, require_roles
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
 
-@router.get("/summary", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/summary", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def summary() -> dict:
     return {"success": True, "summary": report_service.summary()}
 
 
-@router.get("/compliance", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/compliance", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def compliance_report(
     service_id: str | None = None,
     severity: str | None = None,
@@ -28,17 +28,17 @@ def compliance_report(
     }
 
 
-@router.get("/conflicts", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/conflicts", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def conflicts_report(status: str | None = None, severity: str | None = None) -> dict:
     return {"success": True, "report": report_service.conflict_report(status=status, severity=severity)}
 
 
-@router.get("/priority", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/priority", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def priority_report(priority_level: str | None = None) -> dict:
     return {"success": True, "report": report_service.priority_report(priority_level=priority_level)}
 
 
-@router.get("/rules", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/rules", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def rules_report(service_id: str | None = None, status: str | None = None) -> dict:
     return {"success": True, "report": report_service.rules_report(service_id=service_id, status=status)}
 

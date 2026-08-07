@@ -9,17 +9,17 @@ from app.knowledge_base.platform_store import read_store
 router = APIRouter(prefix="/api/propagation", tags=["Propagation"])
 
 
-@router.get("/plans", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/plans", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def list_plans() -> dict:
     return {"success": True, "plans": [item.model_dump() for item in read_store().propagation_plans]}
 
 
-@router.get("/tasks", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/tasks", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def list_tasks() -> dict:
     return {"success": True, "tasks": [item.model_dump() for item in propagation_service.list_tasks()]}
 
 
-@router.get("/tasks/{task_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/tasks/{task_id}", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def get_task(task_id: str) -> dict:
     task = propagation_service.get_task(task_id)
     if task is None:
@@ -35,7 +35,7 @@ def apply_demo_patch(task_id: str) -> dict:
     return result
 
 
-@router.post("/tasks/{task_id}/mark-completed", dependencies=[Depends(require_roles("admin", "reviewer"))])
+@router.post("/tasks/{task_id}/mark-completed", dependencies=[Depends(require_roles("admin", "reviewer", "officer"))])
 def mark_completed(task_id: str) -> dict:
     task = propagation_service.mark_completed(task_id)
     if task is None:
@@ -43,7 +43,7 @@ def mark_completed(task_id: str) -> dict:
     return {"success": True, "task": task.model_dump()}
 
 
-@router.post("/tasks/{task_id}/mark-manual", dependencies=[Depends(require_roles("admin", "reviewer"))])
+@router.post("/tasks/{task_id}/mark-manual", dependencies=[Depends(require_roles("admin", "reviewer", "officer"))])
 def mark_manual(task_id: str) -> dict:
     task = propagation_service.mark_manual(task_id)
     if task is None:

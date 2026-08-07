@@ -7,7 +7,7 @@ from app.services import connected_system_service as service
 router = APIRouter(prefix="/api/connected-systems", tags=["Connected Systems"])
 
 
-@router.get("", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def list_systems() -> dict:
     return {"success": True, "systems": [item.model_dump() for item in service.list_connected_systems()]}
 
@@ -17,7 +17,7 @@ def create_system(payload: ConnectedSystemCreate) -> dict:
     return {"success": True, "system": service.create_connected_system(payload).model_dump()}
 
 
-@router.get("/{system_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/{system_id}", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def get_system(system_id: str) -> dict:
     system = service.get_connected_system(system_id)
     if system is None:
@@ -33,7 +33,7 @@ def create_snapshot(system_id: str, payload: SnapshotCreate) -> dict:
     return {"success": True, "snapshot": snapshot.model_dump()}
 
 
-@router.get("/{system_id}/snapshots", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/{system_id}/snapshots", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def list_snapshots(system_id: str) -> dict:
     if service.get_connected_system(system_id) is None:
         raise HTTPException(status_code=404, detail="Connected system not found.")

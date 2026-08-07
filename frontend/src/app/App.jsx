@@ -13,6 +13,11 @@ import UnifiedLanding from "../shared/components/UnifiedLanding";
 import VirtualGovernmentSandbox from "../government-portal/components/VirtualGovernmentSandbox";
 import VoiceAssistantPanel from "../citizen-portal/components/VoiceAssistantPanel";
 import {
+  isProductionExperience,
+  safeReturnPath,
+  showDemoCredentials,
+} from "../config/environment";
+import {
   askAssistant,
   askChat,
   createSession,
@@ -180,39 +185,31 @@ function sourceCardFromChat(chatResponse) {
 }
 
 function LoginPage({ onLoginSuccess }) {
-  const showDemoCredentials = import.meta.env.VITE_DEMO_MODE === "true" || import.meta.env.MODE === "test";
-  const demoAdminEmail = import.meta.env.MODE === "test"
-    ? "admin@niyamguard.local"
-    : (import.meta.env.VITE_DEMO_ADMIN_EMAIL || "");
-  const demoAdminPassword = import.meta.env.MODE === "test"
-    ? "Admin@12345"
-    : (import.meta.env.VITE_DEMO_ADMIN_PASSWORD || "");
-  const demoCitizenEmail = import.meta.env.MODE === "test"
-    ? "citizen@niyamguard.local"
-    : (import.meta.env.VITE_DEMO_CITIZEN_EMAIL || "");
-  const demoCitizenPassword = import.meta.env.MODE === "test"
-    ? "Citizen@12345"
-    : (import.meta.env.VITE_DEMO_CITIZEN_PASSWORD || "");
-  const demoOfficerEmail = import.meta.env.MODE === "test"
-    ? "officer@niyamguard.local"
-    : (import.meta.env.VITE_DEMO_OFFICER_EMAIL || "");
-  const demoOfficerPassword = import.meta.env.MODE === "test"
-    ? "Officer@12345"
-    : (import.meta.env.VITE_DEMO_OFFICER_PASSWORD || "");
+  const demoAdminEmail = import.meta.env.VITE_DEMO_ADMIN_EMAIL || "";
+  const demoAdminPassword = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || "";
+  const demoCitizenEmail = import.meta.env.VITE_DEMO_CITIZEN_EMAIL || "";
+  const demoCitizenPassword = import.meta.env.VITE_DEMO_CITIZEN_PASSWORD || "";
+  const demoOfficerEmail = import.meta.env.VITE_DEMO_OFFICER_EMAIL || "";
+  const demoOfficerPassword = import.meta.env.VITE_DEMO_OFFICER_PASSWORD || "";
   const [email, setEmail] = useState(demoAdminEmail);
   const [password, setPassword] = useState(demoAdminPassword);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitting(true);
     setError("");
+    if (!email.trim() || !password) {
+      setError("Enter your email address and password.");
+      return;
+    }
+    setSubmitting(true);
     try {
       const response = await loginAdmin(email, password);
       onLoginSuccess(response.user);
     } catch (loginError) {
-      setError(loginError.message);
+      setError(loginError.status === 401 ? "We couldn't sign you in with those details." : "We couldn't sign you in. Try again or contact your system administrator.");
     } finally {
       setSubmitting(false);
     }
@@ -224,8 +221,8 @@ function LoginPage({ onLoginSuccess }) {
         <div className="login-brand">
           <span className="brand-emblem" aria-hidden="true">NG</span>
           <div>
-            <p>Secure government access</p>
-            <h1 id="login-title">NiyamGuard Admin Login</h1>
+            <p>Policy Drift Detection &amp; Compliance Intelligence Platform</p>
+            <h1 id="login-title">NiyamGuard</h1>
           </div>
         </div>
         <form className="login-form" onSubmit={handleSubmit}>
@@ -234,33 +231,37 @@ function LoginPage({ onLoginSuccess }) {
             autoComplete="username"
             id="admin-email"
             onChange={(event) => setEmail(event.target.value)}
+            required
             type="email"
             value={email}
           />
           <label htmlFor="admin-password">Password</label>
-          <input
-            autoComplete="current-password"
-            id="admin-password"
-            onChange={(event) => setPassword(event.target.value)}
-            type="password"
-            value={password}
-          />
+          <div className="login-password-field">
+            <input
+              autoComplete="current-password"
+              id="admin-password"
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              type={showPassword ? "text" : "password"}
+              value={password}
+            />
+            <button aria-pressed={showPassword} className="login-password-toggle" onClick={() => setShowPassword((current) => !current)} type="button">
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
           {error ? <p className="login-error" role="alert">{error}</p> : null}
           <button className="button button-primary" disabled={submitting} type="submit">
             {submitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-        {showDemoCredentials ? (
+        {showDemoCredentials && demoAdminEmail && demoAdminPassword ? (
           <p className="login-hint">
             Demo admin: {demoAdminEmail} / {demoAdminPassword}<br />
             Citizen: {demoCitizenEmail} / {demoCitizenPassword}<br />
             Officer: {demoOfficerEmail} / {demoOfficerPassword}
           </p>
         ) : null}
-        <div className="login-links">
-          <a href="/demo">Open public demo</a>
-          <a href="/">Open citizen portal</a>
-        </div>
+        {!isProductionExperience ? <div className="login-links"><a href="/demo">Open evaluation workspace</a></div> : null}
       </section>
     </main>
   );
@@ -716,8 +717,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (path.startsWith("/admin") && !hasAuthSession()) {
-      window.history.replaceState({}, "", "/login");
+    const productionProtectedRoute = isProductionExperience && !path.startsWith("/login");
+    if ((path.startsWith("/admin") || path.startsWith("/dashboard") || productionProtectedRoute) && !hasAuthSession()) {
+      const next = safeReturnPath(path);
+      window.history.replaceState({}, "", next ? `/login?next=${encodeURIComponent(next)}` : "/login");
       setPath("/login");
     }
   }, [path, currentUser]);
@@ -735,9 +738,13 @@ export default function App() {
 
   function handleLoginSuccess(user) {
     setCurrentUser(user);
-    const next = new URLSearchParams(window.location.search).get("next");
+    const next = safeReturnPath(new URLSearchParams(window.location.search).get("next"));
     if (next) {
       navigate(next);
+      return;
+    }
+    if (isProductionExperience) {
+      navigate("/dashboard");
       return;
     }
     if (user?.role === "citizen") {
@@ -751,6 +758,11 @@ export default function App() {
     navigate("/admin");
   }
 
+  if (isProductionExperience && (path === "/" || path.startsWith("/portal") || path.startsWith("/demo") || path.startsWith("/mock") || path.startsWith("/virtual-gov") || path.startsWith("/government") || path.startsWith("/citizen") || path.startsWith("/services") || path.startsWith("/apply") || path.startsWith("/applications") || path.startsWith("/track") || path.startsWith("/verify-certificate") || path.startsWith("/payment") || path.startsWith("/officer") || path.startsWith("/scheme-finder"))) {
+    return hasAuthSession()
+      ? <AdminPortal currentUser={currentUser} onLogout={handleLogout} onUnauthorized={() => navigate("/login")} />
+      : <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
   if (path === "/" || path.startsWith("/portal")) return <UnifiedLanding />;
   if (path === "/citizen") return <CitizenPortal />;
   if (path.startsWith("/citizen/assistant")) return <CitizenApp />;
@@ -784,7 +796,7 @@ export default function App() {
   if (path.startsWith("/login")) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
-  if (path.startsWith("/admin")) {
+  if (path.startsWith("/admin") || path.startsWith("/dashboard")) {
     return (
       <AdminPortal
         currentUser={currentUser}

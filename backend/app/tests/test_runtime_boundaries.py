@@ -33,6 +33,9 @@ def test_production_accepts_hardened_runtime_settings() -> None:
             secret_key="a-secure-production-secret-with-32-plus-chars",
             debug=False,
             demo_mode=False,
+            show_demo_credentials=False,
+            enable_demo_reset=False,
+            enable_synthetic_controls=False,
             cors_origins=["https://example.gov"],
             trusted_hosts=["api.example.gov"],
             malware_scan_mode="clamav",
@@ -59,6 +62,9 @@ def _complete_hardened_values() -> dict[str, object]:
         "secret_key": "a-secure-production-secret-with-32-plus-chars",
         "debug": False,
         "demo_mode": False,
+        "show_demo_credentials": False,
+        "enable_demo_reset": False,
+        "enable_synthetic_controls": False,
         "cors_origins": ["https://example.gov"],
         "trusted_hosts": ["api.example.gov"],
         "malware_scan_mode": "clamav",
@@ -82,6 +88,14 @@ def test_production_requires_durable_object_storage() -> None:
     values = _complete_hardened_values()
     values["object_storage_backend"] = "local"
     with pytest.raises(RuntimeError, match="OBJECT_STORAGE_BACKEND"):
+        validate_runtime_settings(SimpleNamespace(**values))
+
+
+@pytest.mark.parametrize("control", ["show_demo_credentials", "enable_demo_reset", "enable_synthetic_controls"])
+def test_production_rejects_enabled_demo_ui_controls(control: str) -> None:
+    values = _complete_hardened_values()
+    values[control] = True
+    with pytest.raises(RuntimeError):
         validate_runtime_settings(SimpleNamespace(**values))
 
 

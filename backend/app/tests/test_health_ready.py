@@ -3,7 +3,7 @@ def test_health_endpoint_works(client) -> None:
     body = response.json()
     assert response.status_code == 200
     assert body["status"] == "ok"
-    assert body["app"] == "NiyamGuard AI"
+    assert body["app"] == "NiyamGuard"
 
 
 def test_ready_checks_database_and_demo_data(client) -> None:

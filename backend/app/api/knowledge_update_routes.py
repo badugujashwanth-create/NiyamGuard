@@ -9,7 +9,7 @@ from app.knowledge_base.platform_store import read_store
 router = APIRouter(prefix="/api/knowledge", tags=["Knowledge Updates"])
 
 
-@router.get("/update-events", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/update-events", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def list_update_events() -> dict:
     return {"success": True, "events": [item.model_dump() for item in knowledge_update_service.list_update_events()]}
 

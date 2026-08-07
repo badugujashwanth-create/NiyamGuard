@@ -17,12 +17,12 @@ def rerun_for_rule(
     return {"success": True, "run": run.model_dump()}
 
 
-@router.get("/runs", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/runs", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def list_runs() -> dict:
     return {"success": True, "runs": [item.model_dump() for item in compliance_orchestrator_service.list_runs()]}
 
 
-@router.get("/runs/{run_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/runs/{run_id}", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def get_run(run_id: str) -> dict:
     run = compliance_orchestrator_service.get_run(run_id)
     if run is None:

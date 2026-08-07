@@ -49,7 +49,7 @@ def _path_env(name: str, default: Path) -> Path:
 
 
 class Settings:
-    app_name: str = os.getenv("APP_NAME", "NiyamGuard AI")
+    app_name: str = os.getenv("APP_NAME", "NiyamGuard")
     app_env: str = os.getenv("APP_ENV", "development")
     debug: bool = _bool_env("DEBUG", True)
     auto_create_tables: bool = _bool_env(
@@ -98,6 +98,9 @@ class Settings:
     # accident simply because an environment variable was omitted.
     demo_mode: bool = _bool_env("DEMO_MODE", False)
     seed_demo_on_startup: bool = _bool_env("SEED_DEMO_ON_STARTUP", False)
+    show_demo_credentials: bool = _bool_env("SHOW_DEMO_CREDENTIALS", False)
+    enable_demo_reset: bool = _bool_env("ENABLE_DEMO_RESET", False)
+    enable_synthetic_controls: bool = _bool_env("ENABLE_SYNTHETIC_CONTROLS", False)
 
     stt_max_upload_bytes: int = _int_env("STT_MAX_UPLOAD_BYTES", 10 * 1024 * 1024)
     tts_max_characters: int = _int_env("TTS_MAX_CHARACTERS", 2_000)
@@ -221,6 +224,12 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
         raise RuntimeError("DEBUG must be false in production.")
     if candidate.demo_mode:
         raise RuntimeError("DEMO_MODE must be false in production.")
+    if getattr(candidate, "show_demo_credentials", False):
+        raise RuntimeError("SHOW_DEMO_CREDENTIALS must be false in production.")
+    if getattr(candidate, "enable_demo_reset", False):
+        raise RuntimeError("ENABLE_DEMO_RESET must be false in production.")
+    if getattr(candidate, "enable_synthetic_controls", False):
+        raise RuntimeError("ENABLE_SYNTHETIC_CONTROLS must be false in production.")
     cors_origins = getattr(candidate, "cors_origins", [])
     if "*" in cors_origins:
         raise RuntimeError("CORS_ORIGINS must list explicit origins when credentials are enabled.")

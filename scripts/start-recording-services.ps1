@@ -18,6 +18,9 @@ $frontendErr = Join-Path $env:TEMP "niyamguard-frontend-$runId.err.log"
 $env:APP_ENV = "development"
 $env:DEBUG = "false"
 $env:DEMO_MODE = "true"
+$env:SHOW_DEMO_CREDENTIALS = "true"
+$env:ENABLE_DEMO_RESET = "true"
+$env:ENABLE_SYNTHETIC_CONTROLS = "true"
 $env:DATABASE_URL = "sqlite:///./niyamguard.db"
 $env:SECRET_KEY = "local-demo-secret-key-not-for-production"
 $env:RATE_LIMIT_ENABLED = "false"
@@ -36,6 +39,10 @@ $backendProcess = Start-Process -FilePath $python `
   -RedirectStandardOutput $backendOut -RedirectStandardError $backendErr
 
 $env:VITE_API_BASE_URL = "http://127.0.0.1:$BackendPort"
+$env:VITE_APP_ENV = "demo"
+$env:VITE_DEMO_MODE = "true"
+$env:VITE_SHOW_DEMO_CREDENTIALS = "true"
+$env:VITE_ENABLE_SYNTHETIC_CONTROLS = "true"
 $frontendProcess = Start-Process -FilePath "npm.cmd" `
   -ArgumentList @("run", "dev", "--", "--host", "127.0.0.1", "--port", [string]$FrontendPort) `
   -WorkingDirectory $frontend -WindowStyle Hidden -PassThru `

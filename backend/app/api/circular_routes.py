@@ -188,7 +188,7 @@ async def upload_circular_file(
     }
 
 
-@router.get("", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def list_circulars() -> dict:
     return {
         "success": True,
@@ -196,7 +196,7 @@ def list_circulars() -> dict:
     }
 
 
-@router.get("/{circular_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/{circular_id}", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def get_circular(circular_id: str) -> dict:
     document = circular_ingestion_service.get_document(circular_id)
     if document is None:
@@ -223,7 +223,7 @@ def extract_rules(
     return result
 
 
-@router.get("/{circular_id}/ai-summary", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/{circular_id}/ai-summary", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def circular_ai_summary(circular_id: str) -> dict:
     document = circular_ingestion_service.get_document(circular_id)
     if document is None:

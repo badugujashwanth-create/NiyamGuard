@@ -29,22 +29,22 @@ def summary() -> dict:
     }
 
 
-@router.get("/departments", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/departments", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def departments() -> dict:
     return {"success": True, "departments": department_readiness()}
 
 
-@router.get("/priority-findings", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/priority-findings", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def priority_findings() -> dict:
     return {"success": True, "priority_findings": [item.model_dump() for item in priority_service.list_priorities()]}
 
 
-@router.get("/high-impact", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/high-impact", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def high_impact() -> dict:
     return {"success": True, "priority_findings": [item.model_dump() for item in priority_service.high_impact()]}
 
 
-@router.get("/service/{service_id}", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
+@router.get("/service/{service_id}", dependencies=[Depends(require_roles("admin", "reviewer", "officer", "viewer"))])
 def service_dashboard(service_id: str) -> dict:
     return {"success": True, "priority_findings": [item.model_dump() for item in priority_service.service_priorities(service_id)]}
 

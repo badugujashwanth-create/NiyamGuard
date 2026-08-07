@@ -162,6 +162,14 @@ export function applyPropagationDemoPatch(taskId) {
   return request(`/api/propagation/tasks/${encodeURIComponent(taskId)}/apply-demo-patch`, { method: "POST" });
 }
 
+export function markPropagationManual(taskId) {
+  return request(`/api/propagation/tasks/${encodeURIComponent(taskId)}/mark-manual`, { method: "POST" });
+}
+
+export function markPropagationCompleted(taskId) {
+  return request(`/api/propagation/tasks/${encodeURIComponent(taskId)}/mark-completed`, { method: "POST" });
+}
+
 export function getSchedulerStatus() {
   return request("/api/scheduler/status");
 }

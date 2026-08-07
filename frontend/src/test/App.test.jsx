@@ -647,9 +647,9 @@ describe("NiyamGuard frontend", () => {
     window.history.pushState({}, "", "/login");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Email")).toHaveValue("admin@niyamguard.local");
-    expect(screen.getByText(/Demo admin:/)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "NiyamGuard" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveValue("");
+    expect(screen.queryByText(/Demo admin:/)).not.toBeInTheDocument();
   });
 
   it("protects admin routes when unauthenticated", async () => {
@@ -657,7 +657,7 @@ describe("NiyamGuard frontend", () => {
     window.history.pushState({}, "", "/admin");
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "NiyamGuard" })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/login");
   });
 
@@ -667,6 +667,8 @@ describe("NiyamGuard frontend", () => {
     window.history.pushState({}, "", "/login");
     render(<App />);
 
+    await user.type(screen.getByLabelText("Email"), "admin@niyamguard.local");
+    await user.type(screen.getByLabelText("Password"), "Admin@12345");
     await user.click(await screen.findByRole("button", { name: "Sign In" }));
 
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
@@ -819,16 +821,16 @@ describe("NiyamGuard frontend", () => {
 
     await user.click(screen.getByRole("button", { name: "Rule Candidates" }));
     expect(await screen.findByRole("heading", { name: "Rule Candidates" })).toBeInTheDocument();
-    expect(screen.getByText("Extracted Rule Candidates")).toBeInTheDocument();
+    expect(screen.getByText("Rule Review")).toBeInTheDocument();
     expect(screen.getByText("Income Certificate validity changed from 12 months to 6 months.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Policy Updates" }));
     expect(await screen.findByRole("heading", { name: "Policy Updates" })).toBeInTheDocument();
     expect(screen.getByText("Published Policy Updates")).toBeInTheDocument();
     expect(screen.getByText("Knowledge Updates")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Policy Lineage" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Rule Timeline" })).toBeInTheDocument();
     expect(screen.getByText("Lineage Integrity").closest("article")).toHaveTextContent("Intact");
-    expect(screen.getByText("rule_001 / v2").closest("tr")).toHaveTextContent("version_rule_001_1");
+    expect(screen.getByText("Validity / v2").closest("tr")).toHaveTextContent("Previous verified version");
 
     await user.click(screen.getByRole("button", { name: "Propagation" }));
     expect(await screen.findByRole("heading", { name: "Propagation" })).toBeInTheDocument();
@@ -994,7 +996,7 @@ describe("NiyamGuard frontend", () => {
     expect(await screen.findByRole("heading", { name: "Reports" })).toBeInTheDocument();
     expect(screen.getAllByText("Export Compliance CSV").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Export Conflicts CSV").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Export Rules JSON").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Export Verified Rules").length).toBeGreaterThan(0);
   });
 
   it("admin audit page renders", async () => {
@@ -1031,6 +1033,6 @@ describe("NiyamGuard frontend", () => {
     await screen.findByRole("heading", { name: "Dashboard" });
     await user.click(screen.getByRole("button", { name: "Logout" }));
 
-    expect(await screen.findByRole("heading", { name: "NiyamGuard Admin Login" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "NiyamGuard" })).toBeInTheDocument();
   });
 });
