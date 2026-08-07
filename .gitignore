@@ -29,6 +29,7 @@ frontend/dist/
 frontend/node_modules/
 frontend/playwright-report/
 frontend/test-results/
+frontend/docs/design-audit/
 
 data/datasets/*
 data/processed/*
@@ -52,3 +53,4 @@ docs/recording-assets/e2e-step-*.png
 docs/recording-assets/final-two-portal-*.png
 docs/recording-assets/final-two-portal-demo.webm
 docs/recording-assets/restored-*.png
+docs/design-audit/*.png

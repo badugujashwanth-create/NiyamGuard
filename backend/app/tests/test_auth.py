@@ -33,3 +33,17 @@ def test_refresh_token_returns_new_access_token(client) -> None:
     )
     assert refresh.status_code == 200
     assert refresh.json()["access_token"]
+
+
+def test_refresh_token_rotates_and_rejects_replay(client) -> None:
+    login = client.post(
+        "/api/auth/login",
+        json={"email": "viewer@niyamguard.local", "password": "Viewer@12345"},
+    )
+    original = login.json()["refresh_token"]
+    rotated = client.post("/api/auth/refresh", json={"refresh_token": original})
+    assert rotated.status_code == 200
+    assert rotated.json()["refresh_token"] != original
+
+    replay = client.post("/api/auth/refresh", json={"refresh_token": original})
+    assert replay.status_code == 401

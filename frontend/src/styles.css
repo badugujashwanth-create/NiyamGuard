@@ -30,6 +30,11 @@ button {
   cursor: pointer;
 }
 
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid #d8a429;
+  outline-offset: 3px;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -455,6 +460,125 @@ button:disabled {
   max-width: 42rem;
 }
 
+.two-portal-header .eyebrow,
+.policy-incident .eyebrow,
+.two-portal-card .eyebrow {
+  color: #2f6f5a;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.policy-incident {
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid #d9e2ec;
+  border-left: 5px solid #d8a429;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
+  margin: 0 auto 1rem;
+  max-width: 980px;
+  padding: 1.35rem;
+  width: 100%;
+}
+
+.policy-incident h2,
+.policy-incident h3 {
+  margin: 0.25rem 0 0.65rem;
+}
+
+.policy-incident-copy > p:not(.eyebrow):not(.policy-meta) {
+  color: #52606d;
+  margin: 0;
+  max-width: 42rem;
+}
+
+.policy-delta {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  margin: 1.1rem 0 0.7rem;
+}
+
+.policy-delta span:not(.policy-arrow) {
+  background: #f8fafc;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 9rem;
+  padding: 0.7rem 0.8rem;
+}
+
+.policy-delta small {
+  color: #52606d;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.policy-delta strong {
+  font-size: 1.2rem;
+}
+
+.policy-arrow {
+  color: #b27c00;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.policy-meta,
+.policy-boundary {
+  color: #52606d;
+  font-size: 0.82rem;
+}
+
+.policy-meta {
+  margin: 0;
+}
+
+.policy-impact {
+  background: #f4f8f5;
+  border: 1px solid #d9e9e2;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.policy-impact ul {
+  display: grid;
+  gap: 0.7rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.policy-impact li {
+  align-items: baseline;
+  display: flex;
+  gap: 0.55rem;
+}
+
+.policy-impact li strong {
+  color: #135c46;
+  font-size: 1.35rem;
+  min-width: 1.7rem;
+}
+
+.policy-impact li span {
+  color: #52606d;
+  font-size: 0.9rem;
+}
+
+.policy-boundary {
+  margin: 1.1rem auto 0;
+  max-width: 980px;
+  text-align: center;
+}
+
 .two-portal-grid {
   display: grid;
   gap: 1rem;
@@ -612,6 +736,19 @@ button:disabled {
 
   .two-portal-card {
     min-height: 220px;
+  }
+
+  .policy-incident {
+    grid-template-columns: 1fr;
+  }
+
+  .policy-delta {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .policy-arrow {
+    align-self: center;
   }
 
   .citizen-assistant-form > div {
@@ -1208,6 +1345,17 @@ button:disabled {
 
 .button-primary:hover:not(:disabled) {
   background: #0e553e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 .button-secondary {

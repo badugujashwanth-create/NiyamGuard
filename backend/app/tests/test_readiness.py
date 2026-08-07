@@ -1,5 +1,5 @@
-def test_ops_status_is_public(client) -> None:
-    response = client.get("/api/ops/status")
+def test_ops_status_requires_authenticated_viewer(client, viewer_headers) -> None:
+    response = client.get("/api/ops/status", headers=viewer_headers)
     body = response.json()
     assert response.status_code == 200
     assert body["success"] is True
@@ -8,7 +8,7 @@ def test_ops_status_is_public(client) -> None:
 
 
 def test_admin_readiness_report(client, admin_headers) -> None:
-    client.post("/api/dataset/import")
+    client.post("/api/dataset/import", headers=admin_headers)
     response = client.get("/api/admin/readiness", headers=admin_headers)
     body = response.json()
     assert response.status_code == 200

@@ -66,3 +66,24 @@ def test_sandbox_endpoints_disappear_when_demo_mode_is_disabled(
     response = getattr(client, method)(path)
     assert response.status_code == 404
     assert response.json()["error"]["message"] == "Sandbox endpoint is disabled outside demo mode."
+
+
+def test_demo_otp_endpoints_disappear_when_demo_mode_is_disabled(
+    client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "demo_mode", False)
+    response = client.post(
+        "/api/security/otp/request",
+        json={"channel": "sms", "destination": "9876543210"},
+    )
+    assert response.status_code == 404
+    assert response.json()["error"]["message"] == "Sandbox endpoint is disabled outside demo mode."
+
+
+def test_ops_status_does_not_disclose_filesystem_paths(client, viewer_headers) -> None:
+    response = client.get("/api/ops/status", headers=viewer_headers)
+    assert response.status_code == 200
+    dataset = response.json()["dataset"]
+    assert "pack" in dataset
+    assert "pack_dir" not in dataset
+    assert ":\\" not in str(dataset)

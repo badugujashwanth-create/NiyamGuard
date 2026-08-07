@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
 from app.data_pipeline.dataset_pack_loader import build_dataset_pack_index, import_dataset_pack
+from app.security.rbac import require_roles
 from app.services import dataset_service
 
 router = APIRouter(prefix="/api/dataset", tags=["NiyamGuard Dataset"])
 
 
 class DatasetQARequest(BaseModel):
-    question: str = Field(min_length=1)
-    top_k: int = 5
+    question: str = Field(min_length=1, max_length=2_000)
+    top_k: int = Field(default=5, ge=1, le=20)
 
 
 @router.get("/status")
@@ -19,12 +20,12 @@ def dataset_status() -> dict:
     return dataset_service.dataset_status()
 
 
-@router.post("/import")
+@router.post("/import", dependencies=[Depends(require_roles("admin", "reviewer"))])
 def import_dataset() -> dict:
     return {"success": True, "result": import_dataset_pack()}
 
 
-@router.post("/rag/build")
+@router.post("/rag/build", dependencies=[Depends(require_roles("admin", "reviewer"))])
 def build_rag() -> dict:
     return {"success": True, "result": build_dataset_pack_index()}
 
@@ -39,7 +40,7 @@ def obligations_search(
     q: str | None = None,
     regulator_code: str | None = None,
     sector: str | None = None,
-    limit: int = 25,
+    limit: int = Query(default=25, ge=1, le=100),
 ) -> dict:
     return dataset_service.search_obligations(q, regulator_code, sector, limit)
 
@@ -49,7 +50,7 @@ def gaps(
     org_id: str | None = None,
     policy_id: str | None = None,
     obligation_id: str | None = None,
-    limit: int = 25,
+    limit: int = Query(default=25, ge=1, le=100),
 ) -> dict:
     return dataset_service.detect_gaps(org_id, policy_id, obligation_id, limit)
 
@@ -59,13 +60,13 @@ def evidence(
     org_id: str | None = None,
     obligation_id: str | None = None,
     status: str | None = None,
-    limit: int = 25,
+    limit: int = Query(default=25, ge=1, le=100),
 ) -> dict:
     return dataset_service.review_evidence(org_id, obligation_id, status, limit)
 
 
 @router.get("/drift")
-def drift(org_id: str | None = None, limit: int = 25) -> dict:
+def drift(org_id: str | None = None, limit: int = Query(default=25, ge=1, le=100)) -> dict:
     return dataset_service.detect_drift(org_id, limit)
 
 
@@ -75,7 +76,7 @@ def risk(org_id: str) -> dict:
 
 
 @router.get("/audit")
-def audit(org_id: str | None = None, entity_id: str | None = None, limit: int = 25) -> dict:
+def audit(org_id: str | None = None, entity_id: str | None = None, limit: int = Query(default=25, ge=1, le=100)) -> dict:
     return dataset_service.audit_trail(org_id, entity_id, limit)
 
 
@@ -85,7 +86,7 @@ def demo_flow(org_id: str | None = None) -> dict:
 
 
 @router.get("/{collection}")
-def collection(collection: str, limit: int = 50, q: str | None = None) -> dict:
+def collection(collection: str, limit: int = Query(default=50, ge=1, le=100), q: str | None = None) -> dict:
     return dataset_service.list_collection(collection, limit=limit, q=q)
 
 

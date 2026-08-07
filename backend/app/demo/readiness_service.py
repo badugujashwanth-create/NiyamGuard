@@ -30,7 +30,8 @@ def ops_status() -> dict[str, Any]:
         "status": "ok" if database_ready() else "degraded",
         "database": {"reachable": database_ready()},
         "dataset": {
-            "pack_dir": str(settings.dataset_pack_dir),
+            # Never disclose host filesystem paths through an operational API.
+            "pack": settings.dataset_pack_dir.name,
             "imported_records": dataset_repository.count(),
             "collection_counts": dataset_repository.collection_counts(),
         },

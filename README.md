@@ -57,6 +57,10 @@ Python 3.12 and Node.js are required. No government or paid-provider credentials
 cd backend
 py -3.12 -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements.txt
+.\.venv\Scripts\python -c "from pathlib import Path; p=Path('.env.example'); Path('.env').write_text(p.read_text(), encoding='utf-8')"
+# The local walkthrough is an explicit synthetic sandbox opt-in.
+$env:DEMO_MODE="true"
+$env:SEED_DEMO_ON_STARTUP="true"
 .\.venv\Scripts\python -m app.seed_demo
 .\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8010
 ```
@@ -70,6 +74,9 @@ npm run dev -- --host 127.0.0.1 --port 5180
 ```
 
 Open `http://127.0.0.1:5180`. Demo identities are listed in [TESTER_GUIDE.md](TESTER_GUIDE.md).
+For a deployment, leave `DEMO_MODE=false` and provide a non-placeholder secret,
+explicit CORS/trusted-host lists, and a managed database. The application does not
+seed demo identities unless both demo flags are explicitly enabled.
 
 ## Verification
 
@@ -79,7 +86,7 @@ npm test --prefix frontend -- --run
 npm run build --prefix frontend
 ```
 
-Current verification records **250 backend tests**, **60 frontend tests**, a Vite production build, and a same-origin container check. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
+The repository currently collects **250 backend tests** and **60 frontend tests**. The full backend suite passes in a clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, and the Vite production build is verified. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
 
 ## Current limits
 

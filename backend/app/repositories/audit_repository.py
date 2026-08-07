@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 from uuid import uuid4
 
 from sqlalchemy import delete, select
@@ -11,6 +12,7 @@ from app.models.audit_models import AuditEventRecord
 from app.services.time import now_iso
 
 GENESIS_HASH = "0" * 64
+_append_lock = threading.Lock()
 
 
 def _legacy_payload(record: AuditEventRecord) -> dict:
@@ -72,35 +74,39 @@ class AuditRepository:
         created_at: str | None = None,
     ) -> dict:
         created = created_at or now_iso()
-        with SessionLocal() as session:
+        # Keep the read of the tip and the append in one critical section. This
+        # prevents two concurrent requests in the same application process from
+        # both selecting the same previous hash and silently forking the chain.
+        # A multi-worker deployment must still use a single writer or a database
+        # advisory-lock layer before it is considered pilot-ready.
+        with _append_lock, SessionLocal() as session:
             previous_hash = (
                 session.scalars(
                     select(AuditEventRecord.current_hash)
                     .where(AuditEventRecord.current_hash.is_not(None))
-                    .order_by(AuditEventRecord.created_at.desc())
+                    .order_by(AuditEventRecord.created_at.desc(), AuditEventRecord.id.desc())
                     .limit(1)
                 ).first()
                 or GENESIS_HASH
             )
-        record = AuditEventRecord(
-            id=event_id or f"audit_{uuid4().hex}",
-            actor_user_id=actor_user_id,
-            actor_email=actor_email,
-            actor_role=actor_role,
-            action=action,
-            entity_type=entity_type,
-            entity_id=entity_id,
-            details_json=details or {},
-            ip_address=ip_address,
-            user_agent=user_agent,
-            request_id=request_id,
-            previous_hash=previous_hash,
-            current_hash=None,
-            created_at=created,
-        )
-        record.current_hash = _hash_event(record, previous_hash)
-        with SessionLocal() as session:
-            session.merge(record)
+            record = AuditEventRecord(
+                id=event_id or f"audit_{uuid4().hex}",
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+                actor_role=actor_role,
+                action=action,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                details_json=details or {},
+                ip_address=ip_address,
+                user_agent=user_agent,
+                request_id=request_id,
+                previous_hash=previous_hash,
+                current_hash=None,
+                created_at=created,
+            )
+            record.current_hash = _hash_event(record, previous_hash)
+            session.add(record)
             session.commit()
         return _legacy_payload(record)
 
@@ -145,7 +151,9 @@ class AuditRepository:
 
     def verify_chain(self) -> dict:
         with SessionLocal() as session:
-            records = session.scalars(select(AuditEventRecord).order_by(AuditEventRecord.created_at.asc())).all()
+            records = session.scalars(
+                select(AuditEventRecord).order_by(AuditEventRecord.created_at.asc(), AuditEventRecord.id.asc())
+            ).all()
         expected_previous = GENESIS_HASH
         for record in records:
             if record.previous_hash != expected_previous:

@@ -1,5 +1,6 @@
 import pytest
 
+from app.config import settings
 from app.services import stt_service
 
 
@@ -43,3 +44,13 @@ def test_stt_endpoint_reports_optional_local_provider_unavailable(
     assert body["success"] is False
     assert body["provider"] == "unavailable"
     assert body["fallback"] == "browser-speech-recognition"
+
+
+def test_stt_endpoint_rejects_oversized_upload(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "stt_max_upload_bytes", 4)
+    response = client.post(
+        "/api/stt/transcribe",
+        data={"language_hint": "auto"},
+        files={"audio": ("voice.webm", b"012345", "audio/webm")},
+    )
+    assert response.status_code == 413

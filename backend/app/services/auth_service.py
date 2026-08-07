@@ -114,9 +114,20 @@ def refresh(refresh_token: str) -> dict | None:
     user = auth_repository.get_user(record.user_id)
     if user is None or not user.is_active:
         return None
+    replacement_token = secrets.token_urlsafe(48)
+    replacement = RefreshTokenRecord(
+        id=f"refresh_{uuid4().hex}",
+        user_id=user.id,
+        token_hash=_token_hash(replacement_token),
+        expires_at=_expires_iso(settings.refresh_token_expire_days),
+        revoked_at=None,
+        created_at=now_iso(),
+    )
+    if not auth_repository.rotate_refresh_token(_token_hash(refresh_token), replacement, now_iso()):
+        return None
     return {
         "access_token": create_access_token({"sub": user.id, "email": user.email, "role": user.role}),
-        "refresh_token": refresh_token,
+        "refresh_token": replacement_token,
         "token_type": "bearer",
         "user": _user_response(user),
     }

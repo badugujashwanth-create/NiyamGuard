@@ -1,5 +1,5 @@
-def test_dataset_status_and_import(client) -> None:
-    response = client.post("/api/dataset/import")
+def test_dataset_status_and_import(client, admin_headers) -> None:
+    response = client.post("/api/dataset/import", headers=admin_headers)
     assert response.status_code == 200
     assert response.json()["result"]["total_records"] == 18531
 

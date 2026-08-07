@@ -56,6 +56,8 @@ class Settings:
 
     secret_key: str = os.getenv("SECRET_KEY", "change-this-secret-key")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
+    jwt_issuer: str = os.getenv("JWT_ISSUER", "niyamguard")
+    jwt_audience: str = os.getenv("JWT_AUDIENCE", "niyamguard-users")
     access_token_expire_minutes: int = _int_env("ACCESS_TOKEN_EXPIRE_MINUTES", 30)
     refresh_token_expire_days: int = _int_env("REFRESH_TOKEN_EXPIRE_DAYS", 7)
 
@@ -71,8 +73,16 @@ class Settings:
     rate_limit_enabled: bool = _bool_env("RATE_LIMIT_ENABLED", True)
     rate_limit_per_minute: int = _int_env("RATE_LIMIT_PER_MINUTE", 60)
 
-    demo_mode: bool = _bool_env("DEMO_MODE", True)
+    # Demo endpoints and seeded identities are opt-in.  A fresh deployment must
+    # not expose synthetic credentials or mutation-only sandbox routes by
+    # accident simply because an environment variable was omitted.
+    demo_mode: bool = _bool_env("DEMO_MODE", False)
     seed_demo_on_startup: bool = _bool_env("SEED_DEMO_ON_STARTUP", False)
+
+    stt_max_upload_bytes: int = _int_env("STT_MAX_UPLOAD_BYTES", 10 * 1024 * 1024)
+    tts_max_characters: int = _int_env("TTS_MAX_CHARACTERS", 2_000)
+    tts_cache_max_files: int = _int_env("TTS_CACHE_MAX_FILES", 256)
+    tts_cache_max_bytes: int = _int_env("TTS_CACHE_MAX_BYTES", 64 * 1024 * 1024)
 
     ai_provider: str = os.getenv("AI_PROVIDER", "ollama").strip().lower() or "ollama"
     ai_enabled: bool = _bool_env("AI_ENABLED", False)

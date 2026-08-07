@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.services import tts_service
+from app.config import settings
 
 
 class FakeCommunicate:
@@ -113,6 +114,15 @@ def test_empty_tts_text_returns_400(client: TestClient) -> None:
     )
     assert response.status_code == 400
     assert response.json()["success"] is False
+
+
+def test_tts_rejects_text_over_configured_limit(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "tts_max_characters", 4)
+    response = client.post(
+        "/api/tts/speak",
+        json={"text": "12345", "language_code": "en-IN"},
+    )
+    assert response.status_code == 413
 
 
 def test_unsupported_tts_language_returns_400(client: TestClient) -> None:

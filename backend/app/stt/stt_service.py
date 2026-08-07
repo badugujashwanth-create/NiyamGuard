@@ -58,6 +58,7 @@ def transcribe_audio(
     # is present, use it; otherwise the route returns a clear 503 and the
     # frontend falls back to browser SpeechRecognition.
     model = _load_whisper_model()
+    audio_path = None
     try:
         import tempfile
         from pathlib import Path
@@ -65,7 +66,7 @@ def transcribe_audio(
         suffix = Path(filename or "audio.webm").suffix or ".webm"
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as audio_file:
             audio_file.write(audio_bytes)
-            audio_path = audio_file.name
+        audio_path = audio_file.name
         segments, info = model.transcribe(
             audio_path,
             language=None if language_hint in {None, "", "auto"} else language_hint,
@@ -74,6 +75,9 @@ def transcribe_audio(
         transcript = " ".join(segment.text.strip() for segment in segments).strip()
     except Exception as exc:
         raise SttTranscriptionError("Could not transcribe audio clearly.") from exc
+    finally:
+        if audio_path:
+            Path(audio_path).unlink(missing_ok=True)
 
     if not transcript:
         raise SttTranscriptionError("Could not hear clearly. Please repeat.")

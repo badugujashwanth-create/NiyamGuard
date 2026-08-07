@@ -1,7 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from app.config import settings
+from app.security.rate_limit import rate_limit
 from app.tts.tts_service import (
     TtsProviderError,
     synthesize_speech,
@@ -11,7 +13,7 @@ router = APIRouter(prefix="/api/tts", tags=["tts"])
 
 
 class TtsRequest(BaseModel):
-    text: str = ""
+    text: str = Field(default="", max_length=10_000)
     language_code: str | None = None
     detected_language: str | None = None
     provider: str = "auto"
@@ -31,7 +33,7 @@ def tts_health() -> dict:
     }
 
 
-@router.post("/speak", response_model=None)
+@router.post("/speak", response_model=None, dependencies=[Depends(rate_limit)])
 def speak(request: TtsRequest) -> Response | JSONResponse:
     if not request.text.strip():
         return JSONResponse(
@@ -40,6 +42,11 @@ def speak(request: TtsRequest) -> Response | JSONResponse:
                 "success": False,
                 "message": "TTS text must not be empty.",
             },
+        )
+    if len(request.text) > settings.tts_max_characters:
+        return JSONResponse(
+            status_code=413,
+            content={"success": False, "message": "TTS text exceeds the configured character limit."},
         )
     try:
         result = synthesize_speech(

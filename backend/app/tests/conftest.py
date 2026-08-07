@@ -3,7 +3,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import SESSION_STORAGE_PATH
+from app.config import SESSION_STORAGE_PATH, settings
 from app.main import app
 from app.security.rate_limit import _attempts
 from app.services.auth_service import seed_default_users
@@ -12,6 +12,10 @@ from app.knowledge_base.platform_store import reset_demo_store
 
 @pytest.fixture(autouse=True)
 def clean_session_storage() -> None:
+    # Tests exercise the synthetic sandbox explicitly; production defaults are
+    # fail-closed and therefore keep demo routes disabled unless opted in.
+    previous_demo_mode = settings.demo_mode
+    settings.demo_mode = True
     _attempts.clear()
     SESSION_STORAGE_PATH.write_text("{}\n", encoding="utf-8")
     reset_demo_store(persist=True)
@@ -21,6 +25,7 @@ def clean_session_storage() -> None:
     SESSION_STORAGE_PATH.write_text("{}\n", encoding="utf-8")
     reset_demo_store(persist=True)
     seed_default_users()
+    settings.demo_mode = previous_demo_mode
 
 
 @pytest.fixture

@@ -20,7 +20,13 @@ def _b64url_decode(data: str) -> bytes:
 def create_access_token(claims: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     now = datetime.now(timezone.utc)
     expire = now + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
-    payload = {**claims, "iat": int(now.timestamp()), "exp": int(expire.timestamp())}
+    payload = {
+        **claims,
+        "iat": int(now.timestamp()),
+        "exp": int(expire.timestamp()),
+        "iss": settings.jwt_issuer,
+        "aud": settings.jwt_audience,
+    }
     header = {"alg": settings.jwt_algorithm, "typ": "JWT"}
     signing_input = ".".join(
         [
@@ -52,4 +58,6 @@ def decode_access_token(token: str) -> dict[str, Any]:
     payload = json.loads(_b64url_decode(payload_b64))
     if int(payload.get("exp", 0)) < int(datetime.now(timezone.utc).timestamp()):
         raise ValueError("Token expired.")
+    if payload.get("iss") != settings.jwt_issuer or payload.get("aud") != settings.jwt_audience:
+        raise ValueError("Invalid token issuer or audience.")
     return payload

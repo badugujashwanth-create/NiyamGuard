@@ -1,10 +1,11 @@
 # Test report
 
-Release audit completed on 2026-07-19 from the `pilot-readiness-2026` branch on Windows. A fresh reconciliation rerun on 2026-07-21 from `phase5-niyamguard-reconciliation` preserved the same backend/frontend results and removed the application-owned deprecated HTTP 422 constant. The remaining TestClient warning is inside the installed FastAPI/Starlette compatibility layer. Full-stack container evidence was established on the v1.0.2 deployment baseline and remains applicable to the same packaging path.
+Release audit refreshed on 2026-08-07 from the canonical `main` branch on Windows. The service-portal 422 failure was fixed, demo seeding is now opt-in, and the operational/dataset mutation boundaries are authenticated.
 
 | Command | Result | Evidence / notes |
 |---|---|---|
-| `backend/.venv/Scripts/python -m pytest -q` | Pass | 243 tests passed; 1 dependency-owned FastAPI/Starlette TestClient deprecation warning |
+| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 250 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
+| Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
 | `npm test` in `frontend` | Pass | 60 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |
 | Playwright product walkthrough | Pass | Real browser simulation completed and recorded end to end |
@@ -19,4 +20,4 @@ External identity, payment, government, messaging, and Ollama services were not 
 
 The release-candidate video SHA-256 is `859c36d0571f9b18ec32edf2520d500617ef5f595bdeeec7c460edd052f3aff2`. Its 13,708,739-byte size and hash were rechecked against [verification.json](demo/verification/verification.json).
 
-The recorded narration cites 242 backend tests because that was the passing count at capture time. A coverage-boundary regression test was added after review, bringing the final suite to 243 without changing the demonstrated product flow.
+The existing walkthrough predates this refresh and is not used as evidence for the current test count. A replacement recording is not required for this code-only verification; the media remains synthetic and the current branch/test boundary is documented above.

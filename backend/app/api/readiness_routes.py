@@ -3,6 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends
 
+from app.dependencies import require_demo_mode
 from app.security.rbac import require_roles
 from app.services import readiness_service
 
@@ -19,7 +20,7 @@ class OtpVerifyRequest(BaseModel):
     code: str = Field(min_length=4, max_length=8)
 
 
-@router.get("/api/ops/status")
+@router.get("/api/ops/status", dependencies=[Depends(require_roles("admin", "reviewer", "viewer"))])
 def ops_status() -> dict:
     return readiness_service.ops_status()
 
@@ -29,11 +30,11 @@ def admin_readiness() -> dict:
     return readiness_service.readiness_report()
 
 
-@router.post("/api/security/otp/request")
+@router.post("/api/security/otp/request", dependencies=[Depends(require_demo_mode)])
 def request_otp(payload: OtpRequest) -> dict:
     return readiness_service.request_demo_otp(payload.channel, payload.destination)
 
 
-@router.post("/api/security/otp/verify")
+@router.post("/api/security/otp/verify", dependencies=[Depends(require_demo_mode)])
 def verify_otp(payload: OtpVerifyRequest) -> dict:
     return readiness_service.verify_demo_otp(payload.otp_id, payload.code)

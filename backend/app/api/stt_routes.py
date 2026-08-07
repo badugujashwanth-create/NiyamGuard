@@ -1,6 +1,10 @@
-from fastapi import APIRouter, File, Form, UploadFile
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
+from app.config import settings
+from app.security.rate_limit import rate_limit
 from app.stt.stt_service import (
     SttTranscriptionError,
     SttUnavailableError,
@@ -10,7 +14,7 @@ from app.stt.stt_service import (
 router = APIRouter(prefix="/api/stt", tags=["speech-to-text"])
 
 
-@router.post("/transcribe")
+@router.post("/transcribe", dependencies=[Depends(rate_limit)])
 async def transcribe(
     audio: UploadFile = File(...),
     language_hint: str | None = Form(default="auto"),
@@ -19,7 +23,32 @@ async def transcribe(
     fallback_transcript: str | None = Form(default=None),
 ) -> JSONResponse:
     try:
-        audio_bytes = await audio.read()
+        audio_bytes = await audio.read(settings.stt_max_upload_bytes + 1)
+        if len(audio_bytes) > settings.stt_max_upload_bytes:
+            return JSONResponse(
+                status_code=413,
+                content={"success": False, "message": "Audio upload exceeds the configured size limit."},
+            )
+        suffix = Path(audio.filename or "audio.webm").suffix.casefold()
+        if suffix not in {".webm", ".wav", ".mp3", ".m4a", ".ogg"}:
+            return JSONResponse(
+                status_code=415,
+                content={"success": False, "message": "Unsupported audio format."},
+            )
+        content_type = (audio.content_type or "").casefold().split(";", 1)[0]
+        if content_type and content_type not in {
+            "audio/webm",
+            "audio/wav",
+            "audio/x-wav",
+            "audio/mpeg",
+            "audio/mp4",
+            "audio/ogg",
+            "application/octet-stream",
+        }:
+            return JSONResponse(
+                status_code=415,
+                content={"success": False, "message": "Unsupported audio MIME type."},
+            )
         result = transcribe_audio(
             audio_bytes,
             filename=audio.filename or "audio.webm",

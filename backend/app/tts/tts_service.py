@@ -6,7 +6,7 @@ from pathlib import Path
 
 import edge_tts
 
-from app.config import ENABLE_BHASHINI, ENABLE_EDGE_TTS, TTS_CACHE_DIR, TTS_PROVIDER
+from app.config import ENABLE_BHASHINI, ENABLE_EDGE_TTS, TTS_CACHE_DIR, TTS_PROVIDER, settings
 
 SUPPORTED_LANGUAGE_CODES = {"te-IN", "hi-IN", "en-IN", "en-US"}
 DETECTED_LANGUAGE_CODES = {
@@ -38,6 +38,24 @@ class TtsResult:
     language_code: str
     provider: str
     cache_status: str
+
+
+def _trim_cache(cache_dir: Path) -> None:
+    """Keep the optional speech cache bounded so requests cannot fill disk."""
+    files = [path for path in cache_dir.glob("*.mp3") if path.is_file()]
+    total_bytes = sum(path.stat().st_size for path in files)
+    files.sort(key=lambda path: path.stat().st_mtime)
+    while files and (
+        len(files) > settings.tts_cache_max_files
+        or total_bytes > settings.tts_cache_max_bytes
+    ):
+        oldest = files.pop(0)
+        try:
+            size = oldest.stat().st_size
+            oldest.unlink()
+            total_bytes -= size
+        except OSError:
+            continue
 
 
 def normalize_language_code(
@@ -157,6 +175,7 @@ def synthesize_speech(
             if not audio:
                 raise RuntimeError("TTS provider returned empty audio.")
             os.replace(temporary_path, cached_path)
+            _trim_cache(target_cache_dir)
         except Exception as exc:
             temporary_path.unlink(missing_ok=True)
             raise TtsProviderError(TTS_FAILURE_MESSAGE) from exc

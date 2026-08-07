@@ -49,7 +49,21 @@ class AuthRepository:
                 return False
             record.revoked_at = revoked_at
             session.commit()
-            return True
+        return True
+
+    def rotate_refresh_token(self, token_hash: str, replacement: RefreshTokenRecord, revoked_at: str) -> bool:
+        """Atomically consume a refresh token and persist its replacement."""
+        with SessionLocal() as session:
+            statement = select(RefreshTokenRecord).where(RefreshTokenRecord.token_hash == token_hash)
+            if session.bind and session.bind.dialect.name != "sqlite":
+                statement = statement.with_for_update()
+            record = session.scalar(statement)
+            if record is None or record.revoked_at:
+                return False
+            record.revoked_at = revoked_at
+            session.add(replacement)
+            session.commit()
+        return True
 
 
 auth_repository = AuthRepository()

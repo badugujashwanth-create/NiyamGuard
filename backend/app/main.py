@@ -99,8 +99,9 @@ app.add_middleware(
 )
 
 init_db()
-ensure_demo_store_seeded()
-seed_default_users()
+if settings.demo_mode and settings.seed_demo_on_startup:
+    ensure_demo_store_seeded()
+    seed_default_users()
 
 app.include_router(health_router)
 app.include_router(hybrid_intelligence_router)
