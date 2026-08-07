@@ -1,6 +1,6 @@
 import pytest
 
-from app.database import SessionLocal
+from app.database import SessionLocal, database_ready
 from app.config import settings
 from app.models.database_models import (
     CircularDocumentRecord,
@@ -27,6 +27,7 @@ def test_seed_demo_inserts_go_138_into_database(capsys) -> None:
         assert session.query(CircularDocumentRecord).count() >= 2
         assert session.query(PolicyRuleVersionRecord).count() >= 2
         assert session.query(ConnectedSystemSnapshotRecord).count() >= 1
+    assert database_ready()
 
 
 def test_non_demo_runtime_does_not_fall_back_to_legacy_file_store(monkeypatch) -> None:

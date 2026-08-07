@@ -18,6 +18,8 @@ REQUIRED_RUNTIME_TABLES = frozenset(
         "rate_limit_buckets",
         "circular_documents",
         "policy_rule_candidates",
+        "policy_rule_deltas",
+        "rule_approval_workflows",
         "policy_rule_versions",
         "connected_system_snapshots",
         "compliance_findings",

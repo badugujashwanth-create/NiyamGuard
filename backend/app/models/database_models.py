@@ -75,6 +75,32 @@ class PolicyRuleCandidateRecord(Base):
     created_at: Mapped[str] = mapped_column(String(40))
 
 
+class PolicyRuleDeltaRecord(Base):
+    __tablename__ = "policy_rule_deltas"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    candidate_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_candidates.id"), index=True)
+    existing_rule_id: Mapped[str | None] = mapped_column(String(160), nullable=True, index=True)
+    change_type: Mapped[str] = mapped_column(String(40), index=True)
+    previous_value: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    proposed_value: Mapped[str] = mapped_column(String(200))
+    impact_level: Mapped[str] = mapped_column(String(40), index=True)
+    reason: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class RuleApprovalWorkflowRecord(Base):
+    __tablename__ = "rule_approval_workflows"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    candidate_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_candidates.id"), index=True)
+    reviewer_user_id: Mapped[str | None] = mapped_column(String(160), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    review_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
 class PolicyRuleVersionRecord(Base):
     __tablename__ = "policy_rule_versions"
     __table_args__ = (UniqueConstraint("rule_id", "version_number", name="uq_policy_rule_version_number"),)

@@ -16,7 +16,7 @@ Release audit refreshed on 2026-08-07 from the canonical `main` branch on Window
 | Render Blueprint schema | Pass | Validated against the current official Render schema |
 | `npm audit --omit=dev` | Pass | 0 production dependency vulnerabilities |
 | installed backend `pip-audit` | Pass | No known vulnerabilities after the Edge TTS migration |
-| Fresh Alembic migration and normalized seed/load round trip | Pass | SQLite migrations through `20260807_0007`, readiness, typed row counts, and candidate evidence columns verified locally; PostgreSQL remains a CI/deployment gate |
+| Fresh Alembic migration and normalized seed/load round trip | Pass | SQLite migrations through `20260807_0008`, readiness, review-chain row counts, and candidate evidence columns verified locally; PostgreSQL remains a CI/deployment gate |
 | Gitleaks current tree and history | Not run locally | The Gitleaks CI job is configured; the binary was unavailable in this environment, so no local scan result is claimed. |
 
 External identity, payment, government, messaging, and Ollama services were not treated as verified production integrations. The automated tests use local, mocked, sandboxed, or synthetic boundaries.

@@ -2,7 +2,7 @@
 
 **State date:** 2026-08-07
 **Canonical branch:** `main`
-**Latest local change:** normalized circular, candidate, version, snapshot, and finding persistence with a compatibility mirror
+**Latest local change:** normalized policy-review chain persistence with a compatibility mirror
 **Public release:** `v1.1.0` (a new release is not claimed until the changes are committed and published)
 **Classification:** synthetic policy-drift MVP; production-boundary work in progress
 
@@ -24,7 +24,7 @@
 - Added database-backed session records, session-linked refresh tokens, JWT session IDs, logout revocation, and production enforcement of revocable sessions.
 - Added a database-backed fixed-window rate limiter for cross-worker deployments; local/demo environments retain the in-memory path, while production validation requires `RATE_LIMIT_BACKEND=database`.
 - Added a database-backed policy-store revision and optimistic write check; stale full-store replacements now fail with a retryable conflict instead of silently overwriting another reviewer.
-- Added typed relational tables and foreign keys for circular documents, rule candidates, verified rule versions, connected-system snapshots, and compliance findings. The serialized store remains a compatibility mirror, while these five core policy-drift collections are preferred on reads.
+- Added typed relational tables and foreign keys for circular documents, rule candidates, rule deltas, approval workflows, verified rule versions, connected-system snapshots, and compliance findings. The serialized store remains a compatibility mirror, while these seven core policy-review collections are preferred on reads.
 - Added deterministic evidence offsets to rule candidates so reviewers can locate the exact source-text span that produced a candidate; offsets remain nullable for legacy records and page coordinates are not claimed for OCR-free text.
 - Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
 - Added Alembic execution to both container entrypoints and switched containers to a non-root runtime user.
@@ -53,13 +53,13 @@
 | Docker image build | Not verified: Docker daemon unavailable in the current environment |
 | Hosted Render deployment | Not verified: previous public hostname returned 404 |
 | PostgreSQL migration CI gate | Configured: fresh PostgreSQL service runs Alembic, readiness, and production-style app import in GitHub Actions; not executed locally |
-| Fresh SQLite Alembic migration and normalized seed/load round trip | Pass: migrations through `20260807_0007`, readiness, normalized row counts, and candidate evidence columns verified locally |
+| Fresh SQLite Alembic migration and normalized seed/load round trip | Pass: migrations through `20260807_0008`, readiness, review-chain row counts, and candidate evidence columns verified locally |
 
 ## Remaining blockers
 
 1. Execute the PostgreSQL CI/deployment gate against a fresh database and verify `alembic upgrade head`, health, readiness, and the full policy lifecycle.
 2. Confirm the Render service owner, database, CORS/trusted-host values, and public synthetic-sandbox intent before publishing a new release.
-3. Replace the remaining non-core generic JSON payload rows with normalized relational records and domain transaction boundaries for a true pilot; the five flagship policy-drift collections are now typed and foreign-key constrained, while the serialized store remains a compatibility mirror.
+3. Replace the remaining non-core generic JSON payload rows with normalized relational records and domain transaction boundaries for a true pilot; the seven flagship policy-review collections are now typed and foreign-key constrained, while the serialized store remains a compatibility mirror.
 4. Provision and verify ClamAV signatures/quarantine plus robust PDF/OCR processing before accepting real government documents.
 5. Complete keyboard/screen-reader/contrast/reduced-motion testing with assistive technology; screenshots alone do not establish WCAG conformance.
 6. Review owner/legal approval for licensing and credential policy; no license is intentionally published.

@@ -15,8 +15,10 @@ from app.models.database_models import (
     ConnectedSystemSnapshotRecord,
     PolicyRecord,
     PolicyRuleCandidateRecord,
+    PolicyRuleDeltaRecord,
     PolicyRuleVersionRecord,
     PolicyStoreRevision,
+    RuleApprovalWorkflowRecord,
 )
 from app.models.knowledge_models import Circular
 from app.models.platform_store_models import PolicyDataStore
@@ -120,12 +122,14 @@ def _replace_normalized_records(session, store: PolicyDataStore) -> None:
 
     The serialized PolicyRecord rows remain as a compatibility mirror until
     every non-flagship collection has a typed schema, but normalized rows are
-    the preferred read source for these five core collections.
+    the preferred read source for these seven core policy-review collections.
     """
 
     session.execute(delete(ComplianceFindingRecord))
     session.execute(delete(ConnectedSystemSnapshotRecord))
     session.execute(delete(PolicyRuleVersionRecord))
+    session.execute(delete(RuleApprovalWorkflowRecord))
+    session.execute(delete(PolicyRuleDeltaRecord))
     session.execute(delete(PolicyRuleCandidateRecord))
     session.execute(delete(CircularDocumentRecord))
 
@@ -134,11 +138,23 @@ def _replace_normalized_records(session, store: PolicyDataStore) -> None:
     for item in documents:
         session.add(CircularDocumentRecord(**item))
 
+    candidate_ids: set[str] = set()
     for item in store.policy_rule_candidates:
         data = item.model_dump()
         if data["circular_id"] not in document_ids:
             continue
         session.add(PolicyRuleCandidateRecord(**data))
+        candidate_ids.add(data["id"])
+
+    for item in store.policy_rule_deltas:
+        data = item.model_dump()
+        if data["candidate_id"] in candidate_ids:
+            session.add(PolicyRuleDeltaRecord(**data))
+
+    for item in store.rule_approval_workflows:
+        data = item.model_dump()
+        if data["candidate_id"] in candidate_ids:
+            session.add(RuleApprovalWorkflowRecord(**data))
 
     version_ids: set[str] = set()
     for item in store.verified_policy_rule_versions:
@@ -164,6 +180,8 @@ def _apply_normalized_payload(session, payload: dict[str, list[Any]]) -> None:
 
     documents = session.scalars(select(CircularDocumentRecord)).all()
     candidates = session.scalars(select(PolicyRuleCandidateRecord)).all()
+    deltas = session.scalars(select(PolicyRuleDeltaRecord)).all()
+    workflows = session.scalars(select(RuleApprovalWorkflowRecord)).all()
     versions = session.scalars(select(PolicyRuleVersionRecord)).all()
     snapshots = session.scalars(select(ConnectedSystemSnapshotRecord)).all()
     findings = session.scalars(select(ComplianceFindingRecord)).all()
@@ -171,6 +189,10 @@ def _apply_normalized_payload(session, payload: dict[str, list[Any]]) -> None:
         payload["circular_documents"] = [row_payload(item) for item in documents]
     if candidates:
         payload["policy_rule_candidates"] = [row_payload(item) for item in candidates]
+    if deltas:
+        payload["policy_rule_deltas"] = [row_payload(item) for item in deltas]
+    if workflows:
+        payload["rule_approval_workflows"] = [row_payload(item) for item in workflows]
     if versions:
         payload["verified_policy_rule_versions"] = [row_payload(item) for item in versions]
     if snapshots:
@@ -197,6 +219,8 @@ class PolicyStoreRepository:
                     for name in (
                         "circular_documents",
                         "policy_rule_candidates",
+                        "policy_rule_deltas",
+                        "rule_approval_workflows",
                         "verified_policy_rule_versions",
                         "snapshots",
                         "compliance_findings",
@@ -253,6 +277,8 @@ class PolicyStoreRepository:
                     for model in (
                         CircularDocumentRecord,
                         PolicyRuleCandidateRecord,
+                        PolicyRuleDeltaRecord,
+                        RuleApprovalWorkflowRecord,
                         PolicyRuleVersionRecord,
                         ConnectedSystemSnapshotRecord,
                         ComplianceFindingRecord,
