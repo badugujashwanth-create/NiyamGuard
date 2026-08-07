@@ -29,7 +29,7 @@
 - CI now defines a fresh PostgreSQL migration job with production-style cookie, database-authority, CORS, trusted-host, and malware-scan settings; the job still requires a remote GitHub Actions run for evidence.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 275 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 275 backend tests pass with third-party pytest plugin autoload disabled; 61 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
@@ -166,7 +166,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
 | 275 backend tests | 275 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
-| 60 frontend tests | Current `npm test -- --run` passed 60 tests |
+| 61 frontend tests | Current `npm test -- --run` passed 61 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |
 | Pilot readiness | Internal readiness controls exist, but external authorization, security, accessibility, privacy, operations, and deployment gates remain open |

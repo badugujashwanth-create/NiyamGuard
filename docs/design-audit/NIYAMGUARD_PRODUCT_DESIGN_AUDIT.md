@@ -31,3 +31,10 @@ Not established by screenshots alone: keyboard focus order, screen-reader announ
 ## Result
 
 The landing now communicates the policy-drift thesis before asking the visitor to choose a portal, while preserving the existing working reviewer and citizen workflows.
+
+## Verification rerun (2026-08-07)
+
+- Fresh Chromium captures were accepted for the landing at desktop and 390 × 844 mobile widths, plus the reviewer entry and post-lifecycle states. The accepted files are kept in the ignored `frontend/docs/design-audit/current/` evidence folder.
+- With both local origins explicitly allowed, the reviewer workspace reported `Backend online`, 10 services, and completed all 11 lifecycle steps. The citizen explanation correctly displayed deterministic fallback rather than implying a live model.
+- The 390 × 844 reviewer capture reported zero horizontal overflow.
+- A controlled backend-failure test now surfaces an actionable alert and marks dependent status cards `Unavailable`; it no longer presents zero counts as a working system.

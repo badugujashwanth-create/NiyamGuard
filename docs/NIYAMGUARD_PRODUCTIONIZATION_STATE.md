@@ -2,7 +2,7 @@
 
 **State date:** 2026-08-07
 **Canonical branch:** `main`
-**Latest local change:** verified source-artifact persistence after optimistic policy-store concurrency and standards-based PDF parsing
+**Latest local change:** truthful reviewer failure states after verified source-artifact persistence and optimistic policy-store concurrency
 **Public release:** `v1.1.0` (a new release is not claimed until the changes are committed and published)
 **Classification:** synthetic policy-drift MVP; production-boundary work in progress
 
@@ -41,7 +41,7 @@
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
 | Full backend suite | Pass: 275 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
-| Frontend tests | Pass: 60 tests in default bearer-demo mode and 60 tests with `VITE_AUTH_COOKIE_MODE=true` |
+| Frontend tests | Pass: 61 tests in default bearer-demo mode and 61 tests with `VITE_AUTH_COOKIE_MODE=true` |
 | Frontend production build | Pass: Vite build |
 | `npm audit --omit=dev` | Pass: 0 vulnerabilities |
 | `pip-audit -r backend/requirements.txt` | Pass: no known vulnerabilities |

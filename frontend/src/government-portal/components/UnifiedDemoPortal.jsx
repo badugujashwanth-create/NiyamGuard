@@ -185,7 +185,7 @@ const stepDisplayLabels = {
 function statusTone(status) {
   if (status === "Working" || status === "success" || status === "Online") return "ready";
   if (status === "Mock" || status === "Fallback") return "mock";
-  if (status === "Failed" || status === "failed") return "failed";
+  if (status === "Failed" || status === "failed" || status === "Unavailable") return "failed";
   return "config";
 }
 
@@ -207,6 +207,9 @@ function stepDisplayLabel(step) {
 
 function enrichCards(cards, liveStatus, aiStatus) {
   return cards.map((card) => {
+    if (liveStatus?.backendError) {
+      return { ...card, status: "Unavailable" };
+    }
     if (card.key === "hybrid_ollama") {
       if (aiStatus?.status === "online") {
         return { ...card, status: "Online" };
@@ -258,8 +261,16 @@ export default function UnifiedDemoPortal() {
         getMockSystems(),
         getAIStatus(),
       ]);
+      const backendError = integration.status === "rejected";
+      if (backendError) {
+        setError(
+          integration.reason?.message ||
+            "Backend status is unavailable. Check that the FastAPI service is running and reachable.",
+        );
+      }
       setLiveStatus({
         integration: integration.value,
+        backendError,
         summary: summary.value?.summary,
         virtualGov: virtualGov.value,
         virtualGovError: virtualGov.status === "rejected",
@@ -397,24 +408,26 @@ async function handleAskHybrid() {
       <section className="unified-live-strip" aria-label="Live system status">
         <article>
           <span>Backend</span>
-          <strong>{liveStatus.integration?.status || "Unknown"}</strong>
+          <strong>{liveStatus.backendError ? "Unavailable" : liveStatus.integration?.status || "Unknown"}</strong>
         </article>
         <article>
           <span>Services</span>
-          <strong>{liveStatus.serviceCount || 0}</strong>
+          <strong>{liveStatus.backendError ? "—" : liveStatus.serviceCount || 0}</strong>
         </article>
         <article>
           <span>Virtual apps</span>
-          <strong>{liveStatus.virtualGov?.applications || 0}</strong>
+          <strong>{liveStatus.backendError ? "—" : liveStatus.virtualGov?.applications || 0}</strong>
         </article>
         <article>
           <span>Certificates</span>
-          <strong>{liveStatus.virtualGov?.certificates || 0}</strong>
+          <strong>{liveStatus.backendError ? "—" : liveStatus.virtualGov?.certificates || 0}</strong>
         </article>
         <article>
           <span>Local AI</span>
           <strong>
-            {aiStatus?.status === "online"
+            {liveStatus.backendError
+              ? "Unavailable"
+              : aiStatus?.status === "online"
               ? `Ollama Online - ${aiStatus?.model || "qwen2.5:7b-instruct"}`
               : "Fallback"}
           </strong>
@@ -465,13 +478,13 @@ async function handleAskHybrid() {
         ))}
       </section>
 
-      <section className="unified-stepper" aria-labelledby="portal-stepper-title">
+      <section className="unified-stepper" aria-labelledby="portal-stepper-title" aria-busy={runStatus === "running"}>
         <div className="unified-section-heading">
           <div>
             <p className="eyebrow">Guided workflow</p>
             <h2 id="portal-stepper-title">One circular, one connected evidence trail</h2>
           </div>
-          <StatusBadge>{runStatus === "success" ? "success" : runStatus === "failed" ? "failed" : runStatus === "running" ? "running" : "pending"}</StatusBadge>
+          <span aria-live="polite"><StatusBadge>{runStatus === "success" ? "success" : runStatus === "failed" ? "failed" : runStatus === "running" ? "running" : "pending"}</StatusBadge></span>
         </div>
         <ol>
           {steps.map((step, index) => (

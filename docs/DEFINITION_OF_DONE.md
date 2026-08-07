@@ -4,7 +4,7 @@
 - [x] Production configuration fails closed for placeholder secrets, debug mode, and demo mode.
 - [x] Demo-only APIs are hidden when demo mode is disabled.
 - [x] Backend suite passes: 275 tests in the clean local gate.
-- [x] Frontend suite passes: 60 tests.
+- [x] Frontend suite passes: 61 tests.
 - [x] Frontend production build passes.
 - [x] Production dependency and secret checks are included in CI.
 - [x] The updated product walkthrough shows compliance scoring, department readiness, policy lineage, knowledge relationships, and the real synthetic simulation.

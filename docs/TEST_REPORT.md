@@ -8,7 +8,7 @@ Release audit refreshed on 2026-08-07 from the canonical `main` branch on Window
 | Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
 | Upload malware boundary | Pass | Synthetic mode reports an explicit skipped scan; production configuration requires ClamAV and returns 503 when it cannot produce a trustworthy result. |
 | `python -m app.evaluation.extraction_benchmark` | Pass | 20/20 frozen synthetic cases; exact candidate/evidence threshold 1.0. This is not a model-quality or legal-authority benchmark. |
-| `npm test` in `frontend` | Pass | 60 tests passed across 3 files |
+| `npm test` in `frontend` | Pass | 61 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |
 | Playwright product walkthrough | Pass | Current branch landing and reviewer lifecycle were exercised locally; the checked-in walkthrough predates this code-only refresh. |
 | Demo media acceptance | Pass | 337.408 seconds, 1280×720, VP9 video, Opus audio, captions present, 11 reviewed frames |

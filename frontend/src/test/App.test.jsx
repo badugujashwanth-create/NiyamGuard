@@ -631,6 +631,17 @@ describe("NiyamGuard frontend", () => {
     expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/demo/run-policy-lifecycle"))).toBe(true);
   });
 
+  it("government portal reports an unavailable backend instead of showing false working status", async () => {
+    const { fetchMock } = installApiMock();
+    fetchMock.mockImplementationOnce(() => Promise.reject(new TypeError("Failed to fetch")));
+    window.history.pushState({}, "", "/government");
+    render(<App />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Cannot reach the NiyamGuard backend");
+    expect(screen.getAllByText("Unavailable").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Services\n0")).not.toBeInTheDocument();
+  });
+
   it("login page renders", async () => {
     installApiMock();
     window.history.pushState({}, "", "/login");
