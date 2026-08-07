@@ -83,6 +83,21 @@ def test_production_requires_malware_scanning() -> None:
         validate_runtime_settings(candidate)
 
 
+def test_production_requires_source_artifact_storage() -> None:
+    candidate = SimpleNamespace(
+        app_env="production",
+        secret_key="a-secure-production-secret-with-32-plus-chars",
+        debug=False,
+        demo_mode=False,
+        cors_origins=["https://example.gov"],
+        trusted_hosts=["api.example.gov"],
+        malware_scan_mode="clamav",
+        circular_artifact_storage_enabled=False,
+    )
+    with pytest.raises(RuntimeError, match="CIRCULAR_ARTIFACT_STORAGE_ENABLED"):
+        validate_runtime_settings(candidate)
+
+
 def test_production_requires_cookie_auth() -> None:
     candidate = SimpleNamespace(
         app_env="production",

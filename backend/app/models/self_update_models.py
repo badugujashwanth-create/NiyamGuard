@@ -54,6 +54,11 @@ class CircularDocument(BaseModel):
     expiry_date: str | None = None
     document_url: str | None = None
     storage_path: str | None = None
+    source_filename: str | None = None
+    source_content_type: str | None = None
+    source_size_bytes: int | None = None
+    source_sha256: str | None = None
+    malware_scan_status: str | None = None
     raw_text: str
     content_hash: str
     status: CircularDocumentStatus

@@ -27,6 +27,7 @@ services:
       AUTH_COOKIE_MODE: "false"
       SESSION_RECORDS_REQUIRED: "false"
       RATE_LIMIT_BACKEND: database
+      CIRCULAR_ARTIFACT_STORAGE_ENABLED: "true"
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/niyamguard
       SECRET_KEY: local-compose-demo-only
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173

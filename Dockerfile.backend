@@ -6,6 +6,7 @@ ENV AUTO_CREATE_TABLES=false
 ENV LEGACY_FILE_STORE_ENABLED=false
 ENV SESSION_RECORDS_REQUIRED=true
 ENV RATE_LIMIT_BACKEND=database
+ENV CIRCULAR_ARTIFACT_STORAGE_ENABLED=true
 
 WORKDIR /app
 RUN groupadd --system niyamguard && useradd --system --gid niyamguard --create-home niyamguard

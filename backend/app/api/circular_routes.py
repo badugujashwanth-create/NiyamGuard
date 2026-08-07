@@ -8,8 +8,10 @@ from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 from pydantic import BaseModel, Field
 
+from app.config import settings
 from app.security.rbac import CurrentUser, require_roles
 from app.security.malware_scan import MalwareDetected, MalwareScanUnavailable, scan_bytes
+from app.security.source_artifacts import SourceArtifactStorageUnavailable, persist_circular_source
 from app.services import circular_ingestion_service, circular_sync_service, rule_extraction_service
 from app.services.ollama_client import AIClientFactory
 
@@ -112,6 +114,12 @@ async def upload_circular_file(
         (file.content_type or "").casefold(),
         content,
     )
+    if not settings.circular_artifact_storage_enabled:
+        raise HTTPException(status_code=503, detail="Source artifact storage is disabled.")
+    try:
+        artifact = persist_circular_source(content, file.filename or "source", file.content_type or "")
+    except SourceArtifactStorageUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     try:
         document, created = circular_ingestion_service.ingest_circular(
             {
@@ -123,6 +131,8 @@ async def upload_circular_file(
                 "effective_date": effective_date,
                 "expiry_date": expiry_date,
                 "raw_text": raw_text,
+                **artifact,
+                "malware_scan_status": scan["status"],
             }
         )
     except ValueError as exc:
@@ -132,6 +142,11 @@ async def upload_circular_file(
         "created": created,
         "synthetic_only": True,
         "malware_scan": scan,
+        "source_artifact": {
+            "storage_path": document.storage_path,
+            "source_sha256": document.source_sha256,
+            "source_size_bytes": document.source_size_bytes,
+        },
         "document": document.model_dump(),
     }
 

@@ -105,6 +105,11 @@ class Settings:
     malware_scan_mode: str = os.getenv("MALWARE_SCAN_MODE", "disabled").strip().lower() or "disabled"
     malware_scan_command: str = os.getenv("MALWARE_SCAN_COMMAND", "clamscan").strip() or "clamscan"
     malware_scan_timeout_seconds: int = _int_env("MALWARE_SCAN_TIMEOUT_SECONDS", 30)
+    circular_artifact_storage_enabled: bool = _bool_env("CIRCULAR_ARTIFACT_STORAGE_ENABLED", True)
+    circular_artifact_storage_dir: Path = _path_env(
+        "CIRCULAR_ARTIFACT_STORAGE_DIR",
+        BACKEND_DIR / "storage" / "circulars",
+    )
 
     ai_provider: str = os.getenv("AI_PROVIDER", "ollama").strip().lower() or "ollama"
     ai_enabled: bool = _bool_env("AI_ENABLED", False)
@@ -183,6 +188,8 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
     malware_scan_mode = getattr(candidate, "malware_scan_mode", "disabled")
     if malware_scan_mode != "clamav":
         raise RuntimeError("Production requires MALWARE_SCAN_MODE=clamav for untrusted document uploads.")
+    if not getattr(candidate, "circular_artifact_storage_enabled", True):
+        raise RuntimeError("Production requires CIRCULAR_ARTIFACT_STORAGE_ENABLED=true for source provenance.")
     secret = candidate.secret_key.strip()
     if len(secret) < 32 or secret.lower() in _PLACEHOLDER_SECRETS:
         raise RuntimeError("Production requires a non-placeholder SECRET_KEY of at least 32 characters.")

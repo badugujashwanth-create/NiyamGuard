@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
+
 import pytest
 
+from app.config import settings
 from app.demo.pdf_generator import build_simple_pdf
 from app.knowledge_base.circular_ingestion_service import extract_temporal_metadata
 
@@ -61,6 +65,14 @@ def test_text_and_pdf_circular_uploads_are_validated(client, reviewer_headers) -
     assert pdf_response.status_code == 200
     assert pdf_response.json()["document"]["effective_date"] == "2026-09-01"
     assert pdf_response.json()["document"]["expiry_date"] == "2027-08-31"
+    artifact = pdf_response.json()["source_artifact"]
+    assert artifact["storage_path"].startswith("circulars/")
+    assert ":\\" not in artifact["storage_path"]
+    assert artifact["source_sha256"]
+    assert artifact["source_size_bytes"] == len(pdf)
+    stored = settings.circular_artifact_storage_dir / Path(artifact["storage_path"]).name
+    assert stored.exists()
+    assert hashlib.sha256(stored.read_bytes()).hexdigest() == artifact["source_sha256"]
 
 
 def test_ambiguous_rule_extraction_is_rejected(client, reviewer_headers) -> None:

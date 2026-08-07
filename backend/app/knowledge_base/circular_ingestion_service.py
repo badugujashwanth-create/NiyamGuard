@@ -67,6 +67,22 @@ def ingest_circular(payload: dict) -> tuple[CircularDocument, bool]:
     digest = content_hash(raw_text)
     existing = next((item for item in store.circular_documents if item.content_hash == digest), None)
     if existing:
+        changed = False
+        for field in (
+            "storage_path",
+            "source_filename",
+            "source_content_type",
+            "source_size_bytes",
+            "source_sha256",
+            "malware_scan_status",
+        ):
+            value = payload.get(field)
+            if value is not None and getattr(existing, field) is None:
+                setattr(existing, field, value)
+                changed = True
+        if changed:
+            existing.updated_at = timestamp
+            write_store(store)
         return existing, False
     document = CircularDocument(
         id=payload.get("id") or f"cirdoc_{len(store.circular_documents) + 1:04d}",
@@ -79,6 +95,11 @@ def ingest_circular(payload: dict) -> tuple[CircularDocument, bool]:
         expiry_date=expiry_date,
         document_url=payload.get("document_url"),
         storage_path=payload.get("storage_path"),
+        source_filename=payload.get("source_filename"),
+        source_content_type=payload.get("source_content_type"),
+        source_size_bytes=payload.get("source_size_bytes"),
+        source_sha256=payload.get("source_sha256"),
+        malware_scan_status=payload.get("malware_scan_status"),
         raw_text=raw_text,
         content_hash=digest,
         status="ingested",
@@ -89,7 +110,13 @@ def ingest_circular(payload: dict) -> tuple[CircularDocument, bool]:
     add_audit_event(
         store,
         "circular_ingested",
-        {"entity_type": "circular_document", "entity_id": document.id, "circular": document.circular_number},
+        {
+            "entity_type": "circular_document",
+            "entity_id": document.id,
+            "circular": document.circular_number,
+            "source_sha256": document.source_sha256,
+            "malware_scan_status": document.malware_scan_status,
+        },
     )
     write_store(store)
     return document, True
