@@ -2,7 +2,7 @@
 
 **State date:** 2026-08-07
 **Canonical branch:** `main`
-**Latest local change:** optimistic policy-store concurrency after standards-based PDF parsing and database-backed rate limiting
+**Latest local change:** verified source-artifact persistence after optimistic policy-store concurrency and standards-based PDF parsing
 **Public release:** `v1.1.0` (a new release is not claimed until the changes are committed and published)
 **Classification:** synthetic policy-drift MVP; production-boundary work in progress
 
