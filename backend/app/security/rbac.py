@@ -3,6 +3,7 @@ from typing import Callable
 
 from fastapi import Depends, HTTPException, Request, status
 
+from app.config import settings
 from app.repositories.auth_repository import auth_repository
 from app.security.jwt import decode_access_token
 
@@ -17,9 +18,11 @@ class CurrentUser:
 def _token_from_request(request: Request) -> str | None:
     authorization = request.headers.get("authorization", "")
     scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        return None
-    return token
+    if scheme.lower() == "bearer" and token:
+        return token
+    if getattr(settings, "auth_cookie_mode", False):
+        return request.cookies.get("niyamguard_access") or None
+    return None
 
 
 def get_current_user(request: Request) -> CurrentUser:

@@ -20,7 +20,7 @@
 - Deployed containers disable the legacy `create_all()` compatibility path; schema changes are owned by Alembic migrations.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 264 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 266 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
@@ -48,7 +48,7 @@ The repository is not yet authorized for an unrestricted public or government de
 | Citizen guidance | `public_routes.py`, hybrid answer engine, citizen portal components | `/api/public/*`, citizen portal | public/chat/frontend tests | **Partial** — source-grounded seeded guidance works; eligibility endpoint is hard-coded for `income_certificate` |
 | Eligibility re-evaluation | compliance rerun and service-portal eligibility helpers | compliance rerun routes, citizen forms | focused lifecycle tests | **Partial** — no general versioned scenario result model with prior/new comparison for every rule |
 | Audit history | `audit_repository.py`, hash-chain verification | `/api/audit/events`, `/api/audit/verify` | audit tests | **Complete** for recorded events |
-| Authentication | password hashing, JWT access tokens, refresh-token records | `/api/auth/*`, login UI | auth tests | **Partial** — refresh tokens rotate on refresh; known demo users remain synthetic and require explicit demo seeding |
+| Authentication | password hashing, JWT access tokens, refresh-token records, optional same-origin HttpOnly cookies | `/api/auth/*`, login UI | auth and cookie-session tests | **Partial** — refresh tokens rotate on refresh and production requires secure cookie mode; known demo users remain synthetic and require explicit demo seeding |
 | Authorization | `security/rbac.py`, route dependencies | role-gated officer/admin routes | RBAC tests | **Partial** — route role boundaries exist; department/object-level isolation is not comprehensively demonstrated |
 | AI/fallback | hybrid/exact/RAG services, optional Ollama and remote providers | `/api/ai/*`, `/api/hybrid/*`, assistant UI | AI/RAG/Ollama tests | **Complete for deterministic fallback**; external providers remain optional/unverified |
 | Voice | `stt_service.py`, `tts_service.py`, voice routes | citizen voice UI | STT/TTS/frontend tests | **Partial** — bounded, rate-limited synthetic voice endpoints; production speech providers remain unverified |
@@ -132,13 +132,13 @@ Dataset QA/top-k and collection/search limits now have explicit upper bounds. Ot
 
 ### P2 — auth/session hardening
 
-Refresh tokens now rotate atomically and JWT issuer/audience claims are validated. Rate limiting remains in-memory/per-process, and session ownership/expiry requires a separate pilot hardening pass.
+Refresh tokens now rotate atomically and JWT issuer/audience claims are validated. Same-origin HttpOnly access/refresh cookies are available and required by production validation; bearer/localStorage remains a local-demo fallback. Rate limiting remains in-memory/per-process, and session ownership/expiry requires a separate pilot hardening pass.
 
 `/api/ops/status` now requires an authenticated viewer/reviewer/admin role and returns only a dataset pack name, not an absolute path. Health endpoints remain intentionally small and non-sensitive.
 
 ### P2 — claims and documentation drift
 
-README and test-report claims now reflect 264 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
+README and test-report claims now reflect 266 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
 
 The changelog describes a 1.2.0 candidate, but the public default branch currently has release/tag `v1.1.0`; a v1.2.0 public release is not verified. `docs/access-control.md` also labels the seeded officer account as a reviewer, while the code assigns the `officer` role.
 
@@ -146,7 +146,7 @@ The current localization paths are covered by frontend/assistant tests; a separa
 
 The README requires Python 3.12, but the requirements do not enforce an upper bound; the current Python 3.13 environment exposed the service-portal exception.
 
-The frontend stores access and refresh tokens in `localStorage` (`frontend/src/api/client.js`), which is an accepted demo risk but not the preferred production session boundary. The integration-readiness checklist still marks production audit-chain review as pending even though the internal readiness service reports that control as ready.
+The frontend uses `localStorage` tokens only when `VITE_AUTH_COOKIE_MODE=false`; production configuration requires the same-origin HttpOnly cookie path. The integration-readiness checklist still marks production audit-chain review as pending even though the internal readiness service reports that control as ready.
 
 No license file is present; redistribution and public reuse remain an owner/legal decision even though the repository is publicly visible.
 
@@ -156,7 +156,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 |---|---|
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
-| 264 backend tests | 264 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
+| 266 backend tests | 266 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
 | 60 frontend tests | Current `npm test -- --run` passed 60 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |

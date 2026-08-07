@@ -7,6 +7,7 @@ export const API_BASE_URL = configuredBaseUrl.replace(/\/+$/, "");
 export const ACCESS_TOKEN_KEY = "niyamguard.access_token";
 export const REFRESH_TOKEN_KEY = "niyamguard.refresh_token";
 export const USER_KEY = "niyamguard.user";
+export const AUTH_COOKIE_MODE = String(import.meta.env.VITE_AUTH_COOKIE_MODE || "").toLowerCase() === "true";
 
 export class ApiError extends Error {
   constructor(message, status = 0, details = null) {
@@ -18,10 +19,12 @@ export class ApiError extends Error {
 }
 
 export function getAccessToken() {
+  if (AUTH_COOKIE_MODE) return "";
   return window.localStorage?.getItem(ACCESS_TOKEN_KEY) || "";
 }
 
 export function getRefreshToken() {
+  if (AUTH_COOKIE_MODE) return "";
   return window.localStorage?.getItem(REFRESH_TOKEN_KEY) || "";
 }
 
@@ -36,8 +39,13 @@ export function getStoredUser() {
 }
 
 export function setAuthSession({ accessToken, refreshToken, user }) {
-  if (accessToken) window.localStorage?.setItem(ACCESS_TOKEN_KEY, accessToken);
-  if (refreshToken) window.localStorage?.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  if (AUTH_COOKIE_MODE) {
+    window.localStorage?.removeItem(ACCESS_TOKEN_KEY);
+    window.localStorage?.removeItem(REFRESH_TOKEN_KEY);
+  } else {
+    if (accessToken) window.localStorage?.setItem(ACCESS_TOKEN_KEY, accessToken);
+    if (refreshToken) window.localStorage?.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
   if (user) window.localStorage?.setItem(USER_KEY, JSON.stringify(user));
   window.dispatchEvent(new CustomEvent("niyamguard:auth-changed", { detail: { user } }));
 }
@@ -89,6 +97,7 @@ export async function request(path, options = {}, { auth = true, parseAs = "json
     response = await fetch(buildUrl(path), {
       ...options,
       headers,
+      ...(AUTH_COOKIE_MODE ? { credentials: "include" } : {}),
     });
   } catch (error) {
     throw new ApiError(

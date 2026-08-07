@@ -86,7 +86,7 @@ npm test --prefix frontend -- --run
 npm run build --prefix frontend
 ```
 
-The repository currently collects **264 backend tests** and **60 frontend tests**. The full backend suite passes in a clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, and the Vite production build is verified. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
+The repository currently collects **266 backend tests** and **60 frontend tests**. The full backend suite passes in a clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, and the Vite production build is verified. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
 
 ## Current limits
 
@@ -95,6 +95,7 @@ The repository currently collects **264 backend tests** and **60 frontend tests*
 - The current score is descriptive for one synthetic snapshot; it is not a forecast or policy-performance metric.
 - Cross-jurisdiction comparison, complex non-ISO expiry language, a formal model/hallucination benchmark, and manual assistive-technology testing remain open work. A frozen 20-case deterministic extraction benchmark is included for the evidence-backed rule boundary.
 - Local synthetic uploads explicitly report that malware scanning is skipped; production configuration requires ClamAV and fails closed when it is not configured or returns an indeterminate result.
+- Production browser sessions require same-origin secure HttpOnly cookies (`AUTH_COOKIE_MODE=true`, `AUTH_COOKIE_SECURE=true`); bearer tokens in localStorage are retained only for the local synthetic demo path.
 - A deployment blueprint exists, but no owner-verified public backend is currently claimed.
 
 ## Evidence and orientation

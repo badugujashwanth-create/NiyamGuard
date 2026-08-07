@@ -64,6 +64,12 @@ class Settings:
     jwt_audience: str = os.getenv("JWT_AUDIENCE", "niyamguard-users")
     access_token_expire_minutes: int = _int_env("ACCESS_TOKEN_EXPIRE_MINUTES", 30)
     refresh_token_expire_days: int = _int_env("REFRESH_TOKEN_EXPIRE_DAYS", 7)
+    # Browser deployments can keep tokens out of JavaScript-visible storage by
+    # opting into same-origin HttpOnly cookies. Bearer/localStorage remains
+    # available for the local synthetic demo only.
+    auth_cookie_mode: bool = _bool_env("AUTH_COOKIE_MODE", False)
+    auth_cookie_secure: bool = _bool_env("AUTH_COOKIE_SECURE", False)
+    auth_cookie_samesite: str = os.getenv("AUTH_COOKIE_SAMESITE", "strict").strip().lower() or "strict"
 
     cors_origins: list[str] = _csv_env(
         "CORS_ORIGINS",
@@ -181,6 +187,12 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
     trusted_hosts = getattr(candidate, "trusted_hosts", [])
     if not trusted_hosts or "*" in trusted_hosts:
         raise RuntimeError("TRUSTED_HOSTS must list explicit hosts in production.")
+    if not getattr(candidate, "auth_cookie_mode", False):
+        raise RuntimeError("Production requires AUTH_COOKIE_MODE=true for browser sessions.")
+    if not getattr(candidate, "auth_cookie_secure", False):
+        raise RuntimeError("Production requires AUTH_COOKIE_SECURE=true.")
+    if getattr(candidate, "auth_cookie_samesite", "strict") not in {"strict", "lax"}:
+        raise RuntimeError("AUTH_COOKIE_SAMESITE must be strict or lax in production.")
 
 APP_NAME = settings.app_name
 APP_VERSION = "1.1.0"

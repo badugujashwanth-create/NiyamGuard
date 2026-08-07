@@ -3,6 +3,7 @@ import {
   getRefreshToken,
   request,
   setAuthSession,
+  AUTH_COOKIE_MODE,
 } from "./client";
 
 export async function login(email, password) {
@@ -23,11 +24,10 @@ export async function login(email, password) {
 }
 
 export async function logout() {
-  const refreshToken = getRefreshToken();
   try {
     await request("/api/auth/logout", {
       method: "POST",
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      body: JSON.stringify(AUTH_COOKIE_MODE ? {} : { refresh_token: getRefreshToken() }),
     });
   } finally {
     clearAuthSession();
@@ -39,7 +39,7 @@ export async function refresh() {
     "/api/auth/refresh",
     {
       method: "POST",
-      body: JSON.stringify({ refresh_token: getRefreshToken() }),
+      body: JSON.stringify(AUTH_COOKIE_MODE ? {} : { refresh_token: getRefreshToken() }),
     },
     { auth: false },
   );

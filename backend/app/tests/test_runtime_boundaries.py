@@ -36,6 +36,9 @@ def test_production_accepts_hardened_runtime_settings() -> None:
             cors_origins=["https://example.gov"],
             trusted_hosts=["api.example.gov"],
             malware_scan_mode="clamav",
+            auth_cookie_mode=True,
+            auth_cookie_secure=True,
+            auth_cookie_samesite="strict",
         )
     )
 
@@ -74,6 +77,23 @@ def test_production_requires_malware_scanning() -> None:
         malware_scan_mode="disabled",
     )
     with pytest.raises(RuntimeError, match="MALWARE_SCAN_MODE"):
+        validate_runtime_settings(candidate)
+
+
+def test_production_requires_cookie_auth() -> None:
+    candidate = SimpleNamespace(
+        app_env="production",
+        secret_key="a-secure-production-secret-with-32-plus-chars",
+        debug=False,
+        demo_mode=False,
+        cors_origins=["https://example.gov"],
+        trusted_hosts=["api.example.gov"],
+        malware_scan_mode="clamav",
+        auth_cookie_mode=False,
+        auth_cookie_secure=True,
+        auth_cookie_samesite="strict",
+    )
+    with pytest.raises(RuntimeError, match="AUTH_COOKIE_MODE"):
         validate_runtime_settings(candidate)
 
 

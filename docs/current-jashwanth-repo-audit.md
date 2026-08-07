@@ -34,7 +34,7 @@ The repository includes backend, frontend, and full-stack Dockerfiles, Docker Co
 
 | Gate | Result |
 |---|---|
-| Backend | 264 tests passed in the clean local gate |
+| Backend | 266 tests passed in the clean local gate |
 | Frontend | 60 tests passed |
 | Frontend build | Passed |
 | Browser walkthrough | Passed end to end |

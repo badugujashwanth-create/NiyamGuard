@@ -18,6 +18,7 @@
 - Added a ClamAV upload-scanning boundary: local synthetic mode is explicit, while production requires ClamAV and fails closed on scanner unavailability or indeterminate results.
 - Added TTS text limits, rate limiting, and bounded cache eviction.
 - Added JWT issuer/audience checks and atomic refresh-token rotation.
+- Added opt-in same-origin HttpOnly access/refresh cookies; production validation requires cookie mode with secure cookies, while bearer/localStorage remains a local-demo fallback.
 - Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
 - Added Alembic execution to both container entrypoints and switched containers to a non-root runtime user.
 - Made migration ownership explicit: deployed containers set `AUTO_CREATE_TABLES=false`, while local/test environments may opt into the compatibility fallback.
@@ -30,7 +31,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 264 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 266 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 60 tests |
 | Frontend production build | Pass: Vite build |
@@ -49,6 +50,7 @@
 4. Provision and verify ClamAV signatures/quarantine plus robust PDF/OCR processing before accepting real government documents.
 5. Complete keyboard/screen-reader/contrast/reduced-motion testing with assistive technology; screenshots alone do not establish WCAG conformance.
 6. Review owner/legal approval for licensing and credential policy; no license is intentionally published.
+7. Configure the frontend with `VITE_AUTH_COOKIE_MODE=true` when the backend cookie mode is enabled; verify same-origin HTTPS playback and session renewal in the hosted environment.
 
 ## Honest public boundary
 

@@ -7,7 +7,7 @@ class LoginRequest(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -21,8 +21,8 @@ class UserResponse(BaseModel):
 
 class TokenResponse(BaseModel):
     success: bool = True
-    access_token: str
-    refresh_token: str
+    access_token: str | None = None
+    refresh_token: str | None = None
     token_type: str = "bearer"
     user: UserResponse
 
