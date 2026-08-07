@@ -9,6 +9,7 @@
 ## Implemented in this pass
 
 - Corrected the service-portal missing-field path to return HTTP 422 and retained its regression test.
+- Tightened deterministic extraction to require one explicit, evidence-backed old→new rule statement; ambiguous or unsupported circulars now return a reviewable HTTP 422.
 - Made `DEMO_MODE` and startup demo seeding opt-in; production validation still rejects demo mode, debug mode, and placeholder secrets.
 - Protected operational status and dataset import/RAG-build mutations with JWT role checks.
 - Gated deterministic OTP endpoints behind explicit demo mode and removed absolute filesystem paths from ops status.
@@ -27,7 +28,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 250 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 259 tests execute successfully with third-party pytest plugin autoload disabled |
 | Frontend tests | Pass: 60 tests |
 | Frontend production build | Pass: Vite build |
 | `npm audit --omit=dev` | Pass: 0 vulnerabilities |

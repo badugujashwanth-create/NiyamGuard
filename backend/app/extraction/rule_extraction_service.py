@@ -13,23 +13,21 @@ def _deterministic_candidates(
     effective_date: str,
     expiry_date: str | None = None,
 ) -> list[PolicyRuleCandidate]:
-    normalized = text.casefold()
-    if "income certificate" not in normalized or "6 months" not in normalized:
-        return []
-    old_value = "12"
-    old_match = re.search(r"from\s+(\d+)\s+months", normalized)
-    if old_match:
-        old_value = old_match.group(1)
-    excerpt_match = re.search(
-        r"Income Certificate validity (?:is )?changed from \d+ months to 6 months\.",
-        text,
+    pattern = re.compile(
+        r"Income Certificate validity(?: is)? changed from (\d+) months to (\d+) months\.",
         flags=re.IGNORECASE,
     )
-    excerpt = (
-        excerpt_match.group(0)
-        if excerpt_match
-        else "Income Certificate validity changed from 12 months to 6 months."
-    )
+    matches = list(pattern.finditer(text))
+    # Do not infer a rule from a loose keyword match. One and only one explicit
+    # change statement is required so conflicting or incomplete circulars stay
+    # in the review queue instead of becoming authoritative candidates.
+    if len(matches) != 1:
+        return []
+    match = matches[0]
+    old_value, new_value = match.groups()
+    if old_value == new_value:
+        return []
+    excerpt = match.group(0)
     return [
         PolicyRuleCandidate(
             id=f"cand_{circular_id}_income_validity",
@@ -37,7 +35,7 @@ def _deterministic_candidates(
             service_id="income_certificate",
             rule_key="validity",
             old_value=old_value,
-            new_value="6",
+            new_value=new_value,
             unit="months",
             effective_date=effective_date,
             expiry_date=expiry_date,
@@ -75,7 +73,7 @@ def extract_rules(circular_id: str) -> dict:
         status="success" if candidates else "failed",
         extraction_method="deterministic",
         candidate_ids=[candidate.id for candidate in candidates],
-        error_message=None if candidates else "No deterministic rule candidate found.",
+        error_message=None if candidates else "No unambiguous supported rule statement was found.",
         created_at=now_iso(),
     )
     store.circular_extractions = [item for item in store.circular_extractions if item.id != extraction.id]

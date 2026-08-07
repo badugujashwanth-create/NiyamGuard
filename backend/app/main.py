@@ -70,8 +70,9 @@ app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
     description=(
-        "Voice and form guidance API for simplified government service forms. "
-        "It guides citizens but never fills, uploads, or submits an application."
+        "Evidence-led policy-drift detection and citizen-guidance sandbox. "
+        "It models human-reviewed rule publication and downstream mock-system checks; "
+        "it never claims official government authority or submits a real application."
     ),
 )
 

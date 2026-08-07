@@ -140,7 +140,14 @@ def extract_rules(
 ) -> dict:
     result = rule_extraction_service.extract_rules(circular_id)
     if not result.get("success"):
-        raise HTTPException(status_code=404, detail=result.get("message", "Rule extraction failed."))
+        if result.get("message") == "Circular not found.":
+            raise HTTPException(status_code=404, detail=result["message"])
+        raise HTTPException(
+            status_code=422,
+            detail=(result.get("extraction") or {}).get(
+                "error_message", "No unambiguous rule candidate was found."
+            ),
+        )
     result["reviewer_user_id"] = actor.id
     return result
 

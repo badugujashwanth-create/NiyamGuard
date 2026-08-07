@@ -63,6 +63,34 @@ def test_text_and_pdf_circular_uploads_are_validated(client, reviewer_headers) -
     assert pdf_response.json()["document"]["expiry_date"] == "2027-08-31"
 
 
+def test_ambiguous_rule_extraction_is_rejected(client, reviewer_headers) -> None:
+    upload = client.post(
+        "/api/circulars/upload",
+        headers=reviewer_headers,
+        json={
+            "circular_number": "SYN-AMBIGUOUS-1",
+            "title": "Conflicting synthetic circular",
+            "department": "Revenue",
+            "published_date": "2026-07-21",
+            "raw_text": (
+                "Income Certificate validity changed from 12 months to 6 months. "
+                "Income Certificate validity changed from 6 months to 3 months. "
+                "Effective 2026-08-01."
+            ),
+        },
+    )
+    assert upload.status_code == 200
+    circular_id = upload.json()["document"]["id"]
+
+    extraction = client.post(
+        f"/api/circulars/{circular_id}/extract-rules",
+        headers=reviewer_headers,
+    )
+
+    assert extraction.status_code == 422
+    assert "unambiguous" in extraction.json()["error"]["message"].lower()
+
+
 def test_circular_upload_rejects_mime_mismatch_and_oversized_file(client, reviewer_headers) -> None:
     data = {
         "circular_number": "SYN-BAD",
