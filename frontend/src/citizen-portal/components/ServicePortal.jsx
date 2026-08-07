@@ -24,6 +24,8 @@ import {
   uploadPortalDocument,
   verifyPortalCertificate,
 } from "../../services/api";
+import { isProductionExperience } from "../../config/environment";
+import CitizenAssistantDock from "./CitizenAssistantDock";
 
 function titleCase(value = "") {
   return value
@@ -51,7 +53,7 @@ function RequiresLogin({ path }) {
   return (
     <section className="portal-panel">
       <h2>Sign in required</h2>
-      <p>Use the demo citizen or officer account to continue this service workflow.</p>
+      <p>Sign in with your authorized citizen or officer account to continue this service workflow.</p>
       <a className="button button-primary" href={`/login?next=${encodeURIComponent(path)}`}>Sign In</a>
     </section>
   );
@@ -134,7 +136,7 @@ function ServicesPage() {
         <div>
           <p className="eyebrow">Public service portal</p>
           <h2>Services</h2>
-          <p>Apply through the synthetic NiyamGuard Service Portal and track each stage from draft to certificate.</p>
+          <p>Apply through NiyamGuard and track each stage from draft to certificate.</p>
         </div>
         <Pill tone="green">{services.length} services</Pill>
       </div>
@@ -552,10 +554,10 @@ function PaymentPage({ applicationId, path }) {
   if (!application) return <p className="portal-loading">Loading payment...</p>;
 
   async function handleCreatePayment() {
-    setStatus("Creating sandbox payment...");
+    setStatus("Preparing payment...");
     const response = await createPortalPayment(application.id);
     setPayment(response.payment);
-    setStatus("Sandbox payment ready.");
+    setStatus("Payment step is ready.");
   }
 
   async function handleSuccess() {
@@ -571,9 +573,9 @@ function PaymentPage({ applicationId, path }) {
     <section className="portal-section">
       <div className="portal-summary">
         <div>
-          <p className="eyebrow">Payment sandbox</p>
+          <p className="eyebrow">{isProductionExperience ? "Payment" : "Payment sandbox"}</p>
           <h2>{application.application_number}</h2>
-          <p>No real money is collected. This simulates a government fee gateway callback.</p>
+          <p>{isProductionExperience ? "Payment status is updated only by an approved payment provider." : "No real money is collected. This simulates a government fee gateway callback."}</p>
         </div>
         <Pill tone={statusTone(application.fee_status)}>{titleCase(application.fee_status)}</Pill>
       </div>
@@ -585,14 +587,18 @@ function PaymentPage({ applicationId, path }) {
           ["Current status", titleCase(application.status)],
           ["Fee status", titleCase(application.fee_status)],
         ]} />
-        <div className="portal-actions">
-          <button className="button button-secondary" onClick={() => void handleCreatePayment()} type="button">
-            Create Sandbox Payment
-          </button>
-          <button className="button button-primary" disabled={!payment} onClick={() => void handleSuccess()} type="button">
-            Simulate Success
-          </button>
-        </div>
+        {isProductionExperience ? (
+          <p className="support-message">Payment-provider activation remains an external integration gate. No payment is simulated here.</p>
+        ) : (
+          <div className="portal-actions">
+            <button className="button button-secondary" onClick={() => void handleCreatePayment()} type="button">
+              Create Sandbox Payment
+            </button>
+            <button className="button button-primary" disabled={!payment} onClick={() => void handleSuccess()} type="button">
+              Simulate Success
+            </button>
+          </div>
+        )}
       </section>
     </section>
   );
@@ -621,7 +627,7 @@ function TrackPage() {
         <div>
           <p className="eyebrow">Public tracking</p>
           <h2>Track Application</h2>
-          <p>Enter a NiyamGuard demo application number to view its current stage and SLA state.</p>
+          <p>Enter an application number to view its current stage and SLA state.</p>
         </div>
       </div>
       <form className="portal-search-form" onSubmit={handleSubmit}>
@@ -685,7 +691,7 @@ function VerifyCertificatePage() {
         <div>
           <p className="eyebrow">Public verification</p>
           <h2>Verify Certificate</h2>
-          <p>Use the certificate number or verification hash printed on a demo certificate.</p>
+          <p>Use the certificate number or verification hash printed on an issued certificate.</p>
         </div>
       </div>
       <form className="portal-search-form" onSubmit={handleSubmit}>
@@ -744,7 +750,7 @@ function ProfilePage({ path }) {
         <div>
           <p className="eyebrow">Citizen profile</p>
           <h2>Profile</h2>
-          <p>Profile data can prefill future demo applications.</p>
+          <p>Profile data can prefill future applications.</p>
         </div>
       </div>
       {status ? <p className="portal-status">{status}</p> : null}
@@ -785,7 +791,7 @@ function DocumentsPage({ path }) {
         <div>
           <p className="eyebrow">Citizen documents</p>
           <h2>Document Vault</h2>
-          <p>Uploaded application documents are listed from local demo storage.</p>
+          <p>Uploaded application documents are listed with their application evidence.</p>
         </div>
         <Pill tone="blue">{documents.length} files</Pill>
       </div>
@@ -892,7 +898,7 @@ function OfficerPage({ path, applicationId }) {
               </button>
               <button
                 className="button button-secondary"
-                onClick={() => void rejectPortalApplication(selected.id, "Evidence did not satisfy demo review.").then(load).then(() => setStatus("Application rejected."))}
+                onClick={() => void rejectPortalApplication(selected.id, "Evidence did not satisfy the review requirements.").then(load).then(() => setStatus("Application rejected."))}
                 type="button"
               >
                 Reject
@@ -973,8 +979,11 @@ export default function ServicePortal({ path }) {
       <main className="portal-main">
         {renderPage()}
       </main>
+      <CitizenAssistantDock />
       <footer>
-        Synthetic NiyamGuard demo portal. No official submission, payment, or certificate is sent to a government system.
+        {isProductionExperience
+          ? "NiyamGuard provides a guided workflow. Government-system submission, payment, and certificate issuance require approved receiving-system integrations."
+          : "NiyamGuard development environment. No official submission, payment, or certificate is sent to a government system."}
       </footer>
     </div>
   );

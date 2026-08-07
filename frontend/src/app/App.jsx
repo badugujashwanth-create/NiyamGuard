@@ -717,7 +717,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const productionProtectedRoute = isProductionExperience && !path.startsWith("/login");
+    const productionProtectedRoute = isProductionExperience && (
+      path.startsWith("/admin") ||
+      path.startsWith("/dashboard") ||
+      path.startsWith("/officer")
+    );
     if ((path.startsWith("/admin") || path.startsWith("/dashboard") || productionProtectedRoute) && !hasAuthSession()) {
       const next = safeReturnPath(path);
       window.history.replaceState({}, "", next ? `/login?next=${encodeURIComponent(next)}` : "/login");
@@ -744,7 +748,7 @@ export default function App() {
       return;
     }
     if (isProductionExperience) {
-      navigate("/dashboard");
+      navigate(user?.role === "citizen" ? "/services" : "/dashboard");
       return;
     }
     if (user?.role === "citizen") {
@@ -758,10 +762,13 @@ export default function App() {
     navigate("/admin");
   }
 
-  if (isProductionExperience && (path === "/" || path.startsWith("/portal") || path.startsWith("/demo") || path.startsWith("/mock") || path.startsWith("/virtual-gov") || path.startsWith("/government") || path.startsWith("/citizen") || path.startsWith("/services") || path.startsWith("/apply") || path.startsWith("/applications") || path.startsWith("/track") || path.startsWith("/verify-certificate") || path.startsWith("/payment") || path.startsWith("/officer") || path.startsWith("/scheme-finder"))) {
+  if (isProductionExperience && (path.startsWith("/demo") || path.startsWith("/mock") || path.startsWith("/virtual-gov") || path.startsWith("/government"))) {
     return hasAuthSession()
       ? <AdminPortal currentUser={currentUser} onLogout={handleLogout} onUnauthorized={() => navigate("/login")} />
       : <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+  if (isProductionExperience && (path === "/" || path.startsWith("/portal") || path.startsWith("/citizen") || path.startsWith("/services") || path.startsWith("/apply") || path.startsWith("/applications") || path.startsWith("/track") || path.startsWith("/verify-certificate") || path.startsWith("/payment") || path.startsWith("/scheme-finder"))) {
+    return <ServicePortal path={path === "/" || path.startsWith("/portal") || path.startsWith("/citizen") || path.startsWith("/scheme-finder") ? "/services" : path} />;
   }
   if (path === "/" || path.startsWith("/portal")) return <UnifiedLanding />;
   if (path === "/citizen") return <CitizenPortal />;

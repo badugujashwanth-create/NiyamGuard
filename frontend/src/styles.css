@@ -2808,6 +2808,124 @@ footer {
   display: none;
 }
 
+.citizen-assistant-dock {
+  position: fixed;
+  z-index: 30;
+  right: 1.25rem;
+  bottom: 1.25rem;
+}
+
+.citizen-assistant-launcher,
+.citizen-assistant-close {
+  min-height: 2.75rem;
+  color: #fff;
+  background: #16694f;
+  border: 1px solid #0f503b;
+  border-radius: 999px;
+  padding: 0 1rem;
+  font: inherit;
+  font-weight: 800;
+  box-shadow: 0 0.6rem 1.8rem rgb(20 63 52 / 24%);
+}
+
+.citizen-assistant-popover {
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: min(42rem, calc(100vh - 2rem));
+  overflow: auto;
+  padding: 1rem;
+  color: #172235;
+  background: #fff;
+  border: 1px solid #d2ded8;
+  border-radius: 0.75rem;
+  box-shadow: 0 1rem 3rem rgb(20 63 52 / 28%);
+}
+
+.citizen-assistant-popover header,
+.citizen-assistant-tabs,
+.citizen-assistant-tabs button {
+  display: flex;
+}
+
+.citizen-assistant-popover header {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.citizen-assistant-popover h2,
+.citizen-assistant-popover p {
+  margin-top: 0;
+}
+
+.citizen-assistant-close {
+  min-height: 2rem;
+  padding: 0 0.6rem;
+  background: transparent;
+  color: #174438;
+  box-shadow: none;
+}
+
+.citizen-assistant-tabs {
+  gap: 0.35rem;
+  margin: 0.85rem 0;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #dce6e0;
+}
+
+.citizen-assistant-tabs button {
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  color: #174438;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-weight: 750;
+}
+
+.citizen-assistant-tabs button[aria-selected="true"] {
+  color: #fff;
+  background: #16694f;
+}
+
+.citizen-assistant-language,
+.citizen-assistant-popover form,
+.citizen-assistant-voice {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.citizen-assistant-language,
+.citizen-assistant-popover label {
+  color: #29463c;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.citizen-assistant-popover textarea,
+.citizen-assistant-popover select {
+  width: 100%;
+  color: #172235;
+  background: #fff;
+  border: 1px solid #b8c9c0;
+  border-radius: 0.4rem;
+  padding: 0.65rem;
+  font: inherit;
+}
+
+.citizen-assistant-answer {
+  padding: 0.8rem;
+  background: #f2f7f4;
+  border: 1px solid #d8e7de;
+  border-radius: 0.5rem;
+}
+
+.citizen-assistant-answer p:last-child {
+  margin-bottom: 0;
+}
+
 .admin-brand span {
   display: grid;
   width: 2.8rem;
