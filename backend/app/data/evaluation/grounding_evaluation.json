@@ -1,0 +1,35 @@
+[
+  {
+    "id": "exact_rule_go_138",
+    "question": "What is the Income Certificate validity?",
+    "expected_method": "exact_rule_engine",
+    "expected_source": "GO-138",
+    "expected_text": "6 months"
+  },
+  {
+    "id": "decision_table_documents",
+    "question": "What documents are required for a scholarship?",
+    "expected_method": "decision_table",
+    "expected_source_type": "service_definition",
+    "expected_text": "Valid Income Certificate"
+  },
+  {
+    "id": "decision_table_fee",
+    "question": "What is the fee for an income certificate?",
+    "expected_method": "decision_table",
+    "expected_source_type": "service_definition",
+    "expected_text": "Rs 35"
+  },
+  {
+    "id": "unsupported_secret_rule",
+    "question": "What is the secret subsidy formula for next year?",
+    "expected_method": "safe_fallback",
+    "unsupported": true
+  },
+  {
+    "id": "unsupported_unverified_program",
+    "question": "Can you guarantee approval for a new unverified housing program?",
+    "expected_method": "safe_fallback",
+    "unsupported": true
+  }
+]

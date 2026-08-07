@@ -90,6 +90,18 @@ export function extractCircularRules(circularId) {
   return request(`/api/circulars/${encodeURIComponent(circularId)}/extract-rules`, { method: "POST" });
 }
 
+export function uploadCircularFile({ file, circularNumber, title, department, publishedDate, effectiveDate = "", expiryDate = "" }) {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("circular_number", circularNumber);
+  body.append("title", title);
+  body.append("department", department);
+  body.append("published_date", publishedDate);
+  if (effectiveDate) body.append("effective_date", effectiveDate);
+  if (expiryDate) body.append("expiry_date", expiryDate);
+  return request("/api/circulars/upload-file", { method: "POST", body });
+}
+
 export function getRuleCandidates() {
   return request("/api/rule-candidates");
 }

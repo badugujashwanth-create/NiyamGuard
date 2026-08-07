@@ -3092,6 +3092,34 @@ footer {
   font-size: 0.84rem;
 }
 
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-form-grid label {
+  display: grid;
+  gap: 0.35rem;
+  color: #33463d;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.admin-form-grid input {
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0 0.75rem;
+  color: #172235;
+  background: #fbfcfb;
+  border: 1px solid #cdd8d1;
+  border-radius: 0.45rem;
+}
+
+.admin-form-grid input[type="file"] {
+  padding: 0.55rem;
+}
+
 .admin-report-grid .button {
   justify-self: start;
 }
@@ -3249,6 +3277,7 @@ footer {
   .admin-sidebar nav,
   .admin-card-grid,
   .admin-module-grid,
+  .admin-form-grid,
   .admin-insight-grid,
   .admin-finding-grid,
   .admin-report-grid,

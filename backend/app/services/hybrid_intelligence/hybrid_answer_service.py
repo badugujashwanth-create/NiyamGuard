@@ -133,6 +133,7 @@ def answer_question(
         sources=candidate["sources"],
         fallback=False,
         provider=candidate.get("provider"),
+        ai_called=bool(candidate.get("ai_called", candidate.get("method") == "local_llm")),
     )
 
 

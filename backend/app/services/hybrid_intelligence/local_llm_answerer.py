@@ -33,5 +33,6 @@ def answer(question: str, language: dict[str, Any], intent: str, chunks: list[di
         "sources": references,
         "service_id": best.get("service_id"),
         "provider": ai.get("provider"),
+        "ai_called": method == "local_llm",
     }
 

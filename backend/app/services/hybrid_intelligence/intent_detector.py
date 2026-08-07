@@ -52,8 +52,12 @@ def detect_intent(text: str, context: dict[str, Any] | None = None) -> dict:
             if _contains_alias(text, values):
                 intent = candidate
                 break
-    service_id = detect_service_id(text, context)
-    if intent == "unknown" and service_id:
+    # Context can focus a recognised service question, but it must never turn
+    # an otherwise unsupported question into a generic service answer.  Only
+    # an explicit service mention in the question may promote ``unknown``.
+    explicit_service_id = detect_service_id(text)
+    service_id = explicit_service_id or detect_service_id(text, context)
+    if intent == "unknown" and explicit_service_id:
         intent = "general_service_question"
     confidence = 0.96 if intent in {"validity", "documents", "application_status", "certificate_verification"} else 0.76
     if intent == "unknown":

@@ -51,6 +51,7 @@ import {
   runVirtualGovScenario,
   scanConflicts,
   syncCirculars,
+  uploadCircularFile,
   syncSource,
   verifyAudit,
 } from "../../services/api";
@@ -493,6 +494,12 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
         {!loading && activePage === "/admin/circulars" ? (
           <CircularsPage
             circulars={circularDocuments}
+            onUpload={async (payload) => {
+              setReportStatus("Uploading synthetic circular PDF and validating its source evidence...");
+              const result = await uploadCircularFile(payload);
+              await refreshSelfUpdateData();
+              setReportStatus(`Uploaded ${result.document.circular_number}; ready for deterministic rule extraction.`);
+            }}
             onExtract={async (circularId) => {
               setReportStatus(`Extracting rules from ${circularId}...`);
               await extractCircularRules(circularId);
@@ -1272,18 +1279,67 @@ function SourcesPage({ onRefresh, onRunScheduler, onSyncSource, schedulerStatus,
   );
 }
 
-function CircularsPage({ circulars, onExtract, onSyncAll }) {
+function CircularsPage({ circulars, onExtract, onSyncAll, onUpload }) {
+  const [file, setFile] = useState(null);
+  const [uploadError, setUploadError] = useState("");
+  const [metadata, setMetadata] = useState({
+    circularNumber: "GO-138-REVIEW",
+    title: "Income Certificate Validity Review",
+    department: "Revenue",
+    publishedDate: "2026-07-20",
+    effectiveDate: "2026-08-01",
+    expiryDate: "2027-07-31",
+  });
+
+  async function submitUpload(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setUploadError("");
+    if (!file) {
+      setUploadError("Choose a synthetic PDF or UTF-8 text circular before uploading.");
+      return;
+    }
+    try {
+      await onUpload({ file, ...metadata });
+      setFile(null);
+      form.reset();
+    } catch (error) {
+      setUploadError(error.message);
+    }
+  }
+
   return (
     <section className="admin-section">
       <div className="admin-page-summary">
         <div>
           <h3>Circular Intake</h3>
-          <p>New regulatory documents are ingested, deduplicated, and prepared for rule extraction.</p>
+          <p>New synthetic regulatory documents are validated, stored with source evidence, and prepared for deterministic rule extraction.</p>
         </div>
         <button className="button button-primary" onClick={() => void onSyncAll()} type="button">
           Sync Circulars
         </button>
       </div>
+      <form className="admin-finding-card" onSubmit={(event) => void submitUpload(event)} aria-label="Upload synthetic circular">
+        <div className="admin-card-heading">
+          <div>
+            <span>Local sandbox only</span>
+            <h3>Upload a synthetic circular</h3>
+          </div>
+          <StatusPill tone="blue">PDF / TXT</StatusPill>
+        </div>
+        <p>Accepted files are limited to 2 MiB. The file is malware-scanned according to the active environment and retains checksum/provenance evidence.</p>
+        <div className="admin-form-grid">
+          <label>PDF or UTF-8 text file<input aria-label="Circular source file" accept=".pdf,.txt,application/pdf,text/plain" onChange={(event) => setFile(event.target.files?.[0] || null)} required type="file" /></label>
+          <label>Circular number<input value={metadata.circularNumber} onChange={(event) => setMetadata({ ...metadata, circularNumber: event.target.value })} required /></label>
+          <label>Title<input value={metadata.title} onChange={(event) => setMetadata({ ...metadata, title: event.target.value })} required /></label>
+          <label>Department<input value={metadata.department} onChange={(event) => setMetadata({ ...metadata, department: event.target.value })} required /></label>
+          <label>Published date<input type="date" value={metadata.publishedDate} onChange={(event) => setMetadata({ ...metadata, publishedDate: event.target.value })} required /></label>
+          <label>Effective date<input type="date" value={metadata.effectiveDate} onChange={(event) => setMetadata({ ...metadata, effectiveDate: event.target.value })} /></label>
+          <label>Expiry date<input type="date" value={metadata.expiryDate} onChange={(event) => setMetadata({ ...metadata, expiryDate: event.target.value })} /></label>
+        </div>
+        {uploadError ? <p className="global-error" role="alert">{uploadError}</p> : null}
+        <button className="button button-primary" type="submit">Upload and validate circular</button>
+      </form>
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>

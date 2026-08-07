@@ -9,6 +9,7 @@ def test_hybrid_answer_exact_rule_has_source(client) -> None:
     assert body["method"] == "exact_rule_engine"
     assert body["verified"] is True
     assert body["sources"][0]["circular_number"] == "GO-138"
+    assert body["ai_called"] is False
 
 
 def test_hybrid_answer_decision_table_for_documents(client) -> None:
@@ -18,6 +19,7 @@ def test_hybrid_answer_decision_table_for_documents(client) -> None:
     assert body["method"] == "decision_table"
     assert body["service_id"] == "post_matric_scholarship"
     assert body["sources"][0]["type"] == "service_definition"
+    assert body["ai_called"] is False
 
 
 def test_hybrid_unknown_question_uses_safe_fallback(client) -> None:
@@ -27,6 +29,22 @@ def test_hybrid_unknown_question_uses_safe_fallback(client) -> None:
     assert body["method"] == "safe_fallback"
     assert body["fallback"] is True
     assert body["sources"] == []
+    assert body["ai_called"] is False
+
+
+def test_context_cannot_turn_an_unsupported_question_into_a_service_answer(client) -> None:
+    response = client.post(
+        "/api/hybrid/answer",
+        json={
+            "question": "What is the secret subsidy formula for next year?",
+            "context": {"service_id": "income_certificate"},
+        },
+    )
+    body = response.json()
+    assert response.status_code == 200
+    assert body["method"] == "safe_fallback"
+    assert body["sources"] == []
+    assert body["ai_called"] is False
 
 
 def test_search_status_and_results(client) -> None:

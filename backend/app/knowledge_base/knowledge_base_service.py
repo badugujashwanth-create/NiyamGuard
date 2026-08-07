@@ -3,6 +3,7 @@ from app.models.knowledge_models import (
     RuleSource,
     VerifiedPolicyRule,
 )
+from app.knowledge_base.rule_version_selector import select_active_version
 from app.knowledge_base.platform_store import add_audit_event, now_iso, read_store, write_store
 
 
@@ -37,10 +38,11 @@ def get_rule(rule_id: str) -> VerifiedPolicyRule | None:
     return next((rule for rule in read_store().verified_rules if rule.id == rule_id), None)
 
 
-def latest_rule(service_id: str, rule_key: str) -> LatestRuleResponse:
+def latest_rule(service_id: str, rule_key: str, *, as_of: str | None = None) -> LatestRuleResponse:
+    store = read_store()
     candidates = [
         rule
-        for rule in read_store().verified_rules
+        for rule in store.verified_rules
         if rule.service_id == service_id and rule.rule_key == rule_key and rule.status == "active"
     ]
     if not candidates:
@@ -51,17 +53,52 @@ def latest_rule(service_id: str, rule_key: str) -> LatestRuleResponse:
             rule_key=rule_key,
             answer="Verified rule not found.",
         )
-    rule = sorted(candidates, key=lambda item: item.effective_date, reverse=True)[0]
+    # Version selection is the authority for values once a rule has published
+    # lineage.  It handles future-dated, expired, overlapping and rollback
+    # versions without consulting retrieval or an AI provider.
+    versions = [
+        version
+        for version in store.verified_policy_rule_versions
+        if version.service_id == service_id and version.rule_key == rule_key
+    ]
+    selected = select_active_version(versions, as_of=as_of) if versions else None
+    if selected is not None:
+        rule = next((item for item in candidates if item.id == selected.rule_id), None)
+        if rule is None:
+            return LatestRuleResponse(
+                success=False,
+                verified=False,
+                service_id=service_id,
+                rule_key=rule_key,
+                answer="Verified rule not found.",
+            )
+        value = selected.value
+        unit = selected.unit
+    else:
+        # Legacy verified rules without immutable versions retain the former
+        # deterministic date ordering.  A versioned rule with no active value
+        # must fail safely rather than exposing a future/expired value.
+        if versions:
+            return LatestRuleResponse(
+                success=False,
+                verified=False,
+                service_id=service_id,
+                rule_key=rule_key,
+                answer="Verified rule not found for the requested effective date.",
+            )
+        rule = sorted(candidates, key=lambda item: item.effective_date, reverse=True)[0]
+        value = rule.current_value
+        unit = rule.unit
     return LatestRuleResponse(
         success=True,
         verified=True,
         service_id=rule.service_id,
         rule_key=rule.rule_key,
-        current_value=rule.current_value,
-        unit=rule.unit,
+        current_value=value,
+        unit=unit,
         previous_value=rule.previous_value,
         source=_source_for_rule(rule),
-        answer=f"{rule.rule_name} is currently {rule.current_value} {rule.unit or ''}.".strip(),
+        answer=f"{rule.rule_name} is currently {value} {unit or ''}.".strip(),
     )
 
 

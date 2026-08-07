@@ -21,6 +21,13 @@ def test_latest_rule_endpoint_returns_active_rule(client) -> None:
     assert body["previous_value"] == "12"
 
 
+def test_latest_rule_uses_immutable_version_effective_date_not_a_model() -> None:
+    before_go_138 = latest_rule("income_certificate", "validity", as_of="2026-06-30")
+    after_go_138 = latest_rule("income_certificate", "validity", as_of="2026-07-01")
+    assert before_go_138.current_value == "12"
+    assert after_go_138.current_value == "6"
+
+
 def test_search_finds_income_certificate_validity(client) -> None:
     response = client.get("/api/knowledge/search?q=income certificate validity")
     body = response.json()

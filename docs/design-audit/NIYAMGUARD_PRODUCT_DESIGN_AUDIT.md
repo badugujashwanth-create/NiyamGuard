@@ -57,3 +57,16 @@ Screenshots do not establish keyboard order, screen-reader announcements, contra
 - Lifecycle/module status badges retain visible text and expose an accessible status label; status is not communicated by colour alone.
 - The existing focus-visible outline and reduced-motion rules remain active across the core routes.
 - The React regression suite exercises the labelled main landmark and active navigation semantics. Contrast measurement, keyboard-only traversal with assistive technology, and formal WCAG certification remain external/manual gates.
+
+## Final core-flow capture and manual checklist (2026-08-08)
+
+- The existing local Playwright capture path exercised a real synthetic PDF upload through the UI, extraction, officer approval, publication, compliance drift, cascade impact, mock remediation, audit evidence, one grounded citizen answer, one unsupported safe fallback, and the landing at 390 × 844. The thirteen resulting `e2e-step-*.png` frames remain local ignored evidence; no production media was replaced.
+- Automated evidence confirms the labelled upload control, visible status/alert behavior, labelled main regions, keyboard-focus styling, active navigation, text-labelled states, safe fallback, and no horizontal overflow on the checked mobile landing.
+
+Manual V1 checklist — required before any accessibility certification or production claim:
+
+- [ ] Keyboard-only completion of upload, approval, publication, remediation, and citizen Q&A in Chrome, Firefox, and Safari.
+- [ ] Screen-reader review with NVDA/Firefox and VoiceOver/Safari, including live-status announcements and table navigation.
+- [ ] Contrast measurement for all status/alert/button states at normal and high-contrast system settings.
+- [ ] 200% zoom and 320 CSS-pixel recheck for the reviewer and citizen task flows.
+- [ ] Reduced-motion and browser zoom recheck on a physical mobile device.

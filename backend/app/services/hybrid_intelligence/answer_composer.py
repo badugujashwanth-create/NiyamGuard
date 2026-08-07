@@ -27,6 +27,7 @@ def compose(
     fallback: bool = False,
     provider: str | None = None,
     limitations: str | None = None,
+    ai_called: bool = False,
 ) -> dict[str, Any]:
     return {
         "success": True,
@@ -41,6 +42,7 @@ def compose(
         "sources": sources,
         "fallback": fallback,
         "provider": provider or method,
+        "ai_called": ai_called,
         "limitations": limitations or "This answer is based on verified NiyamGuard data.",
     }
 
@@ -58,4 +60,5 @@ def fallback(language: dict[str, Any], intent: str = "unknown", service_id: str 
         fallback=True,
         provider="deterministic",
         limitations="No verified source matched this question.",
+        ai_called=False,
     )

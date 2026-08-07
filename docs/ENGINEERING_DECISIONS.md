@@ -2,6 +2,18 @@
 
 These are incidents visible in code and history, not reconstructed success stories.
 
+## Answer routing could blur verified policy with optional AI output
+
+**Problem.** The application had deterministic and optional-AI answer modules, but the precedence and evidence boundary were not stated as one executable contract.
+
+**Root cause.** Routing knowledge was distributed across intent detection, individual answerers, and the public answer route. That made it too easy to describe the architecture more strongly than the testable behavior.
+
+**Fix.** `hybrid_answer_service.answer_question` now enforces: exact verified rule → application/certificate lookup → decision table → source-backed retrieval → optional local explanation → safe fallback. The response records `ai_called`; exact rules, lookup, decision-table, retrieval, and fallback paths report `false`. `rule_version_selector.py` selects versioned policy values using UTC calendar dates only, with inclusive effective/expiry boundaries and deterministic overlap/rollback tie-breaks.
+
+**Regression evidence.** `test_hybrid_intelligence.py`, `test_rule_version_selector.py`, and `test_grounding_evaluation.py` cover source precedence, ten date/expiry/rollback edge cases, and the frozen grounding dataset. Run `python -m app.evaluation.grounding_evaluation` from `backend/` for a one-command result.
+
+**Limit.** The optional local explanation path remains optional and source-backed; it is not a legal authority or a replacement for officer review.
+
 ## Sandbox routes remained reachable outside demo mode
 
 **Problem.** Mock systems, the full-demo runner, the virtual-government flow, and sandbox routes were registered like ordinary application routes.

@@ -86,7 +86,11 @@ npm test --prefix frontend -- --run
 npm run build --prefix frontend
 ```
 
-The repository currently collects **298 backend tests** and **61 frontend tests**. The full backend suite passes in an isolated clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, the Vite production build is verified, and the no-video core Playwright accessibility regression passes locally. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
+The repository currently collects **311 backend tests** and **61 frontend tests**. The full backend suite passes in an isolated clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, the Vite production build is verified, and the no-video core Playwright accessibility regression passes locally. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
+
+### Answer authority and temporal rules
+
+Citizen answers follow one fixed precedence: exact verified rule, deterministic service decision table, deterministic application/certificate lookup, source-backed retrieval, optional local explanation, then a safe unsupported fallback. An AI provider cannot replace an exact verified rule or a decision-table answer. Immutable rule versions are selected by UTC calendar date: effective dates and expiry dates are inclusive, future versions cannot win early, and an explicit rollback marker wins among otherwise active versions. Run `python -m app.evaluation.grounding_evaluation` from `backend/` to reproduce the frozen five-case grounding check; its expected result is 100% grounded correctness/source coverage/unsupported-safe rate, zero hallucinations, and zero AI calls.
 
 ## Current limits
 

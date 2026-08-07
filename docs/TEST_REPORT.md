@@ -8,9 +8,11 @@ Release audit refreshed on 2026-08-08 from the canonical `main` branch on Window
 | Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
 | Upload/document-processing boundary | Pass | Circular and citizen service-document uploads validate MIME/signatures, scan before persistence, retain SHA-256/scanner provenance, and use conditional native extraction/OCR with immutable originals and separate OCR derivatives; production requires ClamAV and returns 503 when it cannot produce a trustworthy result. |
 | `python -m app.evaluation.extraction_benchmark` | Pass | 20/20 frozen synthetic cases; exact candidate/evidence threshold 1.0. This is not a model-quality or legal-authority benchmark. |
+| `python -m app.evaluation.grounding_evaluation` | Pass | Frozen source-grounding fixture: 100% grounded correctness and source coverage, 100% unsupported safe fallback, zero hallucinations, and zero AI calls. |
 | `npm test` in `frontend` | Pass | 61 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |
 | Playwright core accessibility/E2E regression | Pass | A no-video local browser test exercised landing, reviewer lifecycle, live success status, admin login, labelled main landmarks, and active navigation. |
+| Playwright final PDF-to-remediation simulation | Pass | Local synthetic PDF upload, extraction, approval, publication, drift/impact, mock remediation, audit trail, grounded answer, unsupported fallback, and 390px no-overflow capture. |
 | Demo media acceptance | Pass | 337.408 seconds, 1280×720, VP9 video, Opus audio, captions present, 11 reviewed frames |
 | Full-stack Docker image | Not verified | Docker daemon was unavailable in the current Windows environment; the Dockerfile runs migrations before Uvicorn and remains CI/deployment evidence only. |
 | Render Blueprint schema | Pass | Validated against the current official Render schema |

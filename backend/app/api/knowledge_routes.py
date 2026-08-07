@@ -12,8 +12,10 @@ def list_rules() -> dict:
 
 
 @router.get("/rules/latest")
-def latest_rule(service_id: str = Query(...), rule_key: str = Query(...)) -> dict:
-    return service.latest_rule(service_id, rule_key).model_dump()
+def latest_rule(
+    service_id: str = Query(...), rule_key: str = Query(...), as_of: str | None = Query(default=None)
+) -> dict:
+    return service.latest_rule(service_id, rule_key, as_of=as_of).model_dump()
 
 
 @router.get("/rules/{rule_id}")
