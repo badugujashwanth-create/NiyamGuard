@@ -26,7 +26,7 @@
 - CI now defines a fresh PostgreSQL migration job with production-style cookie, database-authority, CORS, trusted-host, and malware-scan settings; the job still requires a remote GitHub Actions run for evidence.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 268 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 268 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
