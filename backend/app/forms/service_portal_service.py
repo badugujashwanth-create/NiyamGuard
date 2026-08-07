@@ -3,6 +3,8 @@ from __future__ import annotations
 import calendar
 import hashlib
 import mimetypes
+import os
+import tempfile
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -30,6 +32,7 @@ from app.models.service_portal_models import (
     ServiceFormDefinition,
 )
 from app.security.rbac import CurrentUser
+from app.security.malware_scan import MalwareDetected, MalwareScanUnavailable, scan_bytes
 from app.knowledge_base.platform_store import add_audit_event, read_store, write_store
 from app.services.time import now_iso
 
@@ -468,11 +471,40 @@ async def upload_application_document(
     content = await file.read(MAX_UPLOAD_BYTES + 1)
     if len(content) > MAX_UPLOAD_BYTES:
         raise ServicePortalError(status.HTTP_400_BAD_REQUEST, "Uploaded document exceeds the 5 MB limit.")
+    try:
+        scan_result = scan_bytes(content, file.filename or "document")
+    except MalwareDetected as exc:
+        raise ServicePortalError(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    except MalwareScanUnavailable as exc:
+        raise ServicePortalError(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     destination_dir = DOCUMENT_STORAGE_DIR / application.id
-    destination_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        destination_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(destination_dir, 0o700)
+    except OSError as exc:
+        raise ServicePortalError(status.HTTP_503_SERVICE_UNAVAILABLE, "Document storage is unavailable.") from exc
     safe_name = "".join(char if char.isalnum() or char in {".", "-", "_"} else "_" for char in (file.filename or "document"))
     destination = destination_dir / f"{uuid4().hex}_{safe_name}"
-    destination.write_bytes(content)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            prefix=".upload-",
+            suffix=".tmp",
+            dir=destination_dir,
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary_path, 0o600)
+        os.replace(temporary_path, destination)
+    except OSError as exc:
+        raise ServicePortalError(status.HTTP_503_SERVICE_UNAVAILABLE, "Document storage is unavailable.") from exc
+    finally:
+        if temporary_path and temporary_path.exists():
+            temporary_path.unlink(missing_ok=True)
     document = ApplicationDocument(
         id=f"appdoc_{uuid4().hex}",
         application_id=application.id,
@@ -505,7 +537,12 @@ async def upload_application_document(
         store,
         "service_application_document_uploaded",
         actor,
-        {"entity_type": "application_document", "entity_id": document.id, "application_id": application.id},
+        {
+            "entity_type": "application_document",
+            "entity_id": document.id,
+            "application_id": application.id,
+            "malware_scan_status": scan_result.get("status"),
+        },
     )
     write_store(store)
     return document.model_dump()

@@ -124,3 +124,26 @@ def test_service_portal_access_control(client, citizen_headers, viewer_headers):
 
     officer_only = client.get("/api/officer/applications", headers=citizen_headers)
     assert officer_only.status_code == 403
+
+
+def test_application_document_upload_fails_closed_when_scanner_is_unavailable(
+    client, citizen_headers, monkeypatch
+):
+    from app.forms import service_portal_service
+    from app.security.malware_scan import MalwareScanUnavailable
+
+    application = _create_income_application(client, citizen_headers)
+
+    def unavailable(*_args, **_kwargs):
+        raise MalwareScanUnavailable("Configured ClamAV executable is unavailable.")
+
+    monkeypatch.setattr(service_portal_service, "scan_bytes", unavailable)
+    response = client.post(
+        f"/api/applications/{application['id']}/documents",
+        headers=citizen_headers,
+        data={"document_type": "aadhaar"},
+        files={"file": ("aadhaar.pdf", b"%PDF-1.4 demo", "application/pdf")},
+    )
+
+    assert response.status_code == 503
+    assert "ClamAV" in response.json()["error"]["message"]

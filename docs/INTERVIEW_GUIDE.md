@@ -26,7 +26,7 @@ Add contract-tested adapters, production identity/authorization, realistic load 
 
 ## How did you test it?
 
-The current `main` commit passes 275 backend and 61 frontend tests, plus a frontend production build and dependency/security checks in CI. A 5:37 browser-driven walkthrough exercises the real synthetic workflow, evidence-derived readiness, policy lineage, knowledge relationships, and audit evidence. Explain that this is strong local evidence, not proof of production integrations; the Docker daemon and hosted service still require external verification.
+The current `main` commit passes 276 backend and 61 frontend tests, plus a frontend production build and dependency/security checks in CI. A 5:37 browser-driven walkthrough exercises the real synthetic workflow, evidence-derived readiness, policy lineage, knowledge relationships, and audit evidence. Explain that this is strong local evidence, not proof of production integrations; the Docker daemon and hosted service still require external verification.
 
 ## What are its security limitations?
 

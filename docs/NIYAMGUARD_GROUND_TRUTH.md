@@ -17,6 +17,7 @@
 - `/api/ops/status` and dataset mutation endpoints now require authenticated roles; OTP endpoints are demo-gated; ops output no longer exposes host paths.
 - STT/TTS requests are bounded and rate-limited; STT temporary files are removed; TTS cache eviction is bounded.
 - Accepted circular uploads are stored after scanning and parsing under an opaque SHA-256 key with source filename/type/size/hash provenance; hosted object-storage durability is not yet verified.
+- Citizen service-document uploads now pass through the configured malware scanner before atomic restrictive-permission storage; ClamAV unavailability fails closed, while synthetic mode remains explicitly marked as skipped.
 - Refresh tokens rotate atomically, JWT issuer/audience claims are validated, session records are created and linked, and in-process audit appends are serialized.
 - Production rate limiting now uses database-backed fixed-window buckets; the in-memory limiter remains an explicit local/demo fallback.
 - Serialized policy-store writes carry a database revision; stale replacements are rejected with a retryable conflict instead of silently losing another update.
@@ -30,20 +31,20 @@
 - CI now defines a fresh PostgreSQL migration job with production-style cookie, database-authority, CORS, trusted-host, and malware-scan settings; the job still requires a remote GitHub Actions run for evidence.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 275 backend tests pass with third-party pytest plugin autoload disabled; 61 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 276 backend tests pass with third-party pytest plugin autoload disabled; 61 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
 NiyamGuard is a substantial FastAPI/React synthetic policy-intelligence sandbox. The seeded GO-138 scenario is connected through circular ingestion, deterministic extraction, version comparison, conflict detection, impact/cascade analysis, reviewer decisions, policy publication, propagation tasks, compliance reruns, citizen guidance, eligibility helpers, and an audit hash chain.
 
-The repository is not yet authorized for an unrestricted public or government deployment. The former P0 validation defect and the previously identified demo-seeding, endpoint-boundary, token-rotation, and container-migration gaps were addressed in the 2026-08-07 pass. Docker daemon access and the hosted Render service remain unverified, and relational pilot-grade storage, malware scanning, and legal/operational gates remain open.
+The repository is not yet authorized for an unrestricted public or government deployment. The former P0 validation defect and the previously identified demo-seeding, endpoint-boundary, token-rotation, and container-migration gaps were addressed in the 2026-08-07 pass. Docker daemon access and the hosted Render service remain unverified, and relational pilot-grade storage, ClamAV signature/quarantine provisioning, and legal/operational gates remain open.
 
 ## Existing feature inventory
 
 | Feature | Implementation evidence | API / UI evidence | Tests | Status |
 |---|---|---|---|---|
 | Circular ingestion | `backend/app/api/circular_routes.py`, `backend/app/knowledge_base/circular_ingestion_service.py` | `/api/circulars/upload`, `/api/circulars/upload-file`, circular library UI | `test_policy_lifecycle.py`, validator tests | **Complete for synthetic PDF/TXT only** |
-| File validation | Extension/MIME checks, size limit, PDF signature check in `circular_routes.py` | Upload form | Upload-related tests | **Partial** — no quarantine/malware hook, no source-file persistence pipeline |
+| File validation | Extension/MIME/size checks, PDF parsing, `malware_scan.py`, atomic source and service-document persistence | Upload forms | Upload and scanner-boundary tests | **Partial** — ClamAV signatures/quarantine, object-storage durability, and robust OCR remain unverified |
 | Date extraction | `circular_ingestion_service.extract_temporal_metadata` | Circular metadata and evidence views | lifecycle/date tests | **Complete for ISO dates** |
 | Rule extraction | `backend/app/extraction/rule_extraction_service.py` | `/api/circulars/{id}/extract-rules`, candidate review UI | extraction/lifecycle tests | **Partial** — deterministic patterns are narrow; generic structured extraction is not implemented |
 | Source evidence | `source_excerpt`, circular hash, source metadata | Candidate/evidence cards | lifecycle tests | **Complete for seeded/synthetic path** |
@@ -136,7 +137,7 @@ Audit appends now read and write in one session under a process lock; PostgreSQL
 
 ### P2 — ingestion and extraction boundaries
 
-Uploads validate extension, declared MIME, size, and a PDF signature. Synthetic mode reports that malware scanning is skipped; production configuration requires ClamAV and fails closed when it is unavailable or indeterminate. A persistent quarantine, randomized stored source file, processing queue, timeout state, and robust PDF/OCR path remain open. External source sync is implemented only for `local_demo`; non-local sources are not real integrations.
+Uploads validate extension, declared MIME, size, and a PDF signature, then pass through the configured scanner before atomic persistence. Synthetic mode reports that malware scanning is skipped; production configuration requires ClamAV and fails closed when it is unavailable or indeterminate. ClamAV signatures/quarantine, object-storage durability, a processing queue, timeout state, and robust PDF/OCR remain open. External source sync is implemented only for `local_demo`; non-local sources are not real integrations.
 
 Dataset QA/top-k and collection/search limits now have explicit upper bounds. Other domain-specific query costs still need operational monitoring.
 
@@ -148,7 +149,7 @@ Refresh tokens now rotate atomically and JWT issuer/audience claims are validate
 
 ### P2 — claims and documentation drift
 
-README and test-report claims now reflect 275 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
+README and test-report claims now reflect 276 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
 
 The changelog describes a 1.2.0 candidate, but the public default branch currently has release/tag `v1.1.0`; a v1.2.0 public release is not verified. `docs/access-control.md` also labels the seeded officer account as a reviewer, while the code assigns the `officer` role.
 
@@ -166,7 +167,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 |---|---|
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
-| 275 backend tests | 275 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
+| 276 backend tests | 276 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
 | 61 frontend tests | Current `npm test -- --run` passed 61 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |

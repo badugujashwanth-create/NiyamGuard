@@ -16,6 +16,7 @@
 - Gated deterministic OTP endpoints behind explicit demo mode and removed absolute filesystem paths from ops status.
 - Added STT upload size/format/MIME bounds and guaranteed temporary-file cleanup.
 - Added a ClamAV upload-scanning boundary: local synthetic mode is explicit, while production requires ClamAV and fails closed on scanner unavailability or indeterminate results.
+- Applied the same scan-before-persist boundary to citizen service-document uploads; accepted files are atomically written with restrictive `0600` permissions and scanner failures return a controlled error without leaving a file behind.
 - Added atomic SHA-256 keyed source-artifact storage with restrictive permissions; APIs expose only a relative artifact key and source provenance metadata. Hosted object-storage durability remains an operational gate.
 - Added TTS text limits, rate limiting, and bounded cache eviction.
 - Added JWT issuer/audience checks and atomic refresh-token rotation.
@@ -40,7 +41,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 275 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 276 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 61 tests in default bearer-demo mode and 61 tests with `VITE_AUTH_COOKIE_MODE=true` |
 | Frontend production build | Pass: Vite build |
