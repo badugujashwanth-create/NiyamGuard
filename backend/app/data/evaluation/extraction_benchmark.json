@@ -1,0 +1,22 @@
+[
+  {"id": "valid_01", "text": "Income Certificate validity changed from 12 months to 6 months.", "expected": true, "old_value": "12", "new_value": "6", "evidence": "Income Certificate validity changed from 12 months to 6 months."},
+  {"id": "valid_02", "text": "INCOME CERTIFICATE VALIDITY IS CHANGED FROM 12 MONTHS TO 6 MONTHS.", "expected": true, "old_value": "12", "new_value": "6", "evidence": "INCOME CERTIFICATE VALIDITY IS CHANGED FROM 12 MONTHS TO 6 MONTHS."},
+  {"id": "valid_03", "text": "The order states: Income Certificate validity changed from 6 months to 3 months.", "expected": true, "old_value": "6", "new_value": "3", "evidence": "Income Certificate validity changed from 6 months to 3 months."},
+  {"id": "valid_04", "text": "Income Certificate validity is changed from 24 months to 12 months. Effective 2026-08-01.", "expected": true, "old_value": "24", "new_value": "12", "evidence": "Income Certificate validity is changed from 24 months to 12 months."},
+  {"id": "valid_05", "text": "After review, Income Certificate validity changed from 12 months to 9 months.", "expected": true, "old_value": "12", "new_value": "9", "evidence": "Income Certificate validity changed from 12 months to 9 months."},
+  {"id": "valid_06", "text": "Income Certificate validity changed from 1 months to 2 months.", "expected": true, "old_value": "1", "new_value": "2", "evidence": "Income Certificate validity changed from 1 months to 2 months."},
+  {"id": "valid_07", "text": "Income Certificate validity changed from 18 months to 6 months. This is synthetic.", "expected": true, "old_value": "18", "new_value": "6", "evidence": "Income Certificate validity changed from 18 months to 6 months."},
+  {"id": "valid_08", "text": "Clause 4: Income Certificate validity is changed from 12 months to 6 months.", "expected": true, "old_value": "12", "new_value": "6", "evidence": "Income Certificate validity is changed from 12 months to 6 months."},
+  {"id": "valid_09", "text": "Income Certificate validity changed from 36 months to 18 months.", "expected": true, "old_value": "36", "new_value": "18", "evidence": "Income Certificate validity changed from 36 months to 18 months."},
+  {"id": "valid_10", "text": "Income Certificate validity changed from 12 months to 6 months. Effective 2026-07-01. Expires 2027-06-30.", "expected": true, "old_value": "12", "new_value": "6", "evidence": "Income Certificate validity changed from 12 months to 6 months."},
+  {"id": "ambiguous_01", "text": "Income Certificate validity changed from 12 months to 6 months. Income Certificate validity changed from 6 months to 3 months.", "expected": false},
+  {"id": "ambiguous_02", "text": "Income Certificate validity changed from 12 months to 6 months; Income Certificate validity changed from 12 months to 3 months.", "expected": false},
+  {"id": "ambiguous_03", "text": "Income Certificate validity changed from 12 months to 6 months. The department later says Income Certificate validity changed from 6 months to 3 months.", "expected": false},
+  {"id": "ambiguous_04", "text": "Income Certificate validity changed from 12 months to 12 months.", "expected": false},
+  {"id": "ambiguous_05", "text": "Income Certificate validity changed from 12 months to 6 months. Income Certificate validity changed from 12 months to 6 months.", "expected": false},
+  {"id": "unsupported_01", "text": "Income Certificate validity is 12 months and may be revised to 6 months.", "expected": false},
+  {"id": "unsupported_02", "text": "The certificate must be issued within 6 months. Effective 2026-08-01.", "expected": false},
+  {"id": "unsupported_03", "text": "Residence Certificate validity changed from 12 months to 6 months.", "expected": false},
+  {"id": "unsupported_04", "text": "Income Certificate validity changed from twelve months to six months.", "expected": false},
+  {"id": "unsupported_05", "text": "Income Certificate validity changed from 12 months to 6 months", "expected": false}
+]

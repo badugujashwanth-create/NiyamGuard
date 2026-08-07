@@ -4,8 +4,9 @@ Release audit refreshed on 2026-08-07 from the canonical `main` branch on Window
 
 | Command | Result | Evidence / notes |
 |---|---|---|
-| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 260 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
+| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 261 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
 | Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
+| `python -m app.evaluation.extraction_benchmark` | Pass | 20/20 frozen synthetic cases; exact candidate/evidence threshold 1.0. This is not a model-quality or legal-authority benchmark. |
 | `npm test` in `frontend` | Pass | 60 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |
 | Playwright product walkthrough | Pass | Current branch landing and reviewer lifecycle were exercised locally; the checked-in walkthrough predates this code-only refresh. |

@@ -17,11 +17,16 @@ def _deterministic_candidates(
         r"Income Certificate validity(?: is)? changed from (\d+) months to (\d+) months\.",
         flags=re.IGNORECASE,
     )
+    mentions = re.findall(
+        r"Income Certificate validity(?: is)? changed",
+        text,
+        flags=re.IGNORECASE,
+    )
     matches = list(pattern.finditer(text))
     # Do not infer a rule from a loose keyword match. One and only one explicit
     # change statement is required so conflicting or incomplete circulars stay
     # in the review queue instead of becoming authoritative candidates.
-    if len(matches) != 1:
+    if len(mentions) != 1 or len(matches) != 1:
         return []
     match = matches[0]
     old_value, new_value = match.groups()

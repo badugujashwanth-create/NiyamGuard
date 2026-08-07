@@ -20,7 +20,7 @@
 - Deployed containers disable the legacy `create_all()` compatibility path; schema changes are owned by Alembic migrations.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 260 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 261 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
@@ -138,7 +138,7 @@ Refresh tokens now rotate atomically and JWT issuer/audience claims are validate
 
 ### P2 — claims and documentation drift
 
-README and test-report claims now reflect 260 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
+README and test-report claims now reflect 261 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
 
 The changelog describes a 1.2.0 candidate, but the public default branch currently has release/tag `v1.1.0`; a v1.2.0 public release is not verified. `docs/access-control.md` also labels the seeded officer account as a reviewer, while the code assigns the `officer` role.
 
@@ -156,7 +156,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 |---|---|
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
-| 260 backend tests | 260 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
+| 261 backend tests | 261 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
 | 60 frontend tests | Current `npm test -- --run` passed 60 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |

@@ -36,6 +36,7 @@ jobs:
       - run: pip-audit
       - run: alembic upgrade head
       - run: python -m compileall -q app
+      - run: python -m app.evaluation.extraction_benchmark
       - run: python -m pytest
 
   frontend:

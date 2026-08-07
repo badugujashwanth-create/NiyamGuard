@@ -86,14 +86,14 @@ npm test --prefix frontend -- --run
 npm run build --prefix frontend
 ```
 
-The repository currently collects **260 backend tests** and **60 frontend tests**. The full backend suite passes in a clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, and the Vite production build is verified. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
+The repository currently collects **261 backend tests** and **60 frontend tests**. The full backend suite passes in a clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, and the Vite production build is verified. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
 
 ## Current limits
 
 - Circulars, people, connected systems, applications, payments, and certificates are synthetic.
 - No real government identity, Gazette, MeeSeva, DigiLocker, eSign, payment, or messaging integration is verified.
 - The current score is descriptive for one synthetic snapshot; it is not a forecast or policy-performance metric.
-- Cross-jurisdiction comparison, complex non-ISO expiry language, a formal hallucination benchmark, and manual assistive-technology testing remain open work.
+- Cross-jurisdiction comparison, complex non-ISO expiry language, a formal model/hallucination benchmark, and manual assistive-technology testing remain open work. A frozen 20-case deterministic extraction benchmark is included for the evidence-backed rule boundary.
 - A deployment blueprint exists, but no owner-verified public backend is currently claimed.
 
 ## Evidence and orientation
