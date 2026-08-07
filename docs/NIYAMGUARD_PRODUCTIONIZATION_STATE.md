@@ -16,7 +16,7 @@
 - Gated deterministic OTP endpoints behind explicit demo mode and removed absolute filesystem paths from ops status.
 - Added STT upload size/format/MIME bounds and guaranteed temporary-file cleanup.
 - Added a ClamAV upload-scanning boundary: local synthetic mode is explicit, while production requires ClamAV and fails closed on scanner unavailability or indeterminate results.
-- Applied the same scan-before-persist boundary to citizen service-document uploads; accepted files are atomically written with restrictive `0600` permissions and scanner failures return a controlled error without leaving a file behind.
+- Applied the same scan-before-persist boundary to citizen service-document uploads; accepted files are atomically written with restrictive `0600` permissions, SHA-256 and scanner status are retained as provenance metadata, and scanner failures return a controlled error without leaving a file behind.
 - Added atomic SHA-256 keyed source-artifact storage with restrictive permissions; APIs expose only a relative artifact key and source provenance metadata. Hosted object-storage durability remains an operational gate.
 - Added TTS text limits, rate limiting, and bounded cache eviction.
 - Added JWT issuer/audience checks and atomic refresh-token rotation.

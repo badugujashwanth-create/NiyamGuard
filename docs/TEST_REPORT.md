@@ -6,7 +6,7 @@ Release audit refreshed on 2026-08-07 from the canonical `main` branch on Window
 |---|---|---|
 | `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 276 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
 | Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
-| Upload malware boundary | Pass | Circular and citizen service-document uploads scan before persistence; synthetic mode reports an explicit skipped scan, while production configuration requires ClamAV and returns 503 when it cannot produce a trustworthy result. |
+| Upload malware boundary | Pass | Circular and citizen service-document uploads scan before persistence and retain SHA-256/scanner provenance; synthetic mode reports an explicit skipped scan, while production configuration requires ClamAV and returns 503 when it cannot produce a trustworthy result. |
 | `python -m app.evaluation.extraction_benchmark` | Pass | 20/20 frozen synthetic cases; exact candidate/evidence threshold 1.0. This is not a model-quality or legal-authority benchmark. |
 | `npm test` in `frontend` | Pass | 61 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |

@@ -57,6 +57,8 @@ class CitizenDocument(BaseModel):
     storage_path: str
     mime_type: str
     file_size: int
+    source_sha256: str | None = None
+    malware_scan_status: str | None = None
     created_at: str
 
 
@@ -125,6 +127,8 @@ class ApplicationDocument(BaseModel):
     storage_path: str
     mime_type: str
     file_size: int
+    source_sha256: str | None = None
+    malware_scan_status: str | None = None
     verification_status: DocumentVerificationStatus = "pending"
     uploaded_at: str
 

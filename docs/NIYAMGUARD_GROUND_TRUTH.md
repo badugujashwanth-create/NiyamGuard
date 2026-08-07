@@ -17,7 +17,7 @@
 - `/api/ops/status` and dataset mutation endpoints now require authenticated roles; OTP endpoints are demo-gated; ops output no longer exposes host paths.
 - STT/TTS requests are bounded and rate-limited; STT temporary files are removed; TTS cache eviction is bounded.
 - Accepted circular uploads are stored after scanning and parsing under an opaque SHA-256 key with source filename/type/size/hash provenance; hosted object-storage durability is not yet verified.
-- Citizen service-document uploads now pass through the configured malware scanner before atomic restrictive-permission storage; ClamAV unavailability fails closed, while synthetic mode remains explicitly marked as skipped.
+- Citizen service-document uploads now pass through the configured malware scanner before atomic restrictive-permission storage; SHA-256 and scanner status are retained as metadata, ClamAV unavailability fails closed, and synthetic mode remains explicitly marked as skipped.
 - Refresh tokens rotate atomically, JWT issuer/audience claims are validated, session records are created and linked, and in-process audit appends are serialized.
 - Production rate limiting now uses database-backed fixed-window buckets; the in-memory limiter remains an explicit local/demo fallback.
 - Serialized policy-store writes carry a database revision; stale replacements are rejected with a retryable conflict instead of silently losing another update.

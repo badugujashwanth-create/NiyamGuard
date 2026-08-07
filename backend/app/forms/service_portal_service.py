@@ -513,6 +513,8 @@ async def upload_application_document(
         storage_path=str(destination.relative_to(BASE_DIR)),
         mime_type=content_type,
         file_size=len(content),
+        source_sha256=hashlib.sha256(content).hexdigest(),
+        malware_scan_status=scan_result.get("status"),
         verification_status="pending",
         uploaded_at=now_iso(),
     )
@@ -525,6 +527,8 @@ async def upload_application_document(
         storage_path=document.storage_path,
         mime_type=document.mime_type,
         file_size=document.file_size,
+        source_sha256=document.source_sha256,
+        malware_scan_status=document.malware_scan_status,
         created_at=document.uploaded_at,
     )
     store.citizen_documents.append(citizen_doc)

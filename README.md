@@ -95,6 +95,7 @@ The repository currently collects **276 backend tests** and **61 frontend tests*
 - The current score is descriptive for one synthetic snapshot; it is not a forecast or policy-performance metric.
 - Cross-jurisdiction comparison, complex non-ISO expiry language, a formal model/hallucination benchmark, and manual assistive-technology testing remain open work. A frozen 20-case deterministic extraction benchmark is included for the evidence-backed rule boundary.
 - Local synthetic uploads explicitly report that malware scanning is skipped; production configuration requires ClamAV and fails closed when it is not configured or returns an indeterminate result.
+- Citizen service-document artifacts are stored atomically with restrictive permissions and retain SHA-256/scanner-status provenance; durable object storage and ClamAV signature operations remain deployment gates.
 - Production browser sessions require same-origin secure HttpOnly cookies (`AUTH_COOKIE_MODE=true`, `AUTH_COOKIE_SECURE=true`); bearer tokens in localStorage are retained only for the local synthetic demo path.
 - A deployment blueprint exists, but no owner-verified public backend is currently claimed.
 

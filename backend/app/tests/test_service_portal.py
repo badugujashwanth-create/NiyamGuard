@@ -68,6 +68,12 @@ def test_application_upload_payment_review_certificate_flow(client, citizen_head
     assert invalid_upload.status_code == 400
 
     _upload_required_docs(client, citizen_headers, application["id"])
+    uploaded_documents = client.get(
+        f"/api/applications/{application['id']}/documents", headers=citizen_headers
+    )
+    assert uploaded_documents.status_code == 200
+    assert all(item["source_sha256"] for item in uploaded_documents.json()["documents"])
+    assert all(item["malware_scan_status"] == "skipped" for item in uploaded_documents.json()["documents"])
     submitted = client.post(f"/api/applications/{application['id']}/submit", headers=citizen_headers)
     assert submitted.status_code == 200
     assert submitted.json()["application"]["status"] == "payment_pending"
