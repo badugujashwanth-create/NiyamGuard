@@ -9,7 +9,19 @@ from app.config import settings
 
 
 REQUIRED_RUNTIME_TABLES = frozenset(
-    {"users", "refresh_tokens", "audit_events", "policy_records", "policy_store_revisions", "rate_limit_buckets"}
+    {
+        "users",
+        "refresh_tokens",
+        "audit_events",
+        "policy_records",
+        "policy_store_revisions",
+        "rate_limit_buckets",
+        "circular_documents",
+        "policy_rule_candidates",
+        "policy_rule_versions",
+        "connected_system_snapshots",
+        "compliance_findings",
+    }
 )
 
 

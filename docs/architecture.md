@@ -102,7 +102,7 @@ Official behavior comes from deterministic verified rules and compliance service
 
 ## Storage
 
-Local development defaults to SQLite and JSON-backed demo store helpers. PostgreSQL is supported through `DATABASE_URL` for production-style deployments. The project should not mix multiple authoritative stores for the same concern in one flow; seeded/demo JSON exists to support local scenarios.
+Local development defaults to SQLite and compatibility JSON-backed demo store helpers. PostgreSQL is supported through `DATABASE_URL` for production-style deployments. The five flagship policy-drift collections use typed relational tables; the wider seeded/demo JSON remains a compatibility mirror and is not a second production authority.
 
 ## Sandbox Boundary
 

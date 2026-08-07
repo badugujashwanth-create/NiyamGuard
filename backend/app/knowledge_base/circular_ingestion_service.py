@@ -48,11 +48,15 @@ def extract_temporal_metadata(
 
 
 def list_documents() -> list[CircularDocument]:
-    return read_store().circular_documents
+    # Legacy ``Circular`` rows are mirrored into the normalized table so
+    # historical verified rules keep valid foreign keys. They are not upload
+    # artifacts and must not appear as duplicate ingestion results in the
+    # public circular-document API.
+    return [item for item in read_store().circular_documents if item.source_id != "legacy_demo"]
 
 
 def get_document(circular_id: str) -> CircularDocument | None:
-    return next((item for item in read_store().circular_documents if item.id == circular_id), None)
+    return next((item for item in list_documents() if item.id == circular_id), None)
 
 
 def ingest_circular(payload: dict) -> tuple[CircularDocument, bool]:
