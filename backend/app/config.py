@@ -51,6 +51,10 @@ class Settings:
     app_name: str = os.getenv("APP_NAME", "NiyamGuard AI")
     app_env: str = os.getenv("APP_ENV", "development")
     debug: bool = _bool_env("DEBUG", True)
+    auto_create_tables: bool = _bool_env(
+        "AUTO_CREATE_TABLES",
+        app_env.strip().lower() not in {"production", "prod", "staging"},
+    )
 
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./niyamguard.db")
 
@@ -165,6 +169,12 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
         raise RuntimeError("DEBUG must be false in production.")
     if candidate.demo_mode:
         raise RuntimeError("DEMO_MODE must be false in production.")
+    cors_origins = getattr(candidate, "cors_origins", [])
+    if "*" in cors_origins:
+        raise RuntimeError("CORS_ORIGINS must list explicit origins when credentials are enabled.")
+    trusted_hosts = getattr(candidate, "trusted_hosts", [])
+    if not trusted_hosts or "*" in trusted_hosts:
+        raise RuntimeError("TRUSTED_HOSTS must list explicit hosts in production.")
 
 APP_NAME = settings.app_name
 APP_VERSION = "1.1.0"

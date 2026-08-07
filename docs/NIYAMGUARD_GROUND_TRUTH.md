@@ -16,6 +16,8 @@
 - STT/TTS requests are bounded and rate-limited; STT temporary files are removed; TTS cache eviction is bounded.
 - Refresh tokens rotate atomically, JWT issuer/audience claims are validated, and in-process audit appends are serialized.
 - Container entrypoints run Alembic migrations and drop root privileges.
+- Deployed containers disable the legacy `create_all()` compatibility path; schema changes are owned by Alembic migrations.
+- Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
 - Current verification: 250 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
@@ -119,7 +121,7 @@ Both container entrypoints now run `alembic upgrade head` before starting Uvicor
 
 Most policy, rule, conflict, impact, review, and eligibility records are serialized into generic JSON payload rows. This preserves the demo but does not yet provide the relational foreign keys, constraints, indexes, optimistic locking, and transaction boundaries required for a production-grade multi-user policy system.
 
-Audit appends now read and write in one session under an in-process lock, and verification orders by timestamp plus event id. A database-backed sequence/advisory lock is still required for multi-worker pilot deployment.
+Audit appends now read and write in one session under a process lock; PostgreSQL workers also take a transaction-scoped advisory lock, and verification orders by timestamp plus event id. A durable external archival/retention policy remains a pilot gate.
 
 ### P2 — ingestion and extraction boundaries
 

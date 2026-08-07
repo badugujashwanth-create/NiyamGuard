@@ -33,8 +33,33 @@ def test_production_accepts_hardened_runtime_settings() -> None:
             secret_key="a-secure-production-secret-with-32-plus-chars",
             debug=False,
             demo_mode=False,
+            cors_origins=["https://example.gov"],
+            trusted_hosts=["api.example.gov"],
         )
     )
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"cors_origins": ["*"]},
+        {"trusted_hosts": ["*"]},
+        {"trusted_hosts": []},
+    ],
+)
+def test_production_rejects_wildcard_or_empty_network_boundaries(overrides: dict[str, list[str]]) -> None:
+    values = {
+        "app_env": "production",
+        "secret_key": "a-secure-production-secret-with-32-plus-chars",
+        "debug": False,
+        "demo_mode": False,
+        "cors_origins": ["https://example.gov"],
+        "trusted_hosts": ["api.example.gov"],
+    }
+    values.update(overrides)
+    candidate = SimpleNamespace(**values)
+    with pytest.raises(RuntimeError):
+        validate_runtime_settings(candidate)
 
 
 @pytest.mark.parametrize(

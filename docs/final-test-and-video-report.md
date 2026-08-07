@@ -1,8 +1,8 @@
 # Final test and video report
 
-Date: 2026-07-19
+Date: 2026-08-07 (reconciled against current `main`)
 
-Branch: `pilot-readiness-2026`
+Branch: `main`
 
 ## Verified status
 
@@ -10,16 +10,16 @@ NiyamGuard is a portfolio-ready synthetic sandbox. It is not an official governm
 
 | Check | Result | Evidence |
 |---|---|---|
-| Backend suite | Pass | 243 tests; 2 known framework deprecation warnings |
+| Backend suite | Pass | 250 tests in the clean local gate with third-party plugin autoload disabled |
 | Frontend suite | Pass | 60 tests across 3 files |
 | Frontend build | Pass | Vite production bundle generated |
-| Product simulation | Pass | Playwright completed the real browser flow and recording |
+| Product simulation | Pass | Playwright completed the real browser flow locally; the checked-in recording predates this code-only refresh |
 | Final video | Pass | 337.408 seconds, 1280×720, VP9, Opus narration |
-| Full-stack container | Pass | Same-origin SPA/API runtime, health endpoint, deep route, and API 404 verified |
+| Full-stack container | Not verified | Docker daemon unavailable in the current environment |
 | Captions | Pass | `docs/demo/demo-captions.vtt` |
 | Production npm audit | Pass | 0 known production dependency vulnerabilities |
 | Backend dependency audit | Pass | No known vulnerabilities in the installed environment |
-| Secret scans | Pass | Gitleaks current tree and audited Git history clean |
+| Secret scans | Not run locally | Gitleaks CI job is configured, but the binary was unavailable in this environment |
 
 ## Demonstrated flow
 

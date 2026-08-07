@@ -54,7 +54,7 @@ Demo identities and credentials are synthetic. The project does not submit real 
 
 ## 11. Testing strategy
 
-The release candidate passes 243 backend tests and 60 frontend tests. Coverage includes API behavior, production configuration boundaries, demo-route isolation, deployment URL normalization, policy workflows, evidence-derived readiness, policy lineage, permissions, service logic, and portal behavior. CI runs both suites, dependency/security checks, and the frontend production build.
+The current `main` commit passes 250 backend tests and 60 frontend tests in the clean local gate. Coverage includes API behavior, production configuration boundaries, demo-route isolation, deployment URL normalization, policy workflows, evidence-derived readiness, policy lineage, permissions, service logic, and portal behavior. CI runs both suites, dependency/security checks, and the frontend production build.
 
 ## 12. Performance considerations
 
@@ -69,7 +69,7 @@ The current focus is deterministic pilot behavior rather than scale benchmarks. 
 
 ## 14. Results demonstrated
 
-The repository demonstrates a working policy lifecycle, two role-oriented interfaces, evidence-derived compliance and department readiness, policy lineage, searchable rule-to-system relationships, source-aware citizen guidance, an audit trail, 243 backend plus 60 frontend tests (303 total), a production frontend build, a verified full-stack container, and a 5:37 narrated, captioned sandbox walkthrough.
+The repository demonstrates a working policy lifecycle, two role-oriented interfaces, evidence-derived compliance and department readiness, policy lineage, searchable rule-to-system relationships, source-aware citizen guidance, an audit trail, 250 backend plus 60 frontend tests (310 total), and a production frontend build. The repository includes a 5:37 narrated, captioned sandbox walkthrough; the full-stack Docker image remains unverified locally because the Docker daemon was unavailable.
 
 ## 15. What the developer learned
 

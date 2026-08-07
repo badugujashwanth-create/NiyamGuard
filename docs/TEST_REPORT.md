@@ -8,13 +8,13 @@ Release audit refreshed on 2026-08-07 from the canonical `main` branch on Window
 | Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
 | `npm test` in `frontend` | Pass | 60 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |
-| Playwright product walkthrough | Pass | Real browser simulation completed and recorded end to end |
+| Playwright product walkthrough | Pass | Current branch landing and reviewer lifecycle were exercised locally; the checked-in walkthrough predates this code-only refresh. |
 | Demo media acceptance | Pass | 337.408 seconds, 1280×720, VP9 video, Opus audio, captions present, 11 reviewed frames |
-| Full-stack Docker image | Pass | React SPA and live API served on one origin; deep route 200; missing API 404 |
+| Full-stack Docker image | Not verified | Docker daemon was unavailable in the current Windows environment; the Dockerfile runs migrations before Uvicorn and remains CI/deployment evidence only. |
 | Render Blueprint schema | Pass | Validated against the current official Render schema |
 | `npm audit --omit=dev` | Pass | 0 production dependency vulnerabilities |
 | installed backend `pip-audit` | Pass | No known vulnerabilities after the Edge TTS migration |
-| Gitleaks current tree and history | Pass | No leaks detected in the audited Git scope |
+| Gitleaks current tree and history | Not run locally | The Gitleaks CI job is configured; the binary was unavailable in this environment, so no local scan result is claimed. |
 
 External identity, payment, government, messaging, and Ollama services were not treated as verified production integrations. The automated tests use local, mocked, sandboxed, or synthetic boundaries.
 

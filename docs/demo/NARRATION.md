@@ -20,6 +20,6 @@ Policy lineage connects each immutable version to its source circular, previous 
 
 The audit page shows how important sandbox actions remain reviewable by actor and event.
 
-The completion build is verified by two hundred forty-two backend tests, sixty frontend tests, the frontend production build, dependency checks, and secret scans. Those checks support a strong local sandbox claim, not production or government readiness. Real deployment would still require authorized identity, payment, messaging, official APIs, managed secrets, privacy and accessibility reviews, monitoring, legal approval, and department sign-off.
+The current `main` build is verified by two hundred fifty backend tests, sixty frontend tests, the frontend production build, and dependency checks. The Gitleaks CI job is configured but was not run locally in this environment. These checks support a strong local sandbox claim, not production or government readiness. Real deployment would still require authorized identity, payment, messaging, official APIs, managed secrets, privacy and accessibility reviews, monitoring, legal approval, and department sign-off.
 
 NiyamGuard demonstrates an evidence-led rule-to-service architecture: human approval before publication, deterministic verified sources before model explanation, explicit sandbox mutations, citizen-facing provenance, and an audit trail. The value is in making policy drift visible and testable without pretending that the prototype already operates public infrastructure.

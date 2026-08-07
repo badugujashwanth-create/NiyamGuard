@@ -45,12 +45,13 @@ def import_database_models() -> None:
 
 def init_db() -> None:
     import_database_models()
-    try:
-        Base.metadata.create_all(bind=engine)
-    except OperationalError as exc:
-        if "already exists" not in str(exc).lower():
-            raise
-    _ensure_runtime_columns()
+    if settings.auto_create_tables:
+        try:
+            Base.metadata.create_all(bind=engine)
+        except OperationalError as exc:
+            if "already exists" not in str(exc).lower():
+                raise
+        _ensure_runtime_columns()
 
 
 def _ensure_runtime_columns() -> None:

@@ -15,8 +15,10 @@
 - Added STT upload size/format/MIME bounds and guaranteed temporary-file cleanup.
 - Added TTS text limits, rate limiting, and bounded cache eviction.
 - Added JWT issuer/audience checks and atomic refresh-token rotation.
-- Serialized in-process audit appends and made chain verification ordering deterministic.
+- Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
 - Added Alembic execution to both container entrypoints and switched containers to a non-root runtime user.
+- Made migration ownership explicit: deployed containers set `AUTO_CREATE_TABLES=false`, while local/test environments may opt into the compatibility fallback.
+- Added production fail-closed checks for credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - Refocused the landing screen on the GO-138 policy-drift incident, source evidence, impact chain, and reviewer/citizen workflow choices.
 - Added visible focus treatment and reduced-motion handling; captured desktop/mobile Product Design evidence.
 
@@ -39,11 +41,10 @@
 
 1. Run the updated containers against a fresh PostgreSQL database and verify `alembic upgrade head`, health, readiness, and the full policy lifecycle.
 2. Confirm the Render service owner, database, CORS/trusted-host values, and public synthetic-sandbox intent before publishing a new release.
-3. Add a database-backed audit append lock/sequence before any multi-worker pilot deployment; the current lock protects one application process.
-4. Replace generic JSON policy storage with normalized relational records and foreign-key/optimistic-lock constraints for a true pilot.
-5. Add quarantine/malware scanning and robust PDF/OCR processing before accepting real government documents.
-6. Complete keyboard/screen-reader/contrast/reduced-motion testing with assistive technology; screenshots alone do not establish WCAG conformance.
-7. Review owner/legal approval for licensing and credential policy; no license is intentionally published.
+3. Replace generic JSON policy storage with normalized relational records and foreign-key/optimistic-lock constraints for a true pilot.
+4. Add quarantine/malware scanning and robust PDF/OCR processing before accepting real government documents.
+5. Complete keyboard/screen-reader/contrast/reduced-motion testing with assistive technology; screenshots alone do not establish WCAG conformance.
+6. Review owner/legal approval for licensing and credential policy; no license is intentionally published.
 
 ## Honest public boundary
 

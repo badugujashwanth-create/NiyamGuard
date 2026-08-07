@@ -5,7 +5,7 @@ import json
 import threading
 from uuid import uuid4
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
 
 from app.database import SessionLocal, init_db
 from app.models.audit_models import AuditEventRecord
@@ -77,9 +77,14 @@ class AuditRepository:
         # Keep the read of the tip and the append in one critical section. This
         # prevents two concurrent requests in the same application process from
         # both selecting the same previous hash and silently forking the chain.
-        # A multi-worker deployment must still use a single writer or a database
-        # advisory-lock layer before it is considered pilot-ready.
+        # SQLite uses the process lock; PostgreSQL additionally takes a
+        # transaction-scoped advisory lock so separate workers share one chain.
         with _append_lock, SessionLocal() as session:
+            if session.get_bind().dialect.name == "postgresql":
+                session.execute(
+                    text("SELECT pg_advisory_xact_lock(hashtext(:lock_key))"),
+                    {"lock_key": "niyamguard.audit.chain"},
+                )
             previous_hash = (
                 session.scalars(
                     select(AuditEventRecord.current_hash)

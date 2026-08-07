@@ -21,6 +21,8 @@ services:
         fromDatabase:
           name: niyamguard-db-jashwanth
           property: connectionString
+      - key: AUTO_CREATE_TABLES
+        value: "false"
       - key: TRUSTED_HOSTS
         value: "*.onrender.com"
       - key: CORS_ORIGINS
