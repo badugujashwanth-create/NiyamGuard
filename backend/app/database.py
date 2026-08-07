@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from app.config import settings
 
 
-REQUIRED_RUNTIME_TABLES = frozenset({"users", "refresh_tokens", "audit_events", "policy_records"})
+REQUIRED_RUNTIME_TABLES = frozenset({"users", "refresh_tokens", "audit_events", "policy_records", "rate_limit_buckets"})
 
 
 class Base(DeclarativeBase):
@@ -44,6 +44,7 @@ def import_database_models() -> None:
     import app.models.auth_models  # noqa: F401
     import app.models.database_models  # noqa: F401
     import app.models.dataset_models  # noqa: F401
+    import app.models.rate_limit_models  # noqa: F401
 
 
 def init_db() -> None:

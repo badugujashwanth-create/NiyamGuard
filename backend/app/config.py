@@ -90,6 +90,7 @@ class Settings:
 
     rate_limit_enabled: bool = _bool_env("RATE_LIMIT_ENABLED", True)
     rate_limit_per_minute: int = _int_env("RATE_LIMIT_PER_MINUTE", 60)
+    rate_limit_backend: str = os.getenv("RATE_LIMIT_BACKEND", "memory").strip().lower() or "memory"
 
     # Demo endpoints and seeded identities are opt-in.  A fresh deployment must
     # not expose synthetic credentials or mutation-only sandbox routes by
@@ -205,6 +206,8 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
         raise RuntimeError("Production requires LEGACY_FILE_STORE_ENABLED=false; authoritative state must come from the database.")
     if not getattr(candidate, "session_records_required", False):
         raise RuntimeError("Production requires SESSION_RECORDS_REQUIRED=true for revocable access sessions.")
+    if getattr(candidate, "rate_limit_backend", "memory") != "database":
+        raise RuntimeError("Production requires RATE_LIMIT_BACKEND=database for cross-worker request limiting.")
 
 APP_NAME = settings.app_name
 APP_VERSION = "1.1.0"

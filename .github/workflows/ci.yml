@@ -68,6 +68,7 @@ jobs:
       AUTH_COOKIE_SECURE: "true"
       AUTH_COOKIE_SAMESITE: strict
       SESSION_RECORDS_REQUIRED: "true"
+      RATE_LIMIT_BACKEND: database
       MALWARE_SCAN_MODE: clamav
       SECRET_KEY: ci-production-secret-key-with-more-than-32-characters
       DATABASE_URL: postgresql+psycopg://niyamguard:niyamguard@127.0.0.1:5432/niyamguard

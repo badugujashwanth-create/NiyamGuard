@@ -4,6 +4,7 @@ from time import monotonic
 from fastapi import HTTPException, Request, status
 
 from app.config import settings
+from app.repositories.rate_limit_repository import rate_limit_repository
 
 _attempts: dict[str, deque[float]] = defaultdict(deque)
 
@@ -12,6 +13,13 @@ def rate_limit(request: Request) -> None:
     if not settings.rate_limit_enabled:
         return
     key = request.client.host if request.client else "unknown"
+    if settings.rate_limit_backend == "database":
+        if not rate_limit_repository.consume(key, settings.rate_limit_per_minute):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many requests. Please try again soon.",
+            )
+        return
     now = monotonic()
     window = _attempts[key]
     while window and now - window[0] > 60:
