@@ -2,7 +2,7 @@
 
 **State date:** 2026-08-08
 **Canonical branch:** `main`
-**Latest local change:** production-only database writes and demo-credential build boundaries
+**Latest local change:** hardened-environment database-scheme validation and evidence reconciliation
 **Public release:** `v1.1.0` (a new release is not claimed until the changes are committed and published)
 **Classification:** synthetic policy-drift MVP; production-boundary work in progress
 
@@ -13,6 +13,7 @@
 - Added a frozen 20-case deterministic extraction benchmark covering valid, ambiguous, and unsupported wording (20/20 locally).
 - Made `DEMO_MODE` and startup demo seeding opt-in; production validation still rejects demo mode, debug mode, and placeholder secrets.
 - Hardened `APP_ENV=staging` to use the same fail-closed controls as production, and renamed the synthetic Render/local-container environment to `APP_ENV=demo`; hardened environments now reject SQLite `DATABASE_URL` values.
+- Hardened database validation now rejects SQLite driver variants and every non-PostgreSQL scheme before startup.
 - Protected operational status and dataset import/RAG-build mutations with JWT role checks.
 - Gated deterministic OTP endpoints behind explicit demo mode and removed absolute filesystem paths from ops status.
 - Added STT upload size/format/MIME bounds and guaranteed temporary-file cleanup.
@@ -45,7 +46,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 279 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 281 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 61 tests in default bearer-demo mode and 61 tests with `VITE_AUTH_COOKIE_MODE=true` |
 | Frontend production build | Pass: Vite build |
@@ -60,6 +61,7 @@
 | Isolated policy-drift lifecycle | Pass: 11/11 steps, exact GO-138 evidence, four propagation tasks, one changed eligibility fixture, and typed publication/knowledge/compliance/propagation rows |
 | Production frontend credential boundary | Pass: default Vite production bundle contains no synthetic demo credential literals |
 | Hardened environment boundary | Pass: staging rejects demo mode and SQLite; synthetic deployment is explicitly labeled `APP_ENV=demo` |
+| Database scheme boundary | Pass: hardened startup rejects SQLite driver variants and non-PostgreSQL URLs |
 
 ## Remaining blockers
 

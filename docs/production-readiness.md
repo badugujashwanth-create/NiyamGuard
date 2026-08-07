@@ -1,12 +1,12 @@
 # NiyamGuard Production Readiness
 
-## Current MVP State
+## Current verified state
 
 - Backend: FastAPI application with citizen assistant routes, form catalog, public verified-rule API, admin dashboard APIs, compliance drift detection, cascade tracing, priority scoring, conflict detection, and report export.
-- Storage before hardening: JSON files under `backend/app/storage`, with `platform_demo.json` acting as the government-core demo store.
+- Storage: SQLAlchemy is authoritative for the typed policy-review core and auth/audit records; the JSON mirror remains local/demo compatibility only and is disabled in hardened environments.
 - Frontend: Vite/React app with public citizen portal, `/demo` presentation dashboard, and `/admin` government dashboard.
 - Demo seed: GO-138 changes Income Certificate validity to 6 months while connected systems still show the earlier 12-month rule.
-- Baseline on `codex/production-hardening`: backend `pytest` had 139 passed and 1 existing Windows session-storage failure; frontend `npm test` had 34 passed; frontend `npm run build` passed.
+- Current clean local gate: 281 backend tests, 61 frontend tests, the deterministic 20-case extraction benchmark, the Vite production build, `npm audit --omit=dev`, `pip-audit`, and compile checks pass. Docker and hosted PostgreSQL/Render execution remain unverified external gates.
 
 ## Compatibility Rules
 
@@ -43,14 +43,14 @@
 - [x] Audit logging added.
 - [x] Health/readiness endpoints added.
 - [x] Report filters and metadata exports added.
-- [ ] Frontend auth/API refactor complete.
-- [ ] Docker setup complete.
-- [ ] CI workflow complete.
-- [ ] Final backend tests passing.
-- [ ] Final frontend tests/build passing.
+- [x] Frontend auth/API refactor complete for the current synthetic scope.
+- [x] Docker setup and migration entrypoints are defined.
+- [x] CI workflow includes backend, fresh PostgreSQL migration, frontend, dependency, and secret checks.
+- [x] Final local backend tests passing.
+- [x] Final local frontend tests/build passing.
 - [ ] Final commit pushed.
 
 ## Known Production Limitations
 
-- The app can auto-create tables for local/demo use. Alembic migration files are included for production migration discipline, but deployment should run migrations explicitly.
+- The app can auto-create tables for local/demo use. Hardened deployments disable that compatibility path and run Alembic explicitly before startup.
 - Live MeeSeva integration, official government APIs, production secrets manager, cloud deployment, and a full independent security audit remain future production steps.

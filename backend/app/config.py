@@ -218,8 +218,11 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
     if getattr(candidate, "rate_limit_backend", "memory") != "database":
         raise RuntimeError("Production requires RATE_LIMIT_BACKEND=database for cross-worker request limiting.")
     database_url = str(getattr(candidate, "database_url", "")).strip().lower()
-    if not database_url or database_url.startswith("sqlite:"):
+    scheme = database_url.split(":", 1)[0] if ":" in database_url else ""
+    if not database_url or scheme == "sqlite" or scheme.startswith("sqlite+"):
         raise RuntimeError("Hardened environments require a PostgreSQL DATABASE_URL; SQLite is local/demo only.")
+    if scheme not in {"postgres", "postgresql"} and not scheme.startswith("postgresql+"):
+        raise RuntimeError("Hardened environments require a PostgreSQL DATABASE_URL.")
 
 APP_NAME = settings.app_name
 APP_VERSION = "1.1.0"
