@@ -91,6 +91,57 @@ def test_ambiguous_rule_extraction_is_rejected(client, reviewer_headers) -> None
     assert "unambiguous" in extraction.json()["error"]["message"].lower()
 
 
+def test_fresh_circular_vertical_slice_preserves_lineage_and_finds_drift(client, reviewer_headers) -> None:
+    upload = client.post(
+        "/api/circulars/upload",
+        headers=reviewer_headers,
+        json={
+            "circular_number": "SYN-VERTICAL-1",
+            "title": "Fresh validity amendment",
+            "department": "Revenue",
+            "published_date": "2026-07-22",
+            "effective_date": "2026-08-01",
+            "raw_text": (
+                "Income Certificate validity changed from 12 months to 6 months. "
+                "Effective 2026-08-01."
+            ),
+        },
+    )
+    assert upload.status_code == 200
+    circular_id = upload.json()["document"]["id"]
+
+    extracted = client.post(
+        f"/api/circulars/{circular_id}/extract-rules",
+        headers=reviewer_headers,
+    )
+    assert extracted.status_code == 200
+    candidate = extracted.json()["candidates"][0]
+    assert candidate["source_excerpt"] == "Income Certificate validity changed from 12 months to 6 months."
+
+    approved = client.post(
+        f"/api/rule-candidates/{candidate['id']}/approve",
+        headers=reviewer_headers,
+        json={"notes": "Evidence and effective date reviewed."},
+    )
+    assert approved.status_code == 200
+    assert approved.json()["workflow"]["reviewer_user_id"]
+
+    published = client.post(
+        f"/api/policy-updates/{candidate['id']}/publish",
+        headers=reviewer_headers,
+        json={"notes": "Publish reviewed synthetic rule."},
+    )
+    assert published.status_code == 200
+    body = published.json()
+    assert body["rule_version"]["source_circular_id"] == circular_id
+    assert body["propagation_plan"]["task_ids"]
+    assert body["compliance_run"]["finding_count"] >= 1
+
+    versions = client.get("/api/policy-updates/rules/rule_001/versions", headers=reviewer_headers)
+    assert versions.status_code == 200
+    assert len(versions.json()["versions"]) >= 3
+
+
 def test_circular_upload_rejects_mime_mismatch_and_oversized_file(client, reviewer_headers) -> None:
     data = {
         "circular_number": "SYN-BAD",

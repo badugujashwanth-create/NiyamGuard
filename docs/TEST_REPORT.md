@@ -4,7 +4,7 @@ Release audit refreshed on 2026-08-07 from the canonical `main` branch on Window
 
 | Command | Result | Evidence / notes |
 |---|---|---|
-| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 259 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
+| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 260 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
 | Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
 | `npm test` in `frontend` | Pass | 60 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |

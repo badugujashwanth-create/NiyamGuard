@@ -28,7 +28,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 259 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 260 tests execute successfully with third-party pytest plugin autoload disabled |
 | Frontend tests | Pass: 60 tests |
 | Frontend production build | Pass: Vite build |
 | `npm audit --omit=dev` | Pass: 0 vulnerabilities |

@@ -86,7 +86,7 @@ npm test --prefix frontend -- --run
 npm run build --prefix frontend
 ```
 
-The repository currently collects **259 backend tests** and **60 frontend tests**. The full backend suite passes in a clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, and the Vite production build is verified. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
+The repository currently collects **260 backend tests** and **60 frontend tests**. The full backend suite passes in a clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, and the Vite production build is verified. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
 
 ## Current limits
 
