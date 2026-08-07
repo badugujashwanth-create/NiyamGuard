@@ -86,7 +86,7 @@ npm test --prefix frontend -- --run
 npm run build --prefix frontend
 ```
 
-The repository currently collects **281 backend tests** and **61 frontend tests**. The full backend suite passes in a clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, and the Vite production build is verified. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
+The repository currently collects **298 backend tests** and **61 frontend tests**. The full backend suite passes in an isolated clean environment (use `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` when the host injects incompatible third-party pytest plugins), all frontend tests pass, the Vite production build is verified, and the no-video core Playwright accessibility regression passes locally. The useful detail is in [engineering decisions](docs/ENGINEERING_DECISIONS.md), not the test count alone.
 
 ## Current limits
 
@@ -95,9 +95,15 @@ The repository currently collects **281 backend tests** and **61 frontend tests*
 - The current score is descriptive for one synthetic snapshot; it is not a forecast or policy-performance metric.
 - Cross-jurisdiction comparison, complex non-ISO expiry language, a formal model/hallucination benchmark, and manual assistive-technology testing remain open work. A frozen 20-case deterministic extraction benchmark is included for the evidence-backed rule boundary.
 - Local synthetic uploads explicitly report that malware scanning is skipped; production configuration requires ClamAV and fails closed when it is not configured or returns an indeterminate result.
-- Citizen service-document artifacts are stored atomically with restrictive permissions and retain SHA-256/scanner-status provenance; durable object storage and ClamAV signature operations remain deployment gates.
+- Citizen service-document artifacts are stored atomically with restrictive permissions and retain SHA-256/scanner-status provenance; circular documents use immutable originals, separate OCR derivatives, page provenance, and local/S3-compatible object keys. Hosted object-storage durability and ClamAV signature operations remain deployment gates.
 - Production browser sessions require same-origin secure HttpOnly cookies (`AUTH_COOKIE_MODE=true`, `AUTH_COOKIE_SECURE=true`); bearer tokens in localStorage are retained only for the local synthetic demo path.
 - A deployment blueprint exists, but no owner-verified public backend is currently claimed.
+
+## Readiness boundary
+
+**CODE READY:** the local release path includes conditional OCR with native/OCR provenance, local and S3-compatible object-storage backends, fail-closed ClamAV scanning, hardened PostgreSQL/configuration checks, migrations, and the tested synthetic policy-drift lifecycle.
+
+**EXTERNALLY VERIFIED PRODUCTION READY:** not claimed. Hosted PostgreSQL/object storage/ClamAV operations, TLS/cookie playback, penetration testing, formal accessibility certification, legal approval, government UAT, and official integrations still require external verification.
 
 ## Evidence and orientation
 

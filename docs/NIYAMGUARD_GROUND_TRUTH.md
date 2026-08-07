@@ -33,7 +33,7 @@
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - Hardened startup now accepts only PostgreSQL URL schemes and rejects SQLite driver variants or other database dialects before application startup.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 281 backend tests pass with third-party pytest plugin autoload disabled; 61 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 298 backend tests pass with third-party pytest plugin autoload disabled; 61 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, diff, migration, and no-video core browser checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
@@ -139,7 +139,7 @@ Audit appends now read and write in one session under a process lock; PostgreSQL
 
 ### P2 — ingestion and extraction boundaries
 
-Uploads validate extension, declared MIME, size, and a PDF signature, then pass through the configured scanner before atomic persistence. Synthetic mode reports that malware scanning is skipped; production configuration requires ClamAV and fails closed when it is unavailable or indeterminate. ClamAV signatures/quarantine, object-storage durability, a processing queue, timeout state, and robust PDF/OCR remain open. External source sync is implemented only for `local_demo`; non-local sources are not real integrations.
+Uploads validate extension, declared MIME, size, and magic bytes, then pass through the configured scanner before atomic persistence. Synthetic mode reports that malware scanning is skipped; production configuration requires ClamAV and fails closed when it is unavailable or indeterminate. Native PDF extraction, conditional OCR, immutable originals, separate OCR derivatives, page provenance, and local/S3-compatible object storage are implemented; hosted durability, ClamAV signatures/quarantine, and OCR runtime operations remain external gates. External source sync is implemented only for `local_demo`; non-local sources are not real integrations.
 
 Dataset QA/top-k and collection/search limits now have explicit upper bounds. Other domain-specific query costs still need operational monitoring.
 
@@ -151,7 +151,7 @@ Refresh tokens now rotate atomically and JWT issuer/audience claims are validate
 
 ### P2 — claims and documentation drift
 
-README and test-report claims now reflect 281 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
+README and test-report claims now reflect 298 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
 
 The changelog describes a 1.2.0 candidate, but the public default branch currently has release/tag `v1.1.0`; a v1.2.0 public release is not verified. `docs/access-control.md` also labels the seeded officer account as a reviewer, while the code assigns the `officer` role.
 
@@ -169,7 +169,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 |---|---|
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
-| 281 backend tests | 281 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
+| 298 backend tests | 298 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
 | 61 frontend tests | Current `npm test -- --run` passed 61 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |

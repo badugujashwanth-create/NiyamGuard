@@ -349,7 +349,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
+      <aside aria-label="Government core navigation" className="admin-sidebar">
         <div className="admin-brand">
           <span>NG</span>
           <div>
@@ -363,6 +363,7 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
               className={activePage === page.path ? "admin-nav-active" : ""}
               key={page.path}
               onClick={() => navigate(page.path)}
+              aria-current={activePage === page.path ? "page" : undefined}
               type="button"
             >
               {page.label}
@@ -371,11 +372,11 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
         </nav>
       </aside>
 
-      <main className="admin-main">
+      <main aria-labelledby="admin-page-title" className="admin-main">
         <header className="admin-header">
           <div>
             <p className="eyebrow">Verified policy operations</p>
-            <h2>{pages.find((page) => page.path === activePage)?.label || "Dashboard"}</h2>
+            <h2 id="admin-page-title">{pages.find((page) => page.path === activePage)?.label || "Dashboard"}</h2>
           </div>
           <div className="admin-header-actions">
             <div className="admin-user-chip" aria-label="Current user">
@@ -395,8 +396,8 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
         </header>
 
         {error ? <div className="global-error" role="alert">{error}</div> : null}
-        {reportStatus ? <p className="admin-action-status">{reportStatus}</p> : null}
-        {loading ? <p className="admin-loading">Loading government-core demo data...</p> : null}
+        {reportStatus ? <p aria-live="polite" role="status" className="admin-action-status">{reportStatus}</p> : null}
+        {loading ? <p aria-live="polite" role="status" className="admin-loading">Loading government-core demo data...</p> : null}
 
         {!loading && activePage === "/admin" ? (
           <DashboardPage

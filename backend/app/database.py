@@ -106,6 +106,16 @@ def _ensure_runtime_columns() -> None:
             additions.append("ALTER TABLE policy_rule_candidates ADD COLUMN source_start_offset INTEGER")
         if "source_end_offset" not in candidate_columns:
             additions.append("ALTER TABLE policy_rule_candidates ADD COLUMN source_end_offset INTEGER")
+    if "circular_documents" in inspector.get_table_names():
+        document_columns = {column["name"] for column in inspector.get_columns("circular_documents")}
+        if "extraction_source" not in document_columns:
+            additions.append("ALTER TABLE circular_documents ADD COLUMN extraction_source VARCHAR(20) NOT NULL DEFAULT 'NATIVE_TEXT'")
+        if "ocr_used" not in document_columns:
+            additions.append("ALTER TABLE circular_documents ADD COLUMN ocr_used BOOLEAN NOT NULL DEFAULT 0")
+        if "ocr_storage_path" not in document_columns:
+            additions.append("ALTER TABLE circular_documents ADD COLUMN ocr_storage_path VARCHAR(500)")
+        if "page_provenance" not in document_columns:
+            additions.append("ALTER TABLE circular_documents ADD COLUMN page_provenance JSON NOT NULL DEFAULT '[]'")
     if additions:
         with engine.begin() as connection:
             for statement in additions:

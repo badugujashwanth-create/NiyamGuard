@@ -18,9 +18,11 @@ Admin users authenticate through `/api/auth/login`. The backend returns a short-
 - Security headers: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`.
 - CORS and trusted hosts loaded from environment.
 - Rate limiting for sensitive endpoints.
+- Upload validation, magic-byte checks, fail-closed ClamAV scanning, and bounded OCR processing before policy extraction.
+- Original documents and OCR derivatives use separate generated object keys; production configuration requires an S3-compatible backend and never trusts raw filenames as paths.
 - Standard JSON error shape with readable messages and request IDs.
 - Audit logging with previous/current hash values.
 
 ## Production Notes
 
-Use a real `SECRET_KEY`, HTTPS termination, restricted CORS, managed PostgreSQL, centralized logs, a secrets manager, and an external security review before official deployment.
+Use a real `SECRET_KEY`, HTTPS termination, restricted CORS, managed PostgreSQL, an S3-compatible object store, fresh ClamAV signatures/quarantine, OCR runtime dependencies, centralized logs, a secrets manager, and an external security review before official deployment. `/api/health` only proves process liveness; `/api/ready` must be green before accepting documents.

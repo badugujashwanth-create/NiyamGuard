@@ -153,3 +153,16 @@ def test_application_document_upload_fails_closed_when_scanner_is_unavailable(
 
     assert response.status_code == 503
     assert "ClamAV" in response.json()["error"]["message"]
+
+
+def test_application_document_upload_rejects_mismatched_magic_bytes(client, citizen_headers):
+    application = _create_income_application(client, citizen_headers)
+    response = client.post(
+        f"/api/applications/{application['id']}/documents",
+        headers=citizen_headers,
+        data={"document_type": "aadhaar"},
+        files={"file": ("aadhaar.pdf", b"not-a-pdf", "application/pdf")},
+    )
+
+    assert response.status_code == 400
+    assert "signature" in response.json()["error"]["message"].lower()

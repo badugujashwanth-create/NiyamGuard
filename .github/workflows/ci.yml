@@ -70,6 +70,12 @@ jobs:
       SESSION_RECORDS_REQUIRED: "true"
       RATE_LIMIT_BACKEND: database
       MALWARE_SCAN_MODE: clamav
+      OCR_ENABLED: "true"
+      OCR_COMMAND: ocrmypdf
+      OBJECT_STORAGE_BACKEND: s3
+      OBJECT_STORAGE_BUCKET: niyamguard-ci-documents
+      OBJECT_STORAGE_ACCESS_KEY_ID: ci-access-key
+      OBJECT_STORAGE_SECRET_ACCESS_KEY: ci-secret-key
       SECRET_KEY: ci-production-secret-key-with-more-than-32-characters
       DATABASE_URL: postgresql+psycopg://niyamguard:niyamguard@127.0.0.1:5432/niyamguard
       CORS_ORIGINS: https://example.gov

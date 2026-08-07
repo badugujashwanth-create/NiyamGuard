@@ -46,9 +46,26 @@ docker run --rm -p 8000:8000 `
 
 Open `http://127.0.0.1:8000`. The compiled frontend and `/api/*` requests share one origin. The provider health check uses `/api/integration/health`.
 
+## Production-shaped local stack
+
+`docker-compose.production.yml` exercises the hardened path with PostgreSQL, an S3-compatible MinIO bucket, migrations, secure-cookie configuration, ClamAV CLI integration, and OCRmyPDF/Tesseract dependencies in the application image:
+
+```powershell
+docker compose -f docker-compose.production.yml up --build
+```
+
+This is a local integration harness, not a production deployment. It intentionally uses local-only credentials and `AUTH_COOKIE_SECURE=true`, so browser login requires an HTTPS reverse proxy; use `/api/health` for liveness and `/api/ready` for dependency readiness. MinIO persistence, ClamAV signature freshness, TLS, secret rotation, and hosted backups remain external verification gates.
+
 ## Database URLs
 
-Local SQLite uses `sqlite:///./niyamguard.db`. PostgreSQL uses the psycopg 3 form `postgresql+psycopg://user:password@host:5432/niyamguard`. Render's standard `postgresql://` connection string is normalized to that installed driver at runtime.
+Local SQLite uses `sqlite:///./niyamguard.db`. PostgreSQL uses the psycopg 3 form `postgresql+psycopg://user:password@host:5432/niyamguard`. Render's standard `postgresql://` connection string is normalized to that installed driver at runtime. Hardened environments reject SQLite and every non-PostgreSQL scheme.
+
+## Document-processing services
+
+- Native PDF text extraction uses PyMuPDF first; pypdf is retained as a local compatibility fallback.
+- Low-text/scanned PDFs require `OCR_ENABLED=true` and the configured `OCR_COMMAND` (OCRmyPDF). The original object is immutable; an OCR derivative is stored under a separate key with page provenance.
+- Uploads are scanned before persistence. Production requires `MALWARE_SCAN_MODE=clamav`; an unavailable or indeterminate ClamAV result returns an error and never enters processing.
+- Durable deployments require `OBJECT_STORAGE_BACKEND=s3`, a bucket, and provider credentials. Local/demo uses the filesystem backend explicitly.
 
 ## Boundary
 

@@ -4,22 +4,23 @@ Release audit refreshed on 2026-08-08 from the canonical `main` branch on Window
 
 | Command | Result | Evidence / notes |
 |---|---|---|
-| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 281 collected tests execute successfully; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
+| `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD="1"; python -m pytest backend/app/tests -q` | Pass | 298 collected tests execute successfully in an isolated SQLite release gate; the host's injected optional pytest plugins are excluded from this clean-environment gate. |
 | Focused backend correctness/security suites | Pass | Service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime-boundary tests pass. |
-| Upload malware boundary | Pass | Circular and citizen service-document uploads scan before persistence and retain SHA-256/scanner provenance; synthetic mode reports an explicit skipped scan, while production configuration requires ClamAV and returns 503 when it cannot produce a trustworthy result. |
+| Upload/document-processing boundary | Pass | Circular and citizen service-document uploads validate MIME/signatures, scan before persistence, retain SHA-256/scanner provenance, and use conditional native extraction/OCR with immutable originals and separate OCR derivatives; production requires ClamAV and returns 503 when it cannot produce a trustworthy result. |
 | `python -m app.evaluation.extraction_benchmark` | Pass | 20/20 frozen synthetic cases; exact candidate/evidence threshold 1.0. This is not a model-quality or legal-authority benchmark. |
 | `npm test` in `frontend` | Pass | 61 tests passed across 3 files |
 | `npm run build` in `frontend` | Pass | Vite production bundle generated |
-| Playwright product walkthrough | Pass | Current branch landing and reviewer lifecycle were exercised locally; the checked-in walkthrough predates this code-only refresh. |
+| Playwright core accessibility/E2E regression | Pass | A no-video local browser test exercised landing, reviewer lifecycle, live success status, admin login, labelled main landmarks, and active navigation. |
 | Demo media acceptance | Pass | 337.408 seconds, 1280×720, VP9 video, Opus audio, captions present, 11 reviewed frames |
 | Full-stack Docker image | Not verified | Docker daemon was unavailable in the current Windows environment; the Dockerfile runs migrations before Uvicorn and remains CI/deployment evidence only. |
 | Render Blueprint schema | Pass | Validated against the current official Render schema |
 | `npm audit --omit=dev` | Pass | 0 production dependency vulnerabilities |
 | installed backend `pip-audit` | Pass | No known vulnerabilities after the Edge TTS migration |
-| Fresh Alembic migration and normalized seed/load round trip | Pass | SQLite migrations through `20260807_0010`, readiness, review/publication/propagation audit row counts, and candidate evidence columns verified locally; PostgreSQL remains a CI/deployment gate |
+| Fresh Alembic migration and normalized seed/load round trip | Pass | SQLite migrations through `20260808_0011`, including OCR/page-provenance columns, readiness, review/publication/propagation audit row counts, and candidate evidence columns verified locally; PostgreSQL remains a CI/deployment gate |
 | Production frontend credential boundary | Pass | Default Vite production bundle contains no synthetic demo credential literals; the local Compose demo receives them only through explicit demo build arguments |
 | Isolated policy-drift lifecycle | Pass | 11/11 steps completed; exact GO-138 evidence, 4 propagation tasks, 1 changed eligibility fixture, and typed publication/knowledge/compliance/propagation rows verified in SQLite |
 | Gitleaks current tree and history | Not run locally | The Gitleaks CI job is configured; the binary was unavailable in this environment, so no local scan result is claimed. |
+| `docker compose -f docker-compose.production.yml config --quiet` | Pass | Production-shaped PostgreSQL/MinIO/ClamAV/OCR configuration parses; Docker image build is not verified because the local Docker daemon is unavailable. |
 
 External identity, payment, government, messaging, and Ollama services were not treated as verified production integrations. The automated tests use local, mocked, sandboxed, or synthetic boundaries.
 

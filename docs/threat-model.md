@@ -17,6 +17,9 @@
 ## Production Follow-Up
 
 - Add external secrets manager.
+- Keep original and OCR derivative object keys separate; never use uploaded filenames as storage paths.
+- Treat OCR output as untrusted derived text and require source/page provenance before rule review.
+- Fail closed when ClamAV, object storage, or mandatory OCR is unavailable.
 - Add signed audit log export.
 - Add real MFA provider and device binding.
 - Add automated SAST/DAST gates in CI.

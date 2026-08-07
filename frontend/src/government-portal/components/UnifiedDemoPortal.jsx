@@ -190,7 +190,7 @@ function statusTone(status) {
 }
 
 function StatusBadge({ children }) {
-  return <span className={`unified-status unified-status-${statusTone(children)}`}>{children}</span>;
+  return <span aria-label={`Status: ${children}`} className={`unified-status unified-status-${statusTone(children)}`} role="status">{children}</span>;
 }
 
 function stepStatusLabel(status, step) {
@@ -376,7 +376,7 @@ async function handleAskHybrid() {
   }
 
   return (
-    <main className="unified-shell">
+    <main aria-labelledby="government-portal-title" className="unified-shell">
       <section className="unified-banner" role="note">
         NiyamGuard Virtual Government Sandbox - Synthetic pilot testing only. Not an official government portal.
       </section>
@@ -384,7 +384,7 @@ async function handleAskHybrid() {
       <header className="unified-header">
         <div>
           <p className="eyebrow">Government Portal</p>
-          <h1>NiyamGuard Government Portal</h1>
+          <h1 id="government-portal-title">NiyamGuard Government Portal</h1>
           <p>
             Follow one synthetic circular from validated intake through extraction, version
             comparison, conflict and impact analysis, human review, citizen guidance,
@@ -403,7 +403,8 @@ async function handleAskHybrid() {
       </header>
 
       {error ? <div className="global-error" role="alert">{error}</div> : null}
-      {loading ? <p className="demo-loading">Loading portal status...</p> : null}
+      {loading ? <p aria-live="polite" role="status" className="demo-loading">Loading portal status...</p> : null}
+      {testStatus ? <p aria-live="polite" role="status" className="admin-action-status">{testStatus}</p> : null}
 
       <section className="unified-live-strip" aria-label="Live system status">
         <article>

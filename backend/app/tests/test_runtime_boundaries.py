@@ -43,8 +43,53 @@ def test_production_accepts_hardened_runtime_settings() -> None:
             session_records_required=True,
             rate_limit_backend="database",
             database_url="postgresql+psycopg://user:pass@db:5432/niyamguard",
+            object_storage_backend="s3",
+            object_storage_bucket="niyamguard-documents",
+            object_storage_access_key_id="access-key",
+            object_storage_secret_access_key="secret-key",
+            ocr_enabled=True,
+            ocr_command="ocrmypdf",
         )
     )
+
+
+def _complete_hardened_values() -> dict[str, object]:
+    return {
+        "app_env": "production",
+        "secret_key": "a-secure-production-secret-with-32-plus-chars",
+        "debug": False,
+        "demo_mode": False,
+        "cors_origins": ["https://example.gov"],
+        "trusted_hosts": ["api.example.gov"],
+        "malware_scan_mode": "clamav",
+        "auth_cookie_mode": True,
+        "auth_cookie_secure": True,
+        "auth_cookie_samesite": "strict",
+        "legacy_file_store_enabled": False,
+        "session_records_required": True,
+        "rate_limit_backend": "database",
+        "database_url": "postgresql+psycopg://user:pass@db:5432/niyamguard",
+        "object_storage_backend": "s3",
+        "object_storage_bucket": "niyamguard-documents",
+        "object_storage_access_key_id": "access-key",
+        "object_storage_secret_access_key": "secret-key",
+        "ocr_enabled": True,
+        "ocr_command": "ocrmypdf",
+    }
+
+
+def test_production_requires_durable_object_storage() -> None:
+    values = _complete_hardened_values()
+    values["object_storage_backend"] = "local"
+    with pytest.raises(RuntimeError, match="OBJECT_STORAGE_BACKEND"):
+        validate_runtime_settings(SimpleNamespace(**values))
+
+
+def test_production_requires_ocr_capability() -> None:
+    values = _complete_hardened_values()
+    values["ocr_enabled"] = False
+    with pytest.raises(RuntimeError, match="OCR_ENABLED"):
+        validate_runtime_settings(SimpleNamespace(**values))
 
 
 def test_staging_is_hardened_and_rejects_demo_mode() -> None:

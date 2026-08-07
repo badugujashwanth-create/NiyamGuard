@@ -736,6 +736,8 @@ describe("NiyamGuard frontend", () => {
     expect(screen.getByText("High Priority Findings")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Department Readiness" })).toBeInTheDocument();
     expect(screen.getByText("Revenue Department").closest("tr")).toHaveTextContent("At Risk");
+    expect(screen.getByRole("button", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("main", { name: "Dashboard" })).toBeInTheDocument();
   });
 
   it("admin compliance page renders", async () => {

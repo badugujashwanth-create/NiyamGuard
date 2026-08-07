@@ -1,17 +1,25 @@
 from __future__ import annotations
 
-from io import BytesIO
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from pypdf import PdfReader
-from pypdf.errors import PdfReadError
 from pydantic import BaseModel, Field
 
 from app.config import settings
+from app.documents.processing import (
+    DocumentProcessingError,
+    OCRProcessingError,
+    OCRRequiredError,
+    extract_document,
+)
 from app.security.rbac import CurrentUser, require_roles
 from app.security.malware_scan import MalwareDetected, MalwareScanUnavailable, scan_bytes
-from app.security.source_artifacts import SourceArtifactStorageUnavailable, persist_circular_source
+from app.security.source_artifacts import (
+    SourceArtifactStorageUnavailable,
+    delete_circular_artifact,
+    persist_circular_ocr_derivative,
+    persist_circular_source,
+)
 from app.services import circular_ingestion_service, circular_sync_service, rule_extraction_service
 from app.services.ollama_client import AIClientFactory
 
@@ -33,7 +41,6 @@ class CircularUploadPayload(BaseModel):
 
 
 MAX_CIRCULAR_BYTES = 2 * 1024 * 1024
-MAX_CIRCULAR_PAGES = 100
 ALLOWED_CIRCULAR_UPLOADS = {
     ".pdf": {"application/pdf"},
     ".txt": {"text/plain"},
@@ -48,34 +55,16 @@ def _extract_uploaded_text(filename: str, content_type: str, content: bytes) -> 
         raise HTTPException(status_code=415, detail="Circular file MIME type does not match its extension.")
     if not content or len(content) > MAX_CIRCULAR_BYTES:
         raise HTTPException(status_code=413, detail="Circular file must be between 1 byte and 2 MiB.")
-    if suffix == ".txt":
-        try:
-            text = content.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            raise HTTPException(status_code=400, detail="Text circular must use UTF-8.") from exc
-    else:
-        if not content.startswith(b"%PDF"):
-            raise HTTPException(status_code=400, detail="PDF signature is invalid.")
-        try:
-            reader = PdfReader(BytesIO(content), strict=True)
-            if reader.is_encrypted:
-                raise HTTPException(status_code=422, detail="Encrypted PDFs are not accepted.")
-            if len(reader.pages) > MAX_CIRCULAR_PAGES:
-                raise HTTPException(status_code=413, detail="PDF contains too many pages.")
-            text = "\n".join(
-                (page.extract_text() or "").strip()
-                for page in reader.pages
-            ).strip()
-        except HTTPException:
-            raise
-        except (PdfReadError, ValueError, OSError) as exc:
-            raise HTTPException(status_code=400, detail="PDF could not be parsed safely.") from exc
-    if len(text.strip()) < 20:
-        raise HTTPException(
-            status_code=422,
-            detail="No usable text was found. Use the synthetic text path for scanned PDFs.",
-        )
-    return text[:250_000]
+    if suffix == ".pdf" and not content.startswith(b"%PDF"):
+        raise HTTPException(status_code=400, detail="PDF signature is invalid.")
+    try:
+        return extract_document(content, filename, content_type).text
+    except OCRRequiredError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except OCRProcessingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except DocumentProcessingError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/sync-all")
@@ -103,23 +92,61 @@ async def upload_circular_file(
     expiry_date: str | None = Form(None),
 ) -> dict:
     content = await file.read(MAX_CIRCULAR_BYTES + 1)
+    filename = file.filename or ""
+    content_type = (file.content_type or "").casefold()
+    suffix = Path(filename).suffix.casefold()
+    if suffix not in ALLOWED_CIRCULAR_UPLOADS:
+        raise HTTPException(status_code=415, detail="Only synthetic PDF and UTF-8 text circulars are accepted.")
+    if content_type not in ALLOWED_CIRCULAR_UPLOADS[suffix]:
+        raise HTTPException(status_code=415, detail="Circular file MIME type does not match its extension.")
+    if not content or len(content) > MAX_CIRCULAR_BYTES:
+        raise HTTPException(status_code=413, detail="Circular file must be between 1 byte and 2 MiB.")
+    if suffix == ".pdf" and not content.startswith(b"%PDF"):
+        raise HTTPException(status_code=400, detail="PDF signature is invalid.")
+    if suffix == ".txt":
+        try:
+            content.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise HTTPException(status_code=400, detail="Text circular must use UTF-8.") from exc
     try:
-        scan = scan_bytes(content, file.filename or "")
+        scan = scan_bytes(content, filename)
     except MalwareDetected as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except MalwareScanUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    raw_text = _extract_uploaded_text(
-        file.filename or "",
-        (file.content_type or "").casefold(),
-        content,
-    )
     if not settings.circular_artifact_storage_enabled:
         raise HTTPException(status_code=503, detail="Source artifact storage is disabled.")
     try:
-        artifact = persist_circular_source(content, file.filename or "source", file.content_type or "")
+        artifact = persist_circular_source(content, filename or "source", content_type)
     except SourceArtifactStorageUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    artifact_created = bool(artifact.pop("_storage_created", True))
+
+    def cleanup_original() -> None:
+        if artifact_created:
+            delete_circular_artifact(str(artifact.get("storage_path")))
+
+    try:
+        extraction = extract_document(content, filename, content_type)
+    except OCRRequiredError as exc:
+        cleanup_original()
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except OCRProcessingError as exc:
+        cleanup_original()
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except DocumentProcessingError as exc:
+        cleanup_original()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    ocr_storage_path = None
+    if extraction.ocr_derivative is not None:
+        try:
+            ocr_storage_path = persist_circular_ocr_derivative(
+                extraction.ocr_derivative,
+                source_sha256=str(artifact["source_sha256"]),
+            )
+        except SourceArtifactStorageUnavailable as exc:
+            cleanup_original()
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
     try:
         document, created = circular_ingestion_service.ingest_circular(
             {
@@ -130,12 +157,18 @@ async def upload_circular_file(
                 "published_date": published_date,
                 "effective_date": effective_date,
                 "expiry_date": expiry_date,
-                "raw_text": raw_text,
+                "raw_text": extraction.text,
                 **artifact,
                 "malware_scan_status": scan["status"],
+                "extraction_source": extraction.extraction_source,
+                "ocr_used": extraction.ocr_used,
+                "ocr_storage_path": ocr_storage_path,
+                "page_provenance": extraction.page_provenance,
             }
         )
     except ValueError as exc:
+        cleanup_original()
+        delete_circular_artifact(ocr_storage_path)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {
         "success": True,
@@ -146,6 +179,10 @@ async def upload_circular_file(
             "storage_path": document.storage_path,
             "source_sha256": document.source_sha256,
             "source_size_bytes": document.source_size_bytes,
+            "extraction_source": document.extraction_source,
+            "ocr_used": document.ocr_used,
+            "ocr_storage_path": document.ocr_storage_path,
+            "page_provenance": document.page_provenance,
         },
         "document": document.model_dump(),
     }

@@ -6,7 +6,7 @@
 - Storage: SQLAlchemy is authoritative for the typed policy-review core and auth/audit records; the JSON mirror remains local/demo compatibility only and is disabled in hardened environments.
 - Frontend: Vite/React app with public citizen portal, `/demo` presentation dashboard, and `/admin` government dashboard.
 - Demo seed: GO-138 changes Income Certificate validity to 6 months while connected systems still show the earlier 12-month rule.
-- Current clean local gate: 281 backend tests, 61 frontend tests, the deterministic 20-case extraction benchmark, the Vite production build, `npm audit --omit=dev`, `pip-audit`, and compile checks pass. Docker and hosted PostgreSQL/Render execution remain unverified external gates.
+- Current clean local gate: 298 backend tests, 61 frontend tests, the deterministic 20-case extraction benchmark, the Vite production build, `npm audit --omit=dev`, `pip-audit`, compile checks, and the no-video core Playwright accessibility regression pass. Docker image execution and hosted PostgreSQL/Render execution remain unverified external gates.
 
 ## Compatibility Rules
 
@@ -48,9 +48,16 @@
 - [x] CI workflow includes backend, fresh PostgreSQL migration, frontend, dependency, and secret checks.
 - [x] Final local backend tests passing.
 - [x] Final local frontend tests/build passing.
+- [x] Conditional OCR, original/derivative provenance, object-storage abstraction, fail-closed ClamAV boundary, and dependency-aware readiness implemented.
 - [ ] Final commit pushed.
 
 ## Known Production Limitations
 
 - The app can auto-create tables for local/demo use. Hardened deployments disable that compatibility path and run Alembic explicitly before startup.
 - Live MeeSeva integration, official government APIs, production secrets manager, cloud deployment, and a full independent security audit remain future production steps.
+
+## Readiness boundary
+
+**CODE READY:** OCR, original/derivative provenance, local/S3-compatible object storage, ClamAV fail-closed scanning, dependency-aware `/api/ready`, hardened PostgreSQL configuration, migrations, and the synthetic flagship lifecycle are implemented and locally testable.
+
+**EXTERNALLY VERIFIED PRODUCTION READY:** not claimed. Hosted PostgreSQL, object-storage durability, ClamAV signatures/quarantine, OCR runtime operation, TLS/cookie playback, penetration testing, formal accessibility certification, legal approval, government UAT, and official integrations remain external gates.

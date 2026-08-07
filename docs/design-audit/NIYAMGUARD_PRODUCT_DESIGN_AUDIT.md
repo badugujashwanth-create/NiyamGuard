@@ -49,3 +49,11 @@ The landing now communicates the policy-drift thesis before asking the visitor t
 - Synthetic demo credentials are now supplied only to the explicit demo build. The default production frontend bundle contains no demo credential literals.
 
 Screenshots do not establish keyboard order, screen-reader announcements, contrast ratios, reduced-motion behavior, or assistive-technology support; those remain manual QA gates.
+
+## Core accessibility regression (2026-08-08)
+
+- The reviewer navigation now exposes `aria-current="page"` for the active route and the main landmark is labelled by its visible page heading.
+- Loading, export/action, and lifecycle feedback is announced through status/live regions; backend failures remain alerts.
+- Lifecycle/module status badges retain visible text and expose an accessible status label; status is not communicated by colour alone.
+- The existing focus-visible outline and reduced-motion rules remain active across the core routes.
+- The React regression suite exercises the labelled main landmark and active navigation semantics. Contrast measurement, keyboard-only traversal with assistive technology, and formal WCAG certification remain external/manual gates.

@@ -3,8 +3,6 @@ from __future__ import annotations
 import calendar
 import hashlib
 import mimetypes
-import os
-import tempfile
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -33,17 +31,24 @@ from app.models.service_portal_models import (
 )
 from app.security.rbac import CurrentUser
 from app.security.malware_scan import MalwareDetected, MalwareScanUnavailable, scan_bytes
+from app.storage.object_storage import ObjectStorageError, ObjectStorageUnavailable, get_object_storage
 from app.knowledge_base.platform_store import add_audit_event, read_store, write_store
 from app.services.time import now_iso
 
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-STORAGE_DIR = BASE_DIR / "storage"
-DOCUMENT_STORAGE_DIR = STORAGE_DIR / "documents"
-CERTIFICATE_STORAGE_DIR = STORAGE_DIR / "certificates"
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png"}
 ALLOWED_MIME_TYPES = {"application/pdf", "image/jpeg", "image/png"}
+
+
+def _has_expected_magic_bytes(content: bytes, suffix: str) -> bool:
+    signatures = {
+        ".pdf": (b"%PDF-",),
+        ".jpg": (b"\xff\xd8\xff",),
+        ".jpeg": (b"\xff\xd8\xff",),
+        ".png": (b"\x89PNG\r\n\x1a\n",),
+    }
+    return bool(content) and any(content.startswith(signature) for signature in signatures.get(suffix, ()))
 
 
 class ServicePortalError(Exception):
@@ -469,51 +474,38 @@ async def upload_application_document(
     if suffix not in ALLOWED_EXTENSIONS or content_type not in ALLOWED_MIME_TYPES:
         raise ServicePortalError(status.HTTP_400_BAD_REQUEST, "Only PDF, JPG, JPEG, and PNG files are accepted.")
     content = await file.read(MAX_UPLOAD_BYTES + 1)
+    if not content:
+        raise ServicePortalError(status.HTTP_400_BAD_REQUEST, "Uploaded document is empty.")
     if len(content) > MAX_UPLOAD_BYTES:
         raise ServicePortalError(status.HTTP_400_BAD_REQUEST, "Uploaded document exceeds the 5 MB limit.")
+    if not _has_expected_magic_bytes(content, suffix):
+        raise ServicePortalError(status.HTTP_400_BAD_REQUEST, "Uploaded document signature does not match its extension.")
     try:
         scan_result = scan_bytes(content, file.filename or "document")
     except MalwareDetected as exc:
         raise ServicePortalError(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
     except MalwareScanUnavailable as exc:
         raise ServicePortalError(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
-    destination_dir = DOCUMENT_STORAGE_DIR / application.id
+    source_sha256 = hashlib.sha256(content).hexdigest()
+    storage_key = f"documents/{application.id}/{uuid4().hex}{suffix}"
     try:
-        destination_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
-        os.chmod(destination_dir, 0o700)
-    except OSError as exc:
+        stored = get_object_storage().put(
+            storage_key,
+            content,
+            content_type=content_type,
+            metadata={"sha256": source_sha256, "artifact": "citizen-service-document"},
+        )
+    except (ObjectStorageError, ObjectStorageUnavailable) as exc:
         raise ServicePortalError(status.HTTP_503_SERVICE_UNAVAILABLE, "Document storage is unavailable.") from exc
-    safe_name = "".join(char if char.isalnum() or char in {".", "-", "_"} else "_" for char in (file.filename or "document"))
-    destination = destination_dir / f"{uuid4().hex}_{safe_name}"
-    temporary_path: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="wb",
-            prefix=".upload-",
-            suffix=".tmp",
-            dir=destination_dir,
-            delete=False,
-        ) as handle:
-            temporary_path = Path(handle.name)
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.chmod(temporary_path, 0o600)
-        os.replace(temporary_path, destination)
-    except OSError as exc:
-        raise ServicePortalError(status.HTTP_503_SERVICE_UNAVAILABLE, "Document storage is unavailable.") from exc
-    finally:
-        if temporary_path and temporary_path.exists():
-            temporary_path.unlink(missing_ok=True)
     document = ApplicationDocument(
         id=f"appdoc_{uuid4().hex}",
         application_id=application.id,
         document_type=document_type,
         file_name=file.filename or "document",
-        storage_path=str(destination.relative_to(BASE_DIR)),
+        storage_path=str(stored["key"]),
         mime_type=content_type,
         file_size=len(content),
-        source_sha256=hashlib.sha256(content).hexdigest(),
+        source_sha256=source_sha256,
         malware_scan_status=scan_result.get("status"),
         verification_status="pending",
         uploaded_at=now_iso(),
@@ -812,10 +804,18 @@ def approve_application(actor: CurrentUser, application_id: str, notes: str | No
         source_rule_version_id=source_rule_version_id,
         created_at=now_iso(),
     )
-    CERTIFICATE_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
-    pdf_path = CERTIFICATE_STORAGE_DIR / f"{certificate.id}.pdf"
-    pdf_path.write_text(_certificate_text(certificate, application, service), encoding="utf-8")
-    certificate.pdf_path = str(pdf_path.relative_to(BASE_DIR))
+    certificate_key = f"certificates/{certificate.id}.pdf"
+    certificate_content = _certificate_text(certificate, application, service).encode("utf-8")
+    try:
+        get_object_storage().put(
+            certificate_key,
+            certificate_content,
+            content_type="application/pdf",
+            metadata={"artifact": "synthetic-certificate", "verification_hash": verification_hash},
+        )
+    except (ObjectStorageError, ObjectStorageUnavailable) as exc:
+        raise ServicePortalError(status.HTTP_503_SERVICE_UNAVAILABLE, "Certificate storage is unavailable.") from exc
+    certificate.pdf_path = certificate_key
     store.certificates.append(certificate)
     review = OfficerReview(
         id=f"review_{uuid4().hex}",
@@ -926,9 +926,10 @@ def get_certificate_bytes(actor: CurrentUser, certificate_id: str) -> tuple[str,
     application = _application(store, certificate.application_id)
     _assert_application_access(actor, application)
     if certificate.pdf_path:
-        path = BASE_DIR / certificate.pdf_path
-        if path.exists():
-            return certificate.certificate_number, path.read_bytes()
+        try:
+            return certificate.certificate_number, get_object_storage().get(certificate.pdf_path)
+        except (ObjectStorageError, ObjectStorageUnavailable):
+            pass
     service = _service(store, certificate.service_id)
     return certificate.certificate_number, _certificate_text(certificate, application, service).encode("utf-8")
 

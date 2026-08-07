@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: niyamguard
+      POSTGRES_USER: niyamguard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-niyamguard-local-only}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U niyamguard -d niyamguard"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:RELEASE.2025-10-15T17-29-55Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-niyamguard-local}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-niyamguard-local-secret}
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    volumes:
+      - production_minio_data:/data
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: >-
+      "mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-niyamguard-local} ${MINIO_ROOT_PASSWORD:-niyamguard-local-secret}
+      && mc mb --ignore-existing local/niyamguard-documents"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.fullstack
+    environment:
+      APP_ENV: staging
+      DEBUG: "false"
+      DEMO_MODE: "false"
+      SEED_DEMO_ON_STARTUP: "false"
+      SECRET_KEY: ${LOCAL_PRODUCTION_SECRET_KEY:-local-production-only-secret-replace-before-use-123456}
+      DATABASE_URL: postgresql+psycopg://niyamguard:${POSTGRES_PASSWORD:-niyamguard-local-only}@postgres:5432/niyamguard
+      AUTO_CREATE_TABLES: "false"
+      LEGACY_FILE_STORE_ENABLED: "false"
+      AUTH_COOKIE_MODE: "true"
+      AUTH_COOKIE_SECURE: "true"
+      AUTH_COOKIE_SAMESITE: strict
+      SESSION_RECORDS_REQUIRED: "true"
+      RATE_LIMIT_BACKEND: database
+      RATE_LIMIT_ENABLED: "true"
+      CORS_ORIGINS: http://localhost:8000
+      TRUSTED_HOSTS: localhost,app
+      MALWARE_SCAN_MODE: clamav
+      OCR_ENABLED: "true"
+      OCR_COMMAND: ocrmypdf
+      OCR_LANGUAGES: eng
+      OBJECT_STORAGE_BACKEND: s3
+      OBJECT_STORAGE_BUCKET: niyamguard-documents
+      OBJECT_STORAGE_ENDPOINT_URL: http://minio:9000
+      OBJECT_STORAGE_REGION: us-east-1
+      OBJECT_STORAGE_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-niyamguard-local}
+      OBJECT_STORAGE_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-niyamguard-local-secret}
+      OBJECT_STORAGE_USE_SSL: "false"
+      CIRCULAR_ARTIFACT_STORAGE_ENABLED: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+volumes:
+  production_postgres_data:
+  production_minio_data:

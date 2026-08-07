@@ -59,6 +59,10 @@ class CircularDocument(BaseModel):
     source_size_bytes: int | None = None
     source_sha256: str | None = None
     malware_scan_status: str | None = None
+    extraction_source: Literal["NATIVE_TEXT", "OCR"] = "NATIVE_TEXT"
+    ocr_used: bool = False
+    ocr_storage_path: str | None = None
+    page_provenance: list[dict[str, Any]] = Field(default_factory=list)
     raw_text: str
     content_hash: str
     status: CircularDocumentStatus

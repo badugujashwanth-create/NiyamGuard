@@ -111,6 +111,28 @@ class Settings:
         "CIRCULAR_ARTIFACT_STORAGE_DIR",
         BACKEND_DIR / "storage" / "circulars",
     )
+    object_storage_backend: str = os.getenv("OBJECT_STORAGE_BACKEND", "local").strip().lower() or "local"
+    object_storage_root: Path = _path_env(
+        "OBJECT_STORAGE_ROOT",
+        BACKEND_DIR / "storage",
+    )
+    object_storage_bucket: str = os.getenv("OBJECT_STORAGE_BUCKET", "").strip()
+    object_storage_endpoint_url: str = os.getenv("OBJECT_STORAGE_ENDPOINT_URL", "").strip()
+    object_storage_region: str = os.getenv("OBJECT_STORAGE_REGION", "us-east-1").strip() or "us-east-1"
+    object_storage_access_key_id: str = os.getenv("OBJECT_STORAGE_ACCESS_KEY_ID", "").strip()
+    object_storage_secret_access_key: str = os.getenv("OBJECT_STORAGE_SECRET_ACCESS_KEY", "").strip()
+    object_storage_use_ssl: bool = _bool_env("OBJECT_STORAGE_USE_SSL", True)
+
+    ocr_enabled: bool = _bool_env("OCR_ENABLED", False)
+    ocr_command: str = os.getenv("OCR_COMMAND", "ocrmypdf").strip() or "ocrmypdf"
+    ocr_languages: str = os.getenv("OCR_LANGUAGES", "eng").strip() or "eng"
+    # Keep the scanned-document trigger below the existing 20-character
+    # minimum accepted by the circular ingestion boundary.  A short but
+    # legitimate native PDF must not be sent through OCR just because it is
+    # concise; zero/near-zero native text remains the scanned-PDF signal.
+    ocr_min_text_chars: int = _int_env("OCR_MIN_TEXT_CHARS", 20)
+    ocr_min_text_density: float = _float_env("OCR_MIN_TEXT_DENSITY", 0.0005)
+    ocr_timeout_seconds: int = _int_env("OCR_TIMEOUT_SECONDS", 120)
 
     ai_provider: str = os.getenv("AI_PROVIDER", "ollama").strip().lower() or "ollama"
     ai_enabled: bool = _bool_env("AI_ENABLED", False)
@@ -223,6 +245,31 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
         raise RuntimeError("Hardened environments require a PostgreSQL DATABASE_URL; SQLite is local/demo only.")
     if scheme not in {"postgres", "postgresql"} and not scheme.startswith("postgresql+"):
         raise RuntimeError("Hardened environments require a PostgreSQL DATABASE_URL.")
+    if getattr(candidate, "object_storage_backend", "local") != "s3":
+        raise RuntimeError("Hardened environments require OBJECT_STORAGE_BACKEND=s3 for durable document storage.")
+    if not getattr(candidate, "object_storage_bucket", "").strip():
+        raise RuntimeError("Hardened environments require OBJECT_STORAGE_BUCKET.")
+    if not getattr(candidate, "object_storage_access_key_id", "").strip():
+        raise RuntimeError("Hardened environments require OBJECT_STORAGE_ACCESS_KEY_ID.")
+    if not getattr(candidate, "object_storage_secret_access_key", "").strip():
+        raise RuntimeError("Hardened environments require OBJECT_STORAGE_SECRET_ACCESS_KEY.")
+    if not getattr(candidate, "ocr_enabled", False):
+        raise RuntimeError("Hardened environments require OCR_ENABLED=true for scanned-document processing.")
+    if not getattr(candidate, "ocr_command", "").strip():
+        raise RuntimeError("Hardened environments require OCR_COMMAND.")
+
+
+def runtime_config_health(candidate: Settings = settings) -> dict[str, object]:
+    """Return a redacted readiness result without exposing secret values."""
+
+    hardened = candidate.app_env.strip().lower() in HARDENED_ENVIRONMENTS
+    if not hardened:
+        return {"required": False, "ready": True, "environment": candidate.app_env}
+    try:
+        validate_runtime_settings(candidate)
+    except RuntimeError as exc:
+        return {"required": True, "ready": False, "environment": candidate.app_env, "error": str(exc)}
+    return {"required": True, "ready": True, "environment": candidate.app_env}
 
 APP_NAME = settings.app_name
 APP_VERSION = "1.1.0"
