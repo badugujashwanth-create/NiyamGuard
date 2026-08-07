@@ -18,6 +18,7 @@
 - STT/TTS requests are bounded and rate-limited; STT temporary files are removed; TTS cache eviction is bounded.
 - Refresh tokens rotate atomically, JWT issuer/audience claims are validated, session records are created and linked, and in-process audit appends are serialized.
 - Production rate limiting now uses database-backed fixed-window buckets; the in-memory limiter remains an explicit local/demo fallback.
+- Serialized policy-store writes carry a database revision; stale replacements are rejected with a retryable conflict instead of silently losing another update.
 - Container entrypoints run Alembic migrations and drop root privileges.
 - Deployed containers disable the legacy `create_all()` compatibility path; schema changes are owned by Alembic migrations.
 - Non-demo deployments disable the legacy JSON file-store fallback; authoritative policy state is read from the configured database only.
@@ -27,7 +28,7 @@
 - CI now defines a fresh PostgreSQL migration job with production-style cookie, database-authority, CORS, trusted-host, and malware-scan settings; the job still requires a remote GitHub Actions run for evidence.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 273 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 274 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
@@ -145,7 +146,7 @@ Refresh tokens now rotate atomically and JWT issuer/audience claims are validate
 
 ### P2 — claims and documentation drift
 
-README and test-report claims now reflect 273 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
+README and test-report claims now reflect 274 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
 
 The changelog describes a 1.2.0 candidate, but the public default branch currently has release/tag `v1.1.0`; a v1.2.0 public release is not verified. `docs/access-control.md` also labels the seeded officer account as a reviewer, while the code assigns the `officer` role.
 
@@ -163,7 +164,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 |---|---|
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
-| 273 backend tests | 273 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
+| 274 backend tests | 274 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
 | 60 frontend tests | Current `npm test -- --run` passed 60 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |

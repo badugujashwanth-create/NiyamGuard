@@ -47,6 +47,9 @@ from app.models.service_portal_models import (
 
 
 class PolicyDataStore(BaseModel):
+    # Excluded from payload serialization; populated by the database repository
+    # so a full-store replacement can use optimistic concurrency control.
+    revision: int | None = Field(default=None, exclude=True)
     circulars: list[Circular] = Field(default_factory=list)
     extracted_rules: list[ExtractedPolicyRule] = Field(default_factory=list)
     verified_rules: list[VerifiedPolicyRule] = Field(default_factory=list)

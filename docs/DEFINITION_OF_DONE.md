@@ -3,7 +3,7 @@
 - [x] Synthetic/non-official boundaries are visible in the product and documentation.
 - [x] Production configuration fails closed for placeholder secrets, debug mode, and demo mode.
 - [x] Demo-only APIs are hidden when demo mode is disabled.
-- [x] Backend suite passes: 273 tests in the clean local gate.
+- [x] Backend suite passes: 274 tests in the clean local gate.
 - [x] Frontend suite passes: 60 tests.
 - [x] Frontend production build passes.
 - [x] Production dependency and secret checks are included in CI.

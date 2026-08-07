@@ -20,6 +20,7 @@ from app.middleware.logging_middleware import LoggingMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.version_alias import ApiVersionAliasMiddleware
+from app.repositories.policy_store_repository import PolicyStoreConflict
 from app.api.assistant_routes import router as assistant_router
 from app.api.admin_routes import router as admin_router
 from app.api.ai_routes import router as ai_router
@@ -77,6 +78,7 @@ app = FastAPI(
 )
 
 app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(PolicyStoreConflict, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 

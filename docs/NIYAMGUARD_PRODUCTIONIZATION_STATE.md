@@ -2,7 +2,7 @@
 
 **State date:** 2026-08-07
 **Canonical branch:** `main`
-**Latest local change:** standards-based PDF parsing and database-backed rate limiting after cookie-session productionization
+**Latest local change:** optimistic policy-store concurrency after standards-based PDF parsing and database-backed rate limiting
 **Public release:** `v1.1.0` (a new release is not claimed until the changes are committed and published)
 **Classification:** synthetic policy-drift MVP; production-boundary work in progress
 
@@ -21,6 +21,7 @@
 - Added opt-in same-origin HttpOnly access/refresh cookies; production validation requires cookie mode with secure cookies, while bearer/localStorage remains a local-demo fallback.
 - Added database-backed session records, session-linked refresh tokens, JWT session IDs, logout revocation, and production enforcement of revocable sessions.
 - Added a database-backed fixed-window rate limiter for cross-worker deployments; local/demo environments retain the in-memory path, while production validation requires `RATE_LIMIT_BACKEND=database`.
+- Added a database-backed policy-store revision and optimistic write check; stale full-store replacements now fail with a retryable conflict instead of silently overwriting another reviewer.
 - Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
 - Added Alembic execution to both container entrypoints and switched containers to a non-root runtime user.
 - Made migration ownership explicit: deployed containers set `AUTO_CREATE_TABLES=false`, while local/test environments may opt into the compatibility fallback.
@@ -37,7 +38,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 273 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 274 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 60 tests in default bearer-demo mode and 60 tests with `VITE_AUTH_COOKIE_MODE=true` |
 | Frontend production build | Pass: Vite build |
@@ -53,7 +54,7 @@
 
 1. Execute the PostgreSQL CI/deployment gate against a fresh database and verify `alembic upgrade head`, health, readiness, and the full policy lifecycle.
 2. Confirm the Render service owner, database, CORS/trusted-host values, and public synthetic-sandbox intent before publishing a new release.
-3. Replace the remaining generic JSON payload rows with normalized relational records and foreign-key/optimistic-lock constraints for a true pilot; the legacy file fallback is now disabled outside local/demo mode.
+3. Replace the remaining generic JSON payload rows with normalized relational records and foreign-key constraints for a true pilot; the serialized store now has optimistic revision protection, while the legacy file fallback is disabled outside local/demo mode.
 4. Provision and verify ClamAV signatures/quarantine plus robust PDF/OCR processing before accepting real government documents.
 5. Complete keyboard/screen-reader/contrast/reduced-motion testing with assistive technology; screenshots alone do not establish WCAG conformance.
 6. Review owner/legal approval for licensing and credential policy; no license is intentionally published.

@@ -3,12 +3,14 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from fastapi import HTTPException
 from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import SessionLocal, init_db
-from app.models.database_models import PolicyRecord
+from app.models.database_models import PolicyRecord, PolicyStoreRevision
 from app.models.platform_store_models import PolicyDataStore
+from app.services.time import now_iso
 
 
 COLLECTIONS = (
@@ -65,6 +67,7 @@ class PolicyStoreRepository:
         try:
             with SessionLocal() as session:
                 records = session.scalars(select(PolicyRecord)).all()
+                revision_row = session.get(PolicyStoreRevision, 1)
         except SQLAlchemyError:
             return None
         if not records:
@@ -72,11 +75,23 @@ class PolicyStoreRepository:
         payload: dict[str, list[Any]] = {collection: [] for collection in COLLECTIONS}
         for record in records:
             payload.setdefault(record.collection, []).append(deepcopy(record.payload))
-        return PolicyDataStore(**payload)
+        store = PolicyDataStore(**payload)
+        store.revision = revision_row.revision if revision_row else 0
+        return store
 
     def replace(self, store: PolicyDataStore) -> None:
         try:
             with SessionLocal() as session:
+                revision_row = session.scalar(
+                    select(PolicyStoreRevision).where(PolicyStoreRevision.id == 1).with_for_update()
+                )
+                if revision_row is None:
+                    revision_row = PolicyStoreRevision(id=1, revision=0, updated_at=now_iso())
+                    session.add(revision_row)
+                    session.flush()
+                expected_revision = getattr(store, "revision", None)
+                if expected_revision is not None and expected_revision != revision_row.revision:
+                    raise PolicyStoreConflict(expected_revision, revision_row.revision)
                 session.execute(delete(PolicyRecord))
                 for collection in COLLECTIONS:
                     for item in getattr(store, collection):
@@ -89,7 +104,10 @@ class PolicyStoreRepository:
                                 payload=data,
                             )
                         )
+                revision_row.revision += 1
+                revision_row.updated_at = now_iso()
                 session.commit()
+                store.revision = revision_row.revision
         except SQLAlchemyError:
             raise
 
@@ -99,3 +117,14 @@ class PolicyStoreRepository:
                 return session.scalar(select(PolicyRecord.id).limit(1)) is not None
         except SQLAlchemyError:
             return False
+
+
+class PolicyStoreConflict(HTTPException):
+    """A stale full-store write was rejected instead of losing another update."""
+
+    def __init__(self, expected_revision: int, actual_revision: int) -> None:
+        super().__init__(
+            status_code=409,
+            detail="Policy state changed since it was loaded; reload the current state and retry.",
+            headers={"Cache-Control": "no-store"},
+        )
