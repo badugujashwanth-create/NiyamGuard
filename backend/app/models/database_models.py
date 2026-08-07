@@ -101,6 +101,45 @@ class RuleApprovalWorkflowRecord(Base):
     created_at: Mapped[str] = mapped_column(String(40))
 
 
+class PolicyPublicationEventRecord(Base):
+    __tablename__ = "policy_publication_events"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    candidate_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_candidates.id"), index=True)
+    rule_version_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_versions.id"), index=True)
+    service_id: Mapped[str] = mapped_column(String(120), index=True)
+    rule_key: Mapped[str] = mapped_column(String(120), index=True)
+    old_value: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    new_value: Mapped[str] = mapped_column(String(200))
+    published_by: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class KnowledgeUpdateEventRecord(Base):
+    __tablename__ = "knowledge_update_events"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    rule_version_id: Mapped[str] = mapped_column(ForeignKey("policy_rule_versions.id"), index=True)
+    service_id: Mapped[str] = mapped_column(String(120), index=True)
+    rule_key: Mapped[str] = mapped_column(String(120), index=True)
+    update_type: Mapped[str] = mapped_column(String(80), index=True)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    details: Mapped[dict[str, Any]] = mapped_column(JSON)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class ComplianceRunRecordModel(Base):
+    __tablename__ = "compliance_runs"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    trigger_type: Mapped[str] = mapped_column(String(40), index=True)
+    triggered_by: Mapped[str | None] = mapped_column(String(160), nullable=True, index=True)
+    affected_rule_id: Mapped[str | None] = mapped_column(String(160), nullable=True, index=True)
+    started_at: Mapped[str] = mapped_column(String(40))
+    completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    finding_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
 class PolicyRuleVersionRecord(Base):
     __tablename__ = "policy_rule_versions"
     __table_args__ = (UniqueConstraint("rule_id", "version_number", name="uq_policy_rule_version_number"),)

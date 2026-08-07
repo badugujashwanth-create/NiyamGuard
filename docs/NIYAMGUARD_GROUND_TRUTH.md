@@ -22,7 +22,7 @@
 - Refresh tokens rotate atomically, JWT issuer/audience claims are validated, session records are created and linked, and in-process audit appends are serialized.
 - Production rate limiting now uses database-backed fixed-window buckets; the in-memory limiter remains an explicit local/demo fallback.
 - Serialized policy-store writes carry a database revision; stale replacements are rejected with a retryable conflict instead of silently losing another update.
-- Core policy-review persistence is now normalized into `circular_documents`, `policy_rule_candidates`, `policy_rule_deltas`, `rule_approval_workflows`, `policy_rule_versions`, `connected_system_snapshots`, and `compliance_findings`, with foreign keys and typed columns; generic JSON rows remain only as a compatibility mirror for the wider platform store.
+- Core policy-review persistence is now normalized into `circular_documents`, `policy_rule_candidates`, `policy_rule_deltas`, `rule_approval_workflows`, `policy_rule_versions`, `policy_publication_events`, `knowledge_update_events`, `compliance_runs`, `connected_system_snapshots`, and `compliance_findings`, with foreign keys and typed columns; generic JSON rows remain only as a compatibility mirror for the wider platform store.
 - Container entrypoints run Alembic migrations and drop root privileges.
 - Deployed containers disable the legacy `create_all()` compatibility path; schema changes are owned by Alembic migrations.
 - Non-demo deployments disable the legacy JSON file-store fallback; authoritative policy state is read from the configured database only.
@@ -55,7 +55,7 @@ The repository is not yet authorized for an unrestricted public or government de
 | Impact/cascade analysis | `cascade_trace_service.py`, connected-system/compliance services | `/api/cascade/*`, impact views | cascade/connected-system tests | **Complete for deterministic templates**; not a graph-derived engine |
 | Compliance findings | `compliance_service.py`, `compliance_orchestrator_service.py` | `/api/compliance/*`, readiness dashboards | compliance tests | **Complete for seeded mock systems** |
 | Reviewer workflow | candidate approve/reject/revision routes and approval models | officer/admin review UI | policy/RBAC tests | **Complete for current roles and demo records** |
-| Publication and rollback | `policy_publication_service.py` | `/api/policy-updates/{candidate_id}/publish`, rollback/lineage UI | self-update tests | **Complete for demo path**; core circular/version/snapshot/finding writes are mirrored into typed relational tables, while adjacent collections remain serialized |
+| Publication and rollback | `policy_publication_service.py` | `/api/policy-updates/{candidate_id}/publish`, rollback/lineage UI | self-update tests | **Complete for demo path**; core review/publication/knowledge/compliance writes are mirrored into typed relational tables, while adjacent collections remain serialized |
 | Propagation | `propagation_service.py`, `system_patch_service.py` | propagation task UI | lifecycle/connected-system tests | **Partial** — mutations are explicitly demo/mock patches |
 | Citizen guidance | `public_routes.py`, hybrid answer engine, citizen portal components | `/api/public/*`, citizen portal | public/chat/frontend tests | **Partial** — source-grounded seeded guidance works; eligibility endpoint is hard-coded for `income_certificate` |
 | Eligibility re-evaluation | compliance rerun and service-portal eligibility helpers | compliance rerun routes, citizen forms | focused lifecycle tests | **Partial** — no general versioned scenario result model with prior/new comparison for every rule |
@@ -67,7 +67,7 @@ The repository is not yet authorized for an unrestricted public or government de
 | Multilingual path | language helpers, browser/backend voice support | citizen voice/form UI | language/speech tests | **Complete for verified supported paths** |
 | Reports | `report_routes.py`, report services | `/api/reports/*`, admin reports UI | report tests | **Complete for synthetic records** |
 | Health/readiness | `health_routes.py`, `readiness_service.py` | `/api/health`, `/api/ready`, `/api/integration/health` | health/readiness tests | **Complete internally**; readiness wording can be mistaken for pilot readiness |
-| Database persistence | SQLAlchemy typed core tables plus `PolicyRecord` compatibility mirror, auth/audit tables | SQLite default, PostgreSQL URL support | database seed and migration checks | **Partial** — seven core policy-review collections are normalized; adjacent domain collections remain serialized JSON, while `create_all` remains a local/test fallback |
+| Database persistence | SQLAlchemy typed core tables plus `PolicyRecord` compatibility mirror, auth/audit tables | SQLite default, PostgreSQL URL support | database seed and migration checks | **Partial** — ten core policy-review collections are normalized; adjacent domain collections remain serialized JSON, while `create_all` remains a local/test fallback |
 | Deployment | Dockerfiles, Compose, Render Blueprint | Render hostname from `render.yaml` | local container evidence in docs | **Not verified** — configured hostname returned HTTP 404 during this audit |
 
 ## Architecture
@@ -82,7 +82,7 @@ FastAPI application bootstrapped in `backend/app/main.py`. Routers cover auth, c
 
 ### Database and storage
 
-SQLite is the local default; PostgreSQL is supported through `DATABASE_URL`. `PolicyStoreRepository` stores seven flagship policy-review collections in typed tables and keeps a generic `policy_records` compatibility mirror for the wider platform store. Users, refresh tokens, sessions, and audit events have separate SQLAlchemy tables. A legacy JSON mirror remains under `backend/app/storage` for local/demo compatibility, but non-demo deployments disable fallback to it.
+SQLite is the local default; PostgreSQL is supported through `DATABASE_URL`. `PolicyStoreRepository` stores ten flagship policy-review collections in typed tables and keeps a generic `policy_records` compatibility mirror for the wider platform store. Users, refresh tokens, sessions, and audit events have separate SQLAlchemy tables. A legacy JSON mirror remains under `backend/app/storage` for local/demo compatibility, but non-demo deployments disable fallback to it.
 
 Alembic migrations exist in `backend/alembic/versions`; both container entrypoints now run `alembic upgrade head` before application startup. `Base.metadata.create_all()` remains a local/test compatibility fallback and hosted migration behavior still needs live verification.
 
@@ -132,7 +132,7 @@ Both container entrypoints now run `alembic upgrade head` before starting Uvicor
 
 ### P1 — adjacent domain model is still serialized JSON
 
-Conflict, impact, propagation, eligibility, and adjacent service-review records are still serialized into generic JSON payload rows. The core circular → candidate → delta → approval → verified version → snapshot → finding chain now has typed relational tables, foreign keys, indexes, and normalized read preference; domain-level transaction boundaries for the remaining collections and the outer serialized compatibility mirror still require pilot work.
+Conflict, impact, propagation, eligibility, and adjacent service-review records are still serialized into generic JSON payload rows. The core circular → candidate → delta → approval → verified version → publication/knowledge/compliance → snapshot → finding chain now has typed relational tables, foreign keys, indexes, and normalized read preference; domain-level transaction boundaries for the remaining collections and the outer serialized compatibility mirror still require pilot work.
 
 Audit appends now read and write in one session under a process lock; PostgreSQL workers also take a transaction-scoped advisory lock, and verification orders by timestamp plus event id. A durable external archival/retention policy remains a pilot gate.
 

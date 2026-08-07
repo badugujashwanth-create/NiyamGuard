@@ -11,11 +11,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.database import SessionLocal, init_db
 from app.models.database_models import (
     CircularDocumentRecord,
+    ComplianceRunRecordModel,
     ComplianceFindingRecord,
     ConnectedSystemSnapshotRecord,
+    KnowledgeUpdateEventRecord,
     PolicyRecord,
     PolicyRuleCandidateRecord,
     PolicyRuleDeltaRecord,
+    PolicyPublicationEventRecord,
     PolicyRuleVersionRecord,
     PolicyStoreRevision,
     RuleApprovalWorkflowRecord,
@@ -122,10 +125,13 @@ def _replace_normalized_records(session, store: PolicyDataStore) -> None:
 
     The serialized PolicyRecord rows remain as a compatibility mirror until
     every non-flagship collection has a typed schema, but normalized rows are
-    the preferred read source for these seven core policy-review collections.
+    the preferred read source for these ten core policy-review collections.
     """
 
     session.execute(delete(ComplianceFindingRecord))
+    session.execute(delete(ComplianceRunRecordModel))
+    session.execute(delete(KnowledgeUpdateEventRecord))
+    session.execute(delete(PolicyPublicationEventRecord))
     session.execute(delete(ConnectedSystemSnapshotRecord))
     session.execute(delete(PolicyRuleVersionRecord))
     session.execute(delete(RuleApprovalWorkflowRecord))
@@ -164,6 +170,19 @@ def _replace_normalized_records(session, store: PolicyDataStore) -> None:
         session.add(PolicyRuleVersionRecord(**data))
         version_ids.add(data["id"])
 
+    for item in store.policy_publication_events:
+        data = item.model_dump()
+        if data["candidate_id"] in candidate_ids and data["rule_version_id"] in version_ids:
+            session.add(PolicyPublicationEventRecord(**data))
+
+    for item in store.knowledge_update_events:
+        data = item.model_dump()
+        if data["rule_version_id"] in version_ids:
+            session.add(KnowledgeUpdateEventRecord(**data))
+
+    for item in store.compliance_runs:
+        session.add(ComplianceRunRecordModel(**item.model_dump()))
+
     for item in store.snapshots:
         session.add(ConnectedSystemSnapshotRecord(**item.model_dump()))
 
@@ -182,6 +201,9 @@ def _apply_normalized_payload(session, payload: dict[str, list[Any]]) -> None:
     candidates = session.scalars(select(PolicyRuleCandidateRecord)).all()
     deltas = session.scalars(select(PolicyRuleDeltaRecord)).all()
     workflows = session.scalars(select(RuleApprovalWorkflowRecord)).all()
+    publications = session.scalars(select(PolicyPublicationEventRecord)).all()
+    knowledge_events = session.scalars(select(KnowledgeUpdateEventRecord)).all()
+    compliance_runs = session.scalars(select(ComplianceRunRecordModel)).all()
     versions = session.scalars(select(PolicyRuleVersionRecord)).all()
     snapshots = session.scalars(select(ConnectedSystemSnapshotRecord)).all()
     findings = session.scalars(select(ComplianceFindingRecord)).all()
@@ -193,6 +215,12 @@ def _apply_normalized_payload(session, payload: dict[str, list[Any]]) -> None:
         payload["policy_rule_deltas"] = [row_payload(item) for item in deltas]
     if workflows:
         payload["rule_approval_workflows"] = [row_payload(item) for item in workflows]
+    if publications:
+        payload["policy_publication_events"] = [row_payload(item) for item in publications]
+    if knowledge_events:
+        payload["knowledge_update_events"] = [row_payload(item) for item in knowledge_events]
+    if compliance_runs:
+        payload["compliance_runs"] = [row_payload(item) for item in compliance_runs]
     if versions:
         payload["verified_policy_rule_versions"] = [row_payload(item) for item in versions]
     if snapshots:
@@ -221,6 +249,9 @@ class PolicyStoreRepository:
                         "policy_rule_candidates",
                         "policy_rule_deltas",
                         "rule_approval_workflows",
+                        "policy_publication_events",
+                        "knowledge_update_events",
+                        "compliance_runs",
                         "verified_policy_rule_versions",
                         "snapshots",
                         "compliance_findings",
@@ -279,6 +310,9 @@ class PolicyStoreRepository:
                         PolicyRuleCandidateRecord,
                         PolicyRuleDeltaRecord,
                         RuleApprovalWorkflowRecord,
+                        PolicyPublicationEventRecord,
+                        KnowledgeUpdateEventRecord,
+                        ComplianceRunRecordModel,
                         PolicyRuleVersionRecord,
                         ConnectedSystemSnapshotRecord,
                         ComplianceFindingRecord,

@@ -102,7 +102,7 @@ Official behavior comes from deterministic verified rules and compliance service
 
 ## Storage
 
-Local development defaults to SQLite and compatibility JSON-backed demo store helpers. PostgreSQL is supported through `DATABASE_URL` for production-style deployments. The seven flagship policy-review collections use typed relational tables; the wider seeded/demo JSON remains a compatibility mirror and is not a second production authority.
+Local development defaults to SQLite and compatibility JSON-backed demo store helpers. PostgreSQL is supported through `DATABASE_URL` for production-style deployments. The ten flagship policy-review collections use typed relational tables; the wider seeded/demo JSON remains a compatibility mirror and is not a second production authority.
 
 ## Sandbox Boundary
 
