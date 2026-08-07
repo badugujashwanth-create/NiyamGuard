@@ -40,6 +40,7 @@ def test_production_accepts_hardened_runtime_settings() -> None:
             auth_cookie_secure=True,
             auth_cookie_samesite="strict",
             legacy_file_store_enabled=False,
+            session_records_required=True,
         )
     )
 
@@ -113,6 +114,25 @@ def test_production_requires_database_authority() -> None:
         legacy_file_store_enabled=True,
     )
     with pytest.raises(RuntimeError, match="LEGACY_FILE_STORE_ENABLED"):
+        validate_runtime_settings(candidate)
+
+
+def test_production_requires_revocable_sessions() -> None:
+    candidate = SimpleNamespace(
+        app_env="production",
+        secret_key="a-secure-production-secret-with-32-plus-chars",
+        debug=False,
+        demo_mode=False,
+        cors_origins=["https://example.gov"],
+        trusted_hosts=["api.example.gov"],
+        malware_scan_mode="clamav",
+        auth_cookie_mode=True,
+        auth_cookie_secure=True,
+        auth_cookie_samesite="strict",
+        legacy_file_store_enabled=False,
+        session_records_required=False,
+    )
+    with pytest.raises(RuntimeError, match="SESSION_RECORDS_REQUIRED"):
         validate_runtime_settings(candidate)
 
 

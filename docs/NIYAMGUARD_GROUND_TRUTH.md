@@ -16,7 +16,7 @@
 - Demo mode defaults to false and demo users are seeded only when both `DEMO_MODE=true` and `SEED_DEMO_ON_STARTUP=true` are explicitly set.
 - `/api/ops/status` and dataset mutation endpoints now require authenticated roles; OTP endpoints are demo-gated; ops output no longer exposes host paths.
 - STT/TTS requests are bounded and rate-limited; STT temporary files are removed; TTS cache eviction is bounded.
-- Refresh tokens rotate atomically, JWT issuer/audience claims are validated, and in-process audit appends are serialized.
+- Refresh tokens rotate atomically, JWT issuer/audience claims are validated, session records are created and linked, and in-process audit appends are serialized.
 - Container entrypoints run Alembic migrations and drop root privileges.
 - Deployed containers disable the legacy `create_all()` compatibility path; schema changes are owned by Alembic migrations.
 - Non-demo deployments disable the legacy JSON file-store fallback; authoritative policy state is read from the configured database only.
@@ -26,7 +26,7 @@
 - CI now defines a fresh PostgreSQL migration job with production-style cookie, database-authority, CORS, trusted-host, and malware-scan settings; the job still requires a remote GitHub Actions run for evidence.
 - Production startup rejects credentialed wildcard CORS and wildcard/empty trusted-host settings.
 - The landing now presents the policy-drift incident and impact chain before portal selection; desktop/mobile captures are in `docs/design-audit/` (screenshots are ignored internal evidence).
-- Current verification: 268 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
+- Current verification: 270 backend tests pass with third-party pytest plugin autoload disabled; 60 frontend tests pass in both default bearer-demo and `VITE_AUTH_COOKIE_MODE=true` configurations; the 20-case extraction benchmark passes; Vite build, npm audit, pip-audit, compile, and diff checks pass. Docker daemon and hosted Render deployment remain unverified.
 
 ## Executive result
 
@@ -54,7 +54,7 @@ The repository is not yet authorized for an unrestricted public or government de
 | Citizen guidance | `public_routes.py`, hybrid answer engine, citizen portal components | `/api/public/*`, citizen portal | public/chat/frontend tests | **Partial** — source-grounded seeded guidance works; eligibility endpoint is hard-coded for `income_certificate` |
 | Eligibility re-evaluation | compliance rerun and service-portal eligibility helpers | compliance rerun routes, citizen forms | focused lifecycle tests | **Partial** — no general versioned scenario result model with prior/new comparison for every rule |
 | Audit history | `audit_repository.py`, hash-chain verification | `/api/audit/events`, `/api/audit/verify` | audit tests | **Complete** for recorded events |
-| Authentication | password hashing, JWT access tokens, refresh-token records, optional same-origin HttpOnly cookies | `/api/auth/*`, login UI | auth and cookie-session tests | **Partial** — refresh tokens rotate on refresh and production requires secure cookie mode; known demo users remain synthetic and require explicit demo seeding |
+| Authentication | password hashing, JWT access tokens, revocable session records, refresh-token records, optional same-origin HttpOnly cookies | `/api/auth/*`, login UI | auth and cookie-session tests | **Partial** — session revocation and production enforcement are implemented; known demo users remain synthetic and require explicit demo seeding |
 | Authorization | `security/rbac.py`, route dependencies | role-gated officer/admin routes | RBAC tests | **Partial** — route role boundaries exist; department/object-level isolation is not comprehensively demonstrated |
 | AI/fallback | hybrid/exact/RAG services, optional Ollama and remote providers | `/api/ai/*`, `/api/hybrid/*`, assistant UI | AI/RAG/Ollama tests | **Complete for deterministic fallback**; external providers remain optional/unverified |
 | Voice | `stt_service.py`, `tts_service.py`, voice routes | citizen voice UI | STT/TTS/frontend tests | **Partial** — bounded, rate-limited synthetic voice endpoints; production speech providers remain unverified |
@@ -138,13 +138,13 @@ Dataset QA/top-k and collection/search limits now have explicit upper bounds. Ot
 
 ### P2 — auth/session hardening
 
-Refresh tokens now rotate atomically and JWT issuer/audience claims are validated. Same-origin HttpOnly access/refresh cookies are available and required by production validation; bearer/localStorage remains a local-demo fallback. Rate limiting remains in-memory/per-process, and session ownership/expiry requires a separate pilot hardening pass.
+Refresh tokens now rotate atomically and JWT issuer/audience claims are validated. Access tokens carry a database-backed session ID; logout revokes the session, and production rejects tokens without an active session record. Same-origin HttpOnly access/refresh cookies are available and required by production validation; bearer/localStorage remains a local-demo fallback. Rate limiting remains in-memory/per-process and still needs a distributed limiter for a multi-instance pilot.
 
 `/api/ops/status` now requires an authenticated viewer/reviewer/admin role and returns only a dataset pack name, not an absolute path. Health endpoints remain intentionally small and non-sensitive.
 
 ### P2 — claims and documentation drift
 
-README and test-report claims now reflect 268 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
+README and test-report claims now reflect 270 collected/passing backend tests (with third-party plugin autoload disabled for the clean local gate). `docs/current-jashwanth-repo-audit.md` still contains historical path references and should not be treated as current evidence. Readiness terminology remains explicitly synthetic/internal.
 
 The changelog describes a 1.2.0 candidate, but the public default branch currently has release/tag `v1.1.0`; a v1.2.0 public release is not verified. `docs/access-control.md` also labels the seeded officer account as a reviewer, while the code assigns the `officer` role.
 
@@ -162,7 +162,7 @@ No license file is present; redistribution and public reuse remain an owner/lega
 |---|---|
 | Synthetic/non-official GovTech sandbox | Supported by README, docs, UI disclaimers, tests, and mock-system boundaries |
 | Connected GO-138 policy lifecycle | Supported for the seeded/demo path by backend and frontend tests |
-| 268 backend tests | 268 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
+| 270 backend tests | 270 tests pass in the clean-environment gate documented in `docs/TEST_REPORT.md` |
 | 60 frontend tests | Current `npm test -- --run` passed 60 tests |
 | Government/identity/payment/messaging integration | Explicitly not verified; docs correctly label these synthetic/mock/optional |
 | Production deployment | Not verified; configured Render hostname returned 404 |

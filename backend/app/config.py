@@ -74,6 +74,10 @@ class Settings:
     auth_cookie_mode: bool = _bool_env("AUTH_COOKIE_MODE", False)
     auth_cookie_secure: bool = _bool_env("AUTH_COOKIE_SECURE", False)
     auth_cookie_samesite: str = os.getenv("AUTH_COOKIE_SAMESITE", "strict").strip().lower() or "strict"
+    session_records_required: bool = _bool_env(
+        "SESSION_RECORDS_REQUIRED",
+        app_env.strip().lower() in {"production", "prod"},
+    )
 
     cors_origins: list[str] = _csv_env(
         "CORS_ORIGINS",
@@ -199,6 +203,8 @@ def validate_runtime_settings(candidate: Settings = settings) -> None:
         raise RuntimeError("AUTH_COOKIE_SAMESITE must be strict or lax in production.")
     if getattr(candidate, "legacy_file_store_enabled", True):
         raise RuntimeError("Production requires LEGACY_FILE_STORE_ENABLED=false; authoritative state must come from the database.")
+    if not getattr(candidate, "session_records_required", False):
+        raise RuntimeError("Production requires SESSION_RECORDS_REQUIRED=true for revocable access sessions.")
 
 APP_NAME = settings.app_name
 APP_VERSION = "1.1.0"

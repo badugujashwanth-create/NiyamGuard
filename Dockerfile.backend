@@ -4,6 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV AUTO_CREATE_TABLES=false
 ENV LEGACY_FILE_STORE_ENABLED=false
+ENV SESSION_RECORDS_REQUIRED=true
 
 WORKDIR /app
 RUN groupadd --system niyamguard && useradd --system --gid niyamguard --create-home niyamguard

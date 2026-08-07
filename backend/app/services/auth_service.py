@@ -8,7 +8,7 @@ from uuid import uuid4
 from fastapi import Request
 
 from app.config import settings
-from app.models.auth_models import RefreshTokenRecord, UserRecord
+from app.models.auth_models import RefreshTokenRecord, UserRecord, UserSessionRecord
 from app.repositories.auth_repository import auth_repository
 from app.schemas.auth_schemas import CreateUserRequest, UpdateUserRequest
 from app.security.jwt import create_access_token
@@ -80,12 +80,25 @@ def login(email: str, password: str, request: Request | None = None) -> dict | N
             request=request,
         )
         return None
-    access_token = create_access_token({"sub": user.id, "email": user.email, "role": user.role})
+    session_id = f"session_{uuid4().hex}"
+    auth_repository.create_session(
+        UserSessionRecord(
+            id=session_id,
+            user_id=user.id,
+            ip_address=request.client.host if request and request.client else None,
+            user_agent=request.headers.get("user-agent") if request else None,
+            created_at=now_iso(),
+            expires_at=_expires_iso(settings.refresh_token_expire_days),
+            revoked_at=None,
+        )
+    )
+    access_token = create_access_token({"sub": user.id, "email": user.email, "role": user.role, "sid": session_id})
     refresh_token = secrets.token_urlsafe(48)
     auth_repository.create_refresh_token(
         RefreshTokenRecord(
             id=f"refresh_{uuid4().hex}",
             user_id=user.id,
+            session_id=session_id,
             token_hash=_token_hash(refresh_token),
             expires_at=_expires_iso(settings.refresh_token_expire_days),
             revoked_at=None,
@@ -114,10 +127,21 @@ def refresh(refresh_token: str) -> dict | None:
     user = auth_repository.get_user(record.user_id)
     if user is None or not user.is_active:
         return None
+    session_id = record.session_id
+    session = auth_repository.get_session(session_id) if session_id else None
+    if getattr(settings, "session_records_required", False) and session is None:
+        return None
+    if session and (
+        session.revoked_at
+        or session.expires_at <= datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        or session.user_id != user.id
+    ):
+        return None
     replacement_token = secrets.token_urlsafe(48)
     replacement = RefreshTokenRecord(
         id=f"refresh_{uuid4().hex}",
         user_id=user.id,
+        session_id=session_id,
         token_hash=_token_hash(replacement_token),
         expires_at=_expires_iso(settings.refresh_token_expire_days),
         revoked_at=None,
@@ -125,8 +149,11 @@ def refresh(refresh_token: str) -> dict | None:
     )
     if not auth_repository.rotate_refresh_token(_token_hash(refresh_token), replacement, now_iso()):
         return None
+    access_claims = {"sub": user.id, "email": user.email, "role": user.role}
+    if session_id:
+        access_claims["sid"] = session_id
     return {
-        "access_token": create_access_token({"sub": user.id, "email": user.email, "role": user.role}),
+        "access_token": create_access_token(access_claims),
         "refresh_token": replacement_token,
         "token_type": "bearer",
         "user": _user_response(user),
@@ -136,6 +163,8 @@ def refresh(refresh_token: str) -> dict | None:
 def logout(refresh_token: str | None, actor: CurrentUser, request: Request | None = None) -> None:
     if refresh_token:
         auth_repository.revoke_refresh_token(_token_hash(refresh_token), now_iso())
+    if actor.session_id:
+        auth_repository.revoke_session(actor.session_id, now_iso())
     audit_service.record_event(action="logout", actor=actor, request=request)
 
 

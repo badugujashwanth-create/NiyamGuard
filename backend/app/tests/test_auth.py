@@ -84,3 +84,25 @@ def test_cookie_auth_mode_uses_httponly_session_and_rotates(client, monkeypatch:
     assert "niyamguard_access=\"\"" in logout.headers["set-cookie"]
     assert "SameSite=strict" in logout.headers["set-cookie"]
     assert client.get("/api/auth/me").status_code == 401
+
+
+def test_logout_revokes_access_session_when_session_records_are_required(
+    client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "session_records_required", True)
+    login = client.post(
+        "/api/auth/login",
+        json={"email": "viewer@niyamguard.local", "password": "Viewer@12345"},
+    )
+    access_token = login.json()["access_token"]
+    refresh_token = login.json()["refresh_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+    assert client.get("/api/auth/me", headers=headers).status_code == 200
+
+    logout = client.post(
+        "/api/auth/logout",
+        headers=headers,
+        json={"refresh_token": refresh_token},
+    )
+    assert logout.status_code == 200
+    assert client.get("/api/auth/me", headers=headers).status_code == 401

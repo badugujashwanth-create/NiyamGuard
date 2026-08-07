@@ -60,13 +60,22 @@ def init_db() -> None:
 def _ensure_runtime_columns() -> None:
     inspector = inspect(engine)
     if "audit_events" not in inspector.get_table_names():
-        return
-    columns = {column["name"] for column in inspector.get_columns("audit_events")}
-    additions = []
-    if "previous_hash" not in columns:
-        additions.append("ALTER TABLE audit_events ADD COLUMN previous_hash VARCHAR(64)")
-    if "current_hash" not in columns:
-        additions.append("ALTER TABLE audit_events ADD COLUMN current_hash VARCHAR(64)")
+        additions = []
+    else:
+        additions = []
+        columns = {column["name"] for column in inspector.get_columns("audit_events")}
+        if "previous_hash" not in columns:
+            additions.append("ALTER TABLE audit_events ADD COLUMN previous_hash VARCHAR(64)")
+        if "current_hash" not in columns:
+            additions.append("ALTER TABLE audit_events ADD COLUMN current_hash VARCHAR(64)")
+    if "refresh_tokens" in inspector.get_table_names():
+        refresh_columns = {column["name"] for column in inspector.get_columns("refresh_tokens")}
+        if "session_id" not in refresh_columns:
+            additions.append("ALTER TABLE refresh_tokens ADD COLUMN session_id VARCHAR(120)")
+    if "user_sessions" in inspector.get_table_names():
+        session_columns = {column["name"] for column in inspector.get_columns("user_sessions")}
+        if "revoked_at" not in session_columns:
+            additions.append("ALTER TABLE user_sessions ADD COLUMN revoked_at VARCHAR(40)")
     if additions:
         with engine.begin() as connection:
             for statement in additions:

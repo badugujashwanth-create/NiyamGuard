@@ -31,6 +31,8 @@ services:
         value: "true"
       - key: AUTH_COOKIE_SAMESITE
         value: strict
+      - key: SESSION_RECORDS_REQUIRED
+        value: "true"
       - key: TRUSTED_HOSTS
         value: "*.onrender.com"
       - key: CORS_ORIGINS

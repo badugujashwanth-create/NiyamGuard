@@ -19,6 +19,7 @@
 - Added TTS text limits, rate limiting, and bounded cache eviction.
 - Added JWT issuer/audience checks and atomic refresh-token rotation.
 - Added opt-in same-origin HttpOnly access/refresh cookies; production validation requires cookie mode with secure cookies, while bearer/localStorage remains a local-demo fallback.
+- Added database-backed session records, session-linked refresh tokens, JWT session IDs, logout revocation, and production enforcement of revocable sessions.
 - Serialized audit appends and made chain verification ordering deterministic; PostgreSQL workers also take a transaction-scoped advisory lock.
 - Added Alembic execution to both container entrypoints and switched containers to a non-root runtime user.
 - Made migration ownership explicit: deployed containers set `AUTO_CREATE_TABLES=false`, while local/test environments may opt into the compatibility fallback.
@@ -35,7 +36,7 @@
 | Check | Result |
 |---|---|
 | Focused backend correctness/security suites | Pass (service portal, auth/RBAC, readiness, dataset, speech, audit, and runtime boundaries) |
-| Full backend suite | Pass: 268 tests execute successfully with third-party pytest plugin autoload disabled |
+| Full backend suite | Pass: 270 tests execute successfully with third-party pytest plugin autoload disabled |
 | Deterministic extraction benchmark | Pass: 20/20 frozen synthetic cases |
 | Frontend tests | Pass: 60 tests in default bearer-demo mode and 60 tests with `VITE_AUTH_COOKIE_MODE=true` |
 | Frontend production build | Pass: Vite build |

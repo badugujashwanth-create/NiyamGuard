@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 
 from app.database import SessionLocal, init_db
-from app.models.auth_models import RefreshTokenRecord, UserRecord
+from app.models.auth_models import RefreshTokenRecord, UserRecord, UserSessionRecord
 
 
 class AuthRepository:
@@ -39,6 +39,25 @@ class AuthRepository:
             return session.scalar(
                 select(RefreshTokenRecord).where(RefreshTokenRecord.token_hash == token_hash)
             )
+
+    def create_session(self, record: UserSessionRecord) -> UserSessionRecord:
+        with SessionLocal() as session:
+            session.add(record)
+            session.commit()
+        return record
+
+    def get_session(self, session_id: str) -> UserSessionRecord | None:
+        with SessionLocal() as session:
+            return session.get(UserSessionRecord, session_id)
+
+    def revoke_session(self, session_id: str, revoked_at: str) -> bool:
+        with SessionLocal() as session:
+            record = session.get(UserSessionRecord, session_id)
+            if record is None or record.revoked_at:
+                return False
+            record.revoked_at = revoked_at
+            session.commit()
+        return True
 
     def revoke_refresh_token(self, token_hash: str, revoked_at: str) -> bool:
         with SessionLocal() as session:

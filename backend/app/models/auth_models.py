@@ -21,6 +21,7 @@ class RefreshTokenRecord(Base):
 
     id: Mapped[str] = mapped_column(String(120), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(80), index=True)
+    session_id: Mapped[str | None] = mapped_column(String(120), index=True, nullable=True)
     token_hash: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     expires_at: Mapped[str] = mapped_column(String(40))
     revoked_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
@@ -36,3 +37,4 @@ class UserSessionRecord(Base):
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[str] = mapped_column(String(40))
     expires_at: Mapped[str] = mapped_column(String(40))
+    revoked_at: Mapped[str | None] = mapped_column(String(40), nullable=True)

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Callable
 
 from fastapi import Depends, HTTPException, Request, status
@@ -13,6 +14,7 @@ class CurrentUser:
     id: str
     email: str
     role: str
+    session_id: str | None = None
 
 
 def _token_from_request(request: Request) -> str | None:
@@ -45,7 +47,19 @@ def get_current_user(request: Request) -> CurrentUser:
     user = auth_repository.get_user(user_id)
     if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is inactive or missing.")
-    return CurrentUser(id=user.id, email=user.email, role=user.role)
+    session_id = str(payload.get("sid", "")) or None
+    if getattr(settings, "session_records_required", False) and session_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session record is required.")
+    if session_id:
+        session = auth_repository.get_session(session_id)
+        if (
+            session is None
+            or session.user_id != user.id
+            or session.revoked_at
+            or session.expires_at <= datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        ):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session is expired or revoked.")
+    return CurrentUser(id=user.id, email=user.email, role=user.role, session_id=session_id)
 
 
 def optional_current_user(request: Request) -> CurrentUser | None:
