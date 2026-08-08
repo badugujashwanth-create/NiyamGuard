@@ -9,6 +9,7 @@ from app.security.rate_limit import rate_limit
 
 
 def test_database_rate_limit_is_shared_by_requests(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "rate_limit_enabled", True)
     monkeypatch.setattr(settings, "rate_limit_backend", "database")
     monkeypatch.setattr(settings, "rate_limit_per_minute", 1)
     request = SimpleNamespace(client=SimpleNamespace(host=f"test-{uuid4().hex}"))
