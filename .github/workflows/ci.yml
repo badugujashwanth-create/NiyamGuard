@@ -89,7 +89,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: alembic upgrade head
       - run: python -c "from app.database import database_ready; assert database_ready(), 'database schema is not ready'"
-      - run: python -c "from app.main import app; assert app.title == 'NiyamGuard AI'"
+      - run: python -c "from app.main import app; assert app.title == 'NiyamGuard'"
 
   frontend:
     runs-on: ubuntu-latest
