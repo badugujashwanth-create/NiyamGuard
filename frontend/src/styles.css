@@ -3017,6 +3017,13 @@ footer {
 .citizen-policy-card { display: grid; grid-template-columns: 1fr auto; gap: 0.9rem; padding: 1.25rem; background: #fff; border: 1px solid #d9e1dc; border-radius: 0.65rem; box-shadow: 0 0.45rem 1.2rem rgb(20 63 52 / 8%); }
 .citizen-policy-card h2 { margin: 0; font-size: 1.2rem; }.citizen-policy-status { align-self: start; color: #0d644a; background: #e3f2ea; border-radius: 99px; padding: 0.3rem 0.55rem; font-size: 0.75rem; font-weight: 850; text-transform: uppercase; }.citizen-policy-change { display: flex; grid-column: 1 / -1; gap: 0.7rem; align-items: center; margin: 0; font-size: 1.05rem; }.citizen-policy-card dl { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 1rem; margin: 0; }.citizen-policy-card dt { color: #60766c; font-size: 0.73rem; font-weight: 750; text-transform: uppercase; }.citizen-policy-card dd { margin: 0.2rem 0 0; font-weight: 700; }.citizen-policy-card button { justify-self: start; }.citizen-policy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }.citizen-policy-main > h2 { margin-top: 2rem; }.citizen-policy-intro { max-width: 42rem; color: #536d61; }.citizen-service-list { display: grid; gap: 0.6rem; max-width: 48rem; }.citizen-service-list button { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem; color: #17372c; background: #fff; border: 1px solid #d9e1dc; border-radius: 0.5rem; font: inherit; font-weight: 750; text-align: left; }.citizen-service-list span { color: #17684f; }
 
+.citizen-assistant-transcript {
+  min-height: 1.5rem;
+  margin: 0.8rem 0 0;
+  color: #315447;
+  font-size: 0.9rem;
+}
+
 .admin-brand span {
   display: grid;
   width: 2.8rem;
