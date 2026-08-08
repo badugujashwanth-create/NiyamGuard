@@ -54,6 +54,9 @@ def detect_intent(text: str, context: dict[str, Any] | None = None) -> dict:
             "\u0c2b\u0c3e\u0c30\u0c4d\u0c2e\u0c4d",
             "\u0c05\u0c2a\u0c4d\u0c32\u0c3f\u0c15\u0c47\u0c37\u0c28\u0c4d",
             "\u0c39\u0c46\u0c32\u0c4d\u0c2a\u0c4d",
+            "\u092b\u0949\u0930\u094d\u092e",
+            "\u0906\u0935\u0947\u0926\u0928",
+            "\u092e\u0926\u0926",
         )
     ):
         intent = "form_help"

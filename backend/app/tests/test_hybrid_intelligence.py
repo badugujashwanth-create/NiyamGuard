@@ -35,6 +35,23 @@ def test_hybrid_answer_recognizes_telugu_income_certificate_transcript(client) -
     assert body["verified"] is True
 
 
+def test_hybrid_answer_guides_hindi_form_help_with_current_service_context(client) -> None:
+    response = client.post(
+        "/api/hybrid/answer",
+        json={
+            "question": "\u092e\u0941\u091d\u0947 \u0906\u0935\u0947\u0926\u0928 \u092b\u0949\u0930\u094d\u092e \u092d\u0930\u0928\u0947 \u092e\u0947\u0902 \u092e\u0926\u0926 \u091a\u093e\u0939\u093f\u090f",
+            "language": "hindi",
+            "context": {"service_id": "income_certificate"},
+        },
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["intent"] == "form_help"
+    assert body["verified"] is True
+    assert "\u092b" in body["answer"]
+
+
 def test_hybrid_answer_guides_telugu_form_help_with_current_service_context(client) -> None:
     response = client.post(
         "/api/hybrid/answer",
@@ -50,6 +67,7 @@ def test_hybrid_answer_guides_telugu_form_help_with_current_service_context(clie
     assert body["intent"] == "form_help"
     assert body["service_id"] == "income_certificate"
     assert body["verified"] is True
+    assert "\u0c2b\u0c3e\u0c30\u0c4d\u0c2e\u0c4d" in body["answer"]
 
 
 def test_hybrid_unknown_question_uses_safe_fallback(client) -> None:
