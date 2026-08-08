@@ -149,22 +149,19 @@ describe("NiyamGuard frontend", () => {
     });
   });
 
-  it("landing page leads with the policy-drift incident and two workflow choices", async () => {
+  it("landing page leads with the policy-aware citizen and admin choices", async () => {
     installApiMock();
     window.history.pushState({}, "", "/");
     render(<App />);
 
     expect(
       await screen.findByRole("heading", {
-        name: "A government rule changed. Downstream systems are still wrong.",
+        name: "Government policies, simplified.",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Income Certificate validity" })).toBeInTheDocument();
-    expect(screen.getByText("12 months")).toBeInTheDocument();
-    expect(screen.getByText("6 months")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open Citizen Portal" })).toHaveAttribute("href", "/citizen");
-    expect(screen.getByRole("link", { name: "Open Reviewer Workflow" })).toHaveAttribute("href", "/government");
-    expect(screen.queryByText(/old demo/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open Citizen Portal" })).toHaveAttribute("href", "/login?next=%2Fcitizen%2Fhome");
+    expect(screen.getByRole("link", { name: "Admin Portal" })).toHaveAttribute("href", "/login?next=%2Fadmin%2Fdashboard");
+    expect(screen.queryByText("Backend API")).not.toBeInTheDocument();
     expect(screen.queryByText("Run Full End-to-End Simulation")).not.toBeInTheDocument();
   });
 

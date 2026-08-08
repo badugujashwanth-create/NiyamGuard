@@ -12,6 +12,10 @@ export function getLatestPublicRule(serviceId = "income_certificate", ruleKey = 
   );
 }
 
+export function getPublicPolicyUpdates() {
+  return request("/api/public/policy-updates", {}, { auth: false });
+}
+
 export function getDashboardSummary() {
   return request("/api/dashboard/summary", {}, { auth: false });
 }

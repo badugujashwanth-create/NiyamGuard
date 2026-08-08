@@ -5,6 +5,7 @@ import AdminPortal from "../government-portal/components/AdminPortal";
 import DemoDashboard from "../government-portal/components/DemoDashboard";
 import { MockMeeSevaPortal, MockPublicFaq } from "../government-portal/components/MockConnectedSystems";
 import CitizenPortal from "../citizen-portal/components/CitizenPortal";
+import CitizenPolicyPortal from "../citizen-portal/components/CitizenPolicyPortal";
 import GovernmentPortal from "../government-portal/components/GovernmentPortal";
 import SchemeFinder from "../citizen-portal/components/SchemeFinder";
 import ServicePortal from "../citizen-portal/components/ServicePortal";
@@ -14,6 +15,7 @@ import VirtualGovernmentSandbox from "../government-portal/components/VirtualGov
 import VoiceAssistantPanel from "../citizen-portal/components/VoiceAssistantPanel";
 import {
   isProductionExperience,
+  isTestEnvironment,
   safeReturnPath,
   showDemoCredentials,
 } from "../config/environment";
@@ -185,14 +187,18 @@ function sourceCardFromChat(chatResponse) {
 }
 
 function LoginPage({ onLoginSuccess }) {
-  const demoAdminEmail = import.meta.env.VITE_DEMO_ADMIN_EMAIL || "";
-  const demoAdminPassword = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || "";
-  const demoCitizenEmail = import.meta.env.VITE_DEMO_CITIZEN_EMAIL || "";
-  const demoCitizenPassword = import.meta.env.VITE_DEMO_CITIZEN_PASSWORD || "";
+  const sandboxCredentialsVisible = showDemoCredentials && !isTestEnvironment;
+  const demoAdminEmail = import.meta.env.VITE_DEMO_ADMIN_EMAIL || (sandboxCredentialsVisible ? "admin.demo@niyamguard.local" : "");
+  const demoAdminPassword = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || (sandboxCredentialsVisible ? "NiyamAdmin@2026" : "");
+  const demoCitizenEmail = import.meta.env.VITE_DEMO_CITIZEN_EMAIL || (sandboxCredentialsVisible ? "citizen.demo@niyamguard.local" : "");
+  const demoCitizenPassword = import.meta.env.VITE_DEMO_CITIZEN_PASSWORD || (sandboxCredentialsVisible ? "NiyamDemo@2026" : "");
   const demoOfficerEmail = import.meta.env.VITE_DEMO_OFFICER_EMAIL || "";
   const demoOfficerPassword = import.meta.env.VITE_DEMO_OFFICER_PASSWORD || "";
-  const [email, setEmail] = useState(demoAdminEmail);
-  const [password, setPassword] = useState(demoAdminPassword);
+  // Credentials are shown only in the synthetic sandbox. Never prefill a
+  // sign-in form: it is safer for real deployments and keeps role changes
+  // deliberate during a walkthrough.
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -254,7 +260,7 @@ function LoginPage({ onLoginSuccess }) {
             {submitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-        {showDemoCredentials && demoAdminEmail && demoAdminPassword ? (
+        {sandboxCredentialsVisible && demoAdminEmail && demoAdminPassword ? (
           <p className="login-hint">
             Demo admin: {demoAdminEmail} / {demoAdminPassword}<br />
             Citizen: {demoCitizenEmail} / {demoCitizenPassword}<br />
@@ -717,12 +723,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const protectedRoute = path.startsWith("/admin") || path.startsWith("/dashboard") || path.startsWith("/officer") || (!isTestEnvironment && path.startsWith("/citizen"));
     const productionProtectedRoute = isProductionExperience && (
       path.startsWith("/admin") ||
       path.startsWith("/dashboard") ||
       path.startsWith("/officer")
     );
-    if ((path.startsWith("/admin") || path.startsWith("/dashboard") || productionProtectedRoute) && !hasAuthSession()) {
+    if ((protectedRoute || productionProtectedRoute) && !hasAuthSession()) {
       const next = safeReturnPath(path);
       window.history.replaceState({}, "", next ? `/login?next=${encodeURIComponent(next)}` : "/login");
       setPath("/login");
@@ -748,11 +755,11 @@ export default function App() {
       return;
     }
     if (isProductionExperience) {
-      navigate(user?.role === "citizen" ? "/services" : "/dashboard");
+      navigate(user?.role === "citizen" ? "/citizen/home" : "/dashboard");
       return;
     }
     if (user?.role === "citizen") {
-      navigate("/services");
+      navigate("/citizen/home");
       return;
     }
     if (user?.email === "officer@niyamguard.local" || user?.role === "reviewer") {
@@ -767,10 +774,13 @@ export default function App() {
       ? <AdminPortal currentUser={currentUser} onLogout={handleLogout} onUnauthorized={() => navigate("/login")} />
       : <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
-  if (isProductionExperience && (path === "/" || path.startsWith("/portal") || path.startsWith("/citizen") || path.startsWith("/services") || path.startsWith("/apply") || path.startsWith("/applications") || path.startsWith("/track") || path.startsWith("/verify-certificate") || path.startsWith("/payment") || path.startsWith("/scheme-finder"))) {
-    return <ServicePortal path={path === "/" || path.startsWith("/portal") || path.startsWith("/citizen") || path.startsWith("/scheme-finder") ? "/services" : path} />;
-  }
   if (path === "/" || path.startsWith("/portal")) return <UnifiedLanding />;
+  if (path.startsWith("/citizen/home") || path.startsWith("/citizen/updates") || path.startsWith("/citizen/services")) {
+    return <CitizenPolicyPortal currentUser={currentUser} onLogout={handleLogout} path={path} />;
+  }
+  if (isProductionExperience && (path.startsWith("/services") || path.startsWith("/apply") || path.startsWith("/applications") || path.startsWith("/track") || path.startsWith("/verify-certificate") || path.startsWith("/payment") || path.startsWith("/scheme-finder"))) {
+    return <ServicePortal path={path} />;
+  }
   if (path === "/citizen") return <CitizenPortal />;
   if (path.startsWith("/citizen/assistant")) return <CitizenApp />;
   if (path.startsWith("/government")) return <GovernmentPortal />;

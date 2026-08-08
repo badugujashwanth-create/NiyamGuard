@@ -16,6 +16,17 @@ def test_public_search_works(client) -> None:
     assert response.json()["verified"] is True
 
 
+def test_public_policy_updates_only_return_active_verified_rules(client) -> None:
+    response = client.get("/api/public/policy-updates")
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["success"] is True
+    assert body["updates"]
+    assert all(item["current_value"] for item in body["updates"])
+    assert all("circular_number" in item["source"] for item in body["updates"])
+
+
 def test_missing_public_rule_is_safe(client) -> None:
     response = client.get("/api/public/rules/latest?service_id=missing&rule_key=missing")
     body = response.json()

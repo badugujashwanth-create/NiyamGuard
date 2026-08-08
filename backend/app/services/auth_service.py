@@ -24,6 +24,10 @@ DEFAULT_USERS = [
     ("user_viewer", "viewer@niyamguard.local", "Viewer@12345", "viewer"),
     ("user_officer", "officer@niyamguard.local", "Officer@12345", "officer"),
     ("user_citizen", "citizen@niyamguard.local", "Citizen@12345", "citizen"),
+    # Synthetic local accounts for the sandbox walkthrough. Existing accounts
+    # remain intact so current integrations and test fixtures keep working.
+    ("user_demo_admin", "admin.demo@niyamguard.local", "NiyamAdmin@2026", "admin"),
+    ("user_demo_citizen", "citizen.demo@niyamguard.local", "NiyamDemo@2026", "citizen"),
     ("user_sandbox_admin", "sandbox@niyamguard.local", "Sandbox@12345", "sandbox_admin"),
 ]
 

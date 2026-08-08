@@ -12,6 +12,33 @@ def public_latest_rule(service_id: str = Query(...), rule_key: str = Query(...))
     return knowledge_base_service.citizen_safe_answer(service_id, rule_key)
 
 
+@router.get("/api/public/policy-updates")
+def public_policy_updates() -> dict:
+    """Expose only approved, currently active rule changes to citizen surfaces."""
+    updates = []
+    for rule in knowledge_base_service.list_rules():
+        if rule.status != "active":
+            continue
+        source = knowledge_base_service.source_circular_info(rule.id) or {}
+        updates.append(
+            {
+                "id": rule.id,
+                "service_id": rule.service_id,
+                "rule_key": rule.rule_key,
+                "title": rule.rule_name,
+                "previous_value": rule.previous_value,
+                "current_value": rule.current_value,
+                "unit": rule.unit,
+                "effective_date": rule.effective_date,
+                "source": {
+                    "circular_number": source.get("circular_number"),
+                    "department": source.get("department"),
+                },
+            }
+        )
+    return {"success": True, "updates": sorted(updates, key=lambda item: item["effective_date"], reverse=True)}
+
+
 @router.get("/api/public/services/{service_id}/documents")
 def public_documents(service_id: str) -> dict:
     if service_id == "income_certificate":
