@@ -811,7 +811,7 @@ function DocumentsPage({ path }) {
   );
 }
 
-function OfficerPage({ path, applicationId }) {
+export function OfficerPage({ path, applicationId, routeBase = "/officer" }) {
   const [applications, setApplications] = useState([]);
   const [selected, setSelected] = useState(null);
   const [status, setStatus] = useState("");
@@ -861,14 +861,14 @@ function OfficerPage({ path, applicationId }) {
       {error ? <div className="global-error" role="alert">{error}</div> : null}
       {status ? <p className="portal-status">{status}</p> : null}
       <div className="portal-actions">
-        <button className="button button-secondary" onClick={() => navigateTo("/officer/pending")} type="button">Pending</button>
-        <button className="button button-secondary" onClick={() => navigateTo("/officer/approved")} type="button">Approved</button>
-        <button className="button button-secondary" onClick={() => navigateTo("/officer/rejected")} type="button">Rejected</button>
+        <button className="button button-secondary" onClick={() => navigateTo(`${routeBase}/pending`)} type="button">Pending</button>
+        <button className="button button-secondary" onClick={() => navigateTo(`${routeBase}/approved`)} type="button">Approved</button>
+        <button className="button button-secondary" onClick={() => navigateTo(`${routeBase}/rejected`)} type="button">Rejected</button>
       </div>
       <div className="portal-two-column">
         <section className="portal-panel">
           <h3>Queue</h3>
-          <ApplicationList applications={applications} openPathPrefix="/officer/applications" />
+          <ApplicationList applications={applications} openPathPrefix={`${routeBase}/applications`} />
         </section>
         {selected ? (
           <section className="portal-panel">
@@ -973,7 +973,6 @@ export default function ServicePortal({ path }) {
           <button onClick={() => navigateTo("/applications")} type="button">Applications</button>
           <button onClick={() => navigateTo("/track")} type="button">Track</button>
           <button onClick={() => navigateTo("/verify-certificate")} type="button">Verify</button>
-          <button onClick={() => navigateTo("/officer")} type="button">Officer</button>
         </nav>
       </header>
       <main className="portal-main">

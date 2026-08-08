@@ -58,6 +58,7 @@ import {
   verifyAudit,
 } from "../../services/api";
 import { enableSyntheticControls, isProductionExperience } from "../../config/environment";
+import { OfficerPage } from "../../citizen-portal/components/ServicePortal";
 
 const demoPages = [
   { path: "/admin", label: "Dashboard" },
@@ -78,6 +79,7 @@ const demoPages = [
   { path: "/admin/services", label: "Services" },
   { path: "/admin/forms", label: "Forms" },
   { path: "/admin/certificates", label: "Certificates" },
+  { path: "/admin/officer", label: "Service Operations" },
   { path: "/admin/reports", label: "Reports" },
   { path: "/admin/audit", label: "Audit" },
   { path: "/admin/users", label: "Users" },
@@ -93,6 +95,7 @@ const productionPages = [
   { path: "/admin/impact", label: "Impact", roles: ["admin", "reviewer", "officer", "viewer"] },
   { path: "/admin/propagation", label: "Remediation", roles: ["admin", "reviewer", "officer", "viewer"] },
   { path: "/admin/audit", label: "Audit", roles: ["admin", "reviewer", "officer", "viewer"] },
+  { path: "/admin/officer", label: "Service Operations", roles: ["admin", "officer"] },
   { path: "/admin/reports", label: "Reports", roles: ["admin", "reviewer", "officer", "viewer"] },
   { path: "/admin/users", label: "Administration", roles: ["admin"] },
 ];
@@ -363,7 +366,9 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
     setMobileNavOpen(false);
   }
 
-  const activePage = path === "/admin/dashboard" || path === "/dashboard" ? "/admin" : path;
+  const activePage = path.startsWith("/admin/officer")
+    ? "/admin/officer"
+    : path === "/admin/dashboard" || path === "/dashboard" ? "/admin" : path;
   const pages = useMemo(
     () => isProductionExperience
       ? productionPages.filter((page) => page.roles.includes(currentUser?.role || "viewer"))
@@ -738,6 +743,14 @@ export default function AdminPortal({ currentUser, onLogout, onUnauthorized }) {
 
         {!loading && activePage === "/admin/certificates" ? (
           <AdminCertificatesPage certificates={portalCertificates} />
+        ) : null}
+
+        {!loading && activePage === "/admin/officer" ? (
+          <OfficerPage
+            applicationId={path.split("/").filter(Boolean)[3]}
+            path={path}
+            routeBase="/admin/officer"
+          />
         ) : null}
 
         {!loading && activePage === "/admin/reports" ? (

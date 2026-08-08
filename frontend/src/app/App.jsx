@@ -763,7 +763,7 @@ export default function App() {
       return;
     }
     if (user?.email === "officer@niyamguard.local" || user?.role === "reviewer") {
-      navigate("/officer");
+      navigate(user?.role === "officer" ? "/admin/officer" : "/admin");
       return;
     }
     navigate("/admin");
