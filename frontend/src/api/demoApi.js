@@ -19,15 +19,15 @@ export function getVerifiedAIExplanation(question = "Explain GO-138 in simple wo
   );
 }
 
-export function askHybridDemoQuestion(question) {
+export function askHybridDemoQuestion(question, { serviceId = "income_certificate", language = "auto" } = {}) {
   return request(
     "/api/hybrid/answer",
     {
       method: "POST",
       body: JSON.stringify({
         question,
-        language: "auto",
-        context: { service_id: "income_certificate" },
+        language,
+        context: { service_id: serviceId },
         profile: {},
       }),
     },

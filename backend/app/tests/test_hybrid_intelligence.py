@@ -35,6 +35,23 @@ def test_hybrid_answer_recognizes_telugu_income_certificate_transcript(client) -
     assert body["verified"] is True
 
 
+def test_hybrid_answer_guides_telugu_form_help_with_current_service_context(client) -> None:
+    response = client.post(
+        "/api/hybrid/answer",
+        json={
+            "question": "\u0c39\u0c32\u0c4b \u0c28\u0c3e\u0c15\u0c41 \u0c08 \u0c05\u0c2a\u0c4d\u0c32\u0c3f\u0c15\u0c47\u0c37\u0c28\u0c4d \u0c2b\u0c3e\u0c30\u0c4d\u0c2e\u0c4d \u0c2b\u0c3f\u0c32\u0c4d \u0c05\u0c2a\u0c4d \u0c1a\u0c47\u0c2f\u0c21\u0c3e\u0c28\u0c3f\u0c15\u0c3f \u0c39\u0c46\u0c32\u0c4d\u0c2a\u0c4d \u0c1a\u0c47\u0c2f\u0c35\u0c3e?",
+            "context": {"service_id": "income_certificate"},
+        },
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["method"] == "decision_table"
+    assert body["intent"] == "form_help"
+    assert body["service_id"] == "income_certificate"
+    assert body["verified"] is True
+
+
 def test_hybrid_unknown_question_uses_safe_fallback(client) -> None:
     response = client.post("/api/hybrid/answer", json={"question": "unknown secret subsidy rule"})
     body = response.json()

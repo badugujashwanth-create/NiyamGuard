@@ -14,6 +14,12 @@ function responseText(response) {
   return response?.answer || response?.reply || "I could not find a guidance answer. Please try a different question.";
 }
 
+function activeServiceId() {
+  const segments = window.location.pathname.split("/").filter(Boolean);
+  if ((segments[0] === "apply" || segments[0] === "services") && segments[1]) return segments[1];
+  return "income_certificate";
+}
+
 export default function CitizenAssistantDock() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("chat");
@@ -33,7 +39,10 @@ export default function CitizenAssistantDock() {
     setError("");
     setStatus("Finding verified guidance...");
     try {
-      const response = await askHybridDemoQuestion(cleaned);
+      const response = await askHybridDemoQuestion(cleaned, {
+        language,
+        serviceId: activeServiceId(),
+      });
       const reply = responseText(response);
       setAnswer(reply);
       setStatus(response?.verified ? "Answer checked against a verified published rule." : "Guidance returned. Verify important details with the receiving department.");

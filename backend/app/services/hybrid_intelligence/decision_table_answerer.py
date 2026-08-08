@@ -22,7 +22,7 @@ def _service(service_id: str):
 
 
 def answer(question: str, language: dict[str, Any], intent: str, service_id: str | None) -> dict[str, Any] | None:
-    if intent not in {"documents", "eligibility", "process", "fee", "timeline", "general_service_question"}:
+    if intent not in {"documents", "eligibility", "process", "form_help", "fee", "timeline", "general_service_question"}:
         return None
     if not service_id:
         return None
@@ -46,7 +46,7 @@ def answer(question: str, language: dict[str, Any], intent: str, service_id: str
         text = f"{name} fee is Rs {service.fee_amount} in the NiyamGuard demo service catalog."
     elif intent == "timeline":
         text = f"{name} processing timeline is {service.processing_days} days in the NiyamGuard demo SLA."
-    elif intent == "process":
+    elif intent in {"process", "form_help"}:
         text = f"{name} process: " + " ".join(f"{index + 1}. {step}" for index, step in enumerate(PROCESS_STEPS))
     else:
         text = f"{name}: {service.description}"

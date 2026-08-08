@@ -44,6 +44,19 @@ def detect_intent(text: str, context: dict[str, Any] | None = None) -> dict:
         intent = "application_status"
     elif re.search(r"\bngcert-\d{4}-[a-z0-9]+-\d+\b", normalized) or "verification hash" in normalized:
         intent = "certificate_verification"
+    elif any(
+        phrase in normalized
+        for phrase in (
+            "form fill",
+            "fill application",
+            "form help",
+            "help filling",
+            "\u0c2b\u0c3e\u0c30\u0c4d\u0c2e\u0c4d",
+            "\u0c05\u0c2a\u0c4d\u0c32\u0c3f\u0c15\u0c47\u0c37\u0c28\u0c4d",
+            "\u0c39\u0c46\u0c32\u0c4d\u0c2a\u0c4d",
+        )
+    ):
+        intent = "form_help"
     else:
         intent = "unknown"
         for candidate, values in aliases()["intents"].items():
